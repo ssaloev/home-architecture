@@ -1,0 +1,12 @@
+# тяжёлые модели и текстуры (BlenderKit, Poly Haven) — скачиваются заново: 02_skripty/bk.py
+03_materialy/blenderkit/
+03_materialy/polyhaven/
+*.blend1
+# пересобираемое: python 02_skripty/build.py
+02_skripty/out/
+01_chertezhi/*.png
+06_albom/*.pdf
+# черновые быстрые рендеры
+08_vizualizacii/**/q_*.jpg
+__pycache__/
+*.pyc
