@@ -60,9 +60,10 @@ class Sheet:
         for (x, z, w, d) in furn:
             A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')
         s.toilet(1.43, 9.018, col=col); s.toilet(0.71, 9.018, col=ORANGE, sw=5)
-        s.toilet_r(9.115, 6.073, col=col); s.toilet_r(8.415, 6.073, col=ORANGE, sw=5)
+        s.toilet_r(8.415, 6.073, col=col)          # 13.11: в ванной один унитаз (+ гиг. душ)
         s.highitems()
-        A(f'<rect x="{X(0.309):.1f}" y="{Y(7.85):.1f}" width="{0.32*S:.1f}" height="{0.45*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')
+        A(f'<rect x="{X(1.058):.1f}" y="{Y(6.80):.1f}" width="{0.50*S:.1f}" height="{0.42*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')   # раковина санузла (верхняя стена)
+        A(f'<rect x="{X(3.564):.1f}" y="{Y(8.06):.1f}" width="{0.48*S:.1f}" height="{0.60*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')  # раковина ванной
         A(f'<rect x="{X(686/P):.1f}" y="{Y(112/P):.1f}" width="{25/P*S:.1f}" height="{32/P*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
         for cy in (122, 136):
             A(f'<circle cx="{X(698.5/P):.1f}" cy="{Y(cy/P):.1f}" r="15" fill="none" stroke="{col}" stroke-width="{sw}"/>')
@@ -74,12 +75,12 @@ class Sheet:
         s.A(f'<ellipse cx="{X(ax):.1f}" cy="{Y(wallz-0.16-(d-0.16)/2):.1f}" rx="{w/2*S:.1f}" ry="{(d-0.16)/2*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
     def highitems(s):
         A = s.A; C = "#B03A2E"
-        A(f'<circle cx="{X(3.79):.1f}" cy="{Y(8.52):.1f}" r="{0.225*S:.1f}" fill="none" stroke="{C}" stroke-width="5" stroke-dasharray="14 8"/>')
-        A(f'<text x="{X(3.79):.0f}" y="{Y(8.52)+8:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{C}">Б1</text>')
-        A(f'<rect x="{X(0.40):.1f}" y="{Y(8.568):.1f}" width="{1.0*S:.1f}" height="{0.45*S:.1f}" rx="30" fill="none" stroke="{C}" stroke-width="5" stroke-dasharray="14 8"/>')
-        A(f'<text x="{X(0.90):.0f}" y="{Y(8.568)+30:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{C}">Б2</text>')
-        A(f'<rect x="{X(1.03):.1f}" y="{Y(6.81):.1f}" width="{0.60*S:.1f}" height="{0.40*S:.1f}" fill="#E3EEF8" stroke="{BLUE}" stroke-width="5"/>')
-        if S < 300: A(f'<text x="{X(1.33):.0f}" y="{Y(7.01)+9:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{BLUE}">бак</text>')
+        # 13.11: бойлеры Ø450 над унитазами (пунктир — висят высоко), бак 200 л под заказ — пенал у левой стены санузла
+        for (bx, bz, t) in ((6.073 - 0.275, 8.42, "Б1"), (1.43, 9.018 - 0.275, "Б2")):
+            A(f'<circle cx="{X(bx):.1f}" cy="{Y(bz):.1f}" r="{0.225*S:.1f}" fill="none" stroke="{C}" stroke-width="5" stroke-dasharray="14 8"/>')
+            A(f'<text x="{X(bx):.0f}" y="{Y(bz)+8:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{C}">{t}</text>')
+        A(f'<rect x="{X(0.309):.1f}" y="{Y(7.74):.1f}" width="{0.24*S:.1f}" height="{0.52*S:.1f}" fill="#E3EEF8" stroke="{BLUE}" stroke-width="5"/>')
+        if S < 300: A(f'<text x="{X(0.43):.0f}" y="{Y(8.00)+9:.0f}" text-anchor="middle" font-size="20" font-weight="bold" fill="{BLUE}">бак</text>')
     def toilet_r(s, az, wallx, col=FURNC, sw=2.5, w=0.36, d=0.55):
         z0 = az - w / 2
         s.A(f'<rect x="{X(wallx-0.16):.1f}" y="{Y(z0):.1f}" width="{0.16*S:.1f}" height="{w*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
