@@ -120,7 +120,7 @@ def plank_floor(A, B, PL=0.6, PW=0.09):
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs[0], t.inputs["Vector"]); nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     return m
 M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.38), "washed_grey_oak_veneer", 1.6, WALLC, 1.55, 0.7),
-         ward=mat("Шкафы крем матовые", "#" + OPT.get("ward", "4A4A4C"), 0.55),
+         ward=mat("Шкафы крем матовые", "#" + OPT.get("ward", "2F2F31"), 0.55),
          slat=tex(mat("Рейки дуб", "#C9A57A", 0.5), "washed_grey_oak_veneer", 2.0, "#C79F72", 1.6),
          floor=(plank_floor("D5D4D0", "C4C3BE") if FLOOR == "oak"
                 else mat("Пол светло-серый", "#CFCDC8", 0.5)),

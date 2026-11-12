@@ -194,7 +194,7 @@ M = {
     "frame_led": emit("Световая рамка", "#FFF0DC", 12.0),
 }
 if KREM:
-    for k, c in (("wall", "#E4D9C9"), ("mold", "#EAE1D3"), ("tumba", "#" + OPTC.get("tumba", "4A4A4C")), ("tumba_frame", "#" + OPTC.get("tumbaf", "57575A")), ("rug", "#E2D9CB")):
+    for k, c in (("wall", "#E4D9C9"), ("mold", "#EAE1D3"), ("tumba", "#" + OPTC.get("tumba", "2F2F31")), ("tumba_frame", "#" + OPTC.get("tumbaf", "3A3A3D")), ("rug", "#E2D9CB")):
         M[k].node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = hexlin(c)
     M["top"] = mat("Столешница камень крем", "#EFE9DF", rough=0.15)
 if GREYW:
