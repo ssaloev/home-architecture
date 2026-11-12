@@ -633,6 +633,8 @@ SH = [("gostinaya/_kremA_1_ot_dveri_k_oknu", "Гостиная", "от двер�
       ("gostinaya/_kremA_5_obshchiy_sverhu", "Гостиная", "общий вид"),
       ("gostinaya/_kremA_7_kreslo", "Гостиная", "кресло и столик"), ("gostinaya/_kremA_6_detal_steny", "Гостиная", "деталь стены"),
       ("gostinaya/_kremA_8_potolok", "Гостиная", "потолок"), ("gostinaya/_kremA_9_ugol_potolka", "Гостиная", "угол потолка"),
+      ("komnata/1_ot_dveri_k_oknu", "Вторая гостиная", "от двери к окну"), ("komnata/2_ot_okna_k_shkafu", "Вторая гостиная", "от окна к шкафу"),
+      ("komnata/3_tv_zona", "Вторая гостиная", "ТВ-зона"),
       ("koridor/1_koridor_k_prihozhey", "Коридор", "вид к прихожей"), ("koridor/2_vhodnaya_dver", "Прихожая", "входная дверь, обувница"),
       ("koridor/4_prihozhaya_gosti", "Прихожая", "шкаф и место для гостей"), ("koridor/3_prihozhaya_zerkalo", "Прихожая", "обувница и зеркало")]
 for k, (fn, room, cap) in enumerate(SH, 1):        # как в образце: один ракурс — один лист, картинка на весь лист
