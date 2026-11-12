@@ -118,7 +118,23 @@ except Exception: pass
 # ---------------- коробка комнаты
 T = 0.2
 box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["floor"])
-box("Стена лев", X0 - T, Z0 - T, X0, Z1 + T, 0, H, M["wall"]); box("Стена прав", X1, Z0 - T, X1 + T, Z1 + T, 0, H, M["wall"])
+box("Стена лев", X0 - T, Z0 - T, X0, Z1 + T, 0, H, M["wall"]); ND0, ND1, NDH = 0.545, 1.345, 2.10          # стеклянная дверь в нишу наружных блоков (план: «в нишу конд.»)
+box("Стена прав", X1, ND1, X1 + T, Z1 + T, 0, H, M["wall"]); box("Стена прав у окна", X1, Z0 - T, X1 + T, ND0, 0, H, M["wall"])
+box("Над дверью ниши", X1, ND0, X1 + T, ND1, NDH, H, M["wall"])
+# ниша (балкон под кондиционеры): пол, стены, 2 наружных блока
+M["niche"] = mat("Ниша — штукатурка", "#D9D6D0", 0.9); M["acw2"] = mat("Наружный блок", "#EDEDEA", 0.4)
+box("Ниша пол", X1 + T, Z0 - 0.1, X1 + 1.5, 1.9, -0.05, 0, M["niche"]); box("Ниша стена", X1 + 1.5, Z0 - 0.1, X1 + 1.6, 1.9, 0, H, M["niche"])
+box("Ниша стена2", X1 + T, 1.9, X1 + 1.6, 2.0, 0, H, M["niche"]); box("Ниша стена3", X1 + T, Z0 - 0.2, X1 + 1.6, Z0 - 0.1, 0, H, M["niche"])
+box("Ниша потолок", X1 + T, Z0 - 0.2, X1 + 1.6, 2.0, H, H + 0.05, M["niche"])
+for (zz, hh) in ((0.75, 0.0), (0.75, 0.62)):
+    box("Наружный блок", X1 + 0.75, zz - 0.40, X1 + 1.05, zz + 0.40, hh + 0.02, hh + 0.57, M["acw2"], 0.01)
+    box("Решётка", X1 + 0.745, zz - 0.25, X1 + 0.75, zz + 0.15, hh + 0.12, hh + 0.47, M["seam"])
+# сама дверь: белая рама + стекло
+for (a, b) in ((ND0, ND0 + 0.06), (ND1 - 0.06, ND1)): box("Рама двери", X1, a, X1 + 0.07, b, 0, NDH, M["wframe"], 0.003)
+box("Рама двери", X1, ND0, X1 + 0.07, ND1, NDH - 0.06, NDH, M["wframe"], 0.003); box("Рама двери", X1, ND0, X1 + 0.07, ND1, 0, 0.06, M["wframe"], 0.003)
+box("Импост двери", X1, ND0, X1 + 0.07, ND1, 0.85, 0.91, M["wframe"], 0.003)
+box("Стекло двери", X1 + 0.03, ND0 + 0.06, X1 + 0.04, ND1 - 0.06, 0.06, NDH - 0.06, M["glass"])
+box("Ручка двери", X1 - 0.03, ND1 - 0.12, X1, ND1 - 0.10, 0.95, 1.12, M["wframe"], 0.003)
 box("Стена низ", X0, Z1, DX0, Z1 + T, 0, H, M["wall"]); box("Над дверью", DX0, Z1, DX1, Z1 + T, DH, H, M["wall"])
 box("Окно лев", X0, Z0 - T, WX0, Z0, 0, H, M["wall"]); box("Окно прав", WX1, Z0 - T, X1, Z0, 0, H, M["wall"])
 box("Под окном", WX0, Z0 - T, WX1, Z0, 0, WS, M["wall"]); box("Над окном", WX0, Z0 - T, WX1, Z0, WT, H, M["wall"])
@@ -144,8 +160,11 @@ def seams(axis, fixed, a0, a1, n_, skip=()):
 tm = 3.436
 # левая стена (ТВ): швы симметрично ТВ — по краям тумбы (tm±1.55), дальше шагом 1220 наружу
 for zz in [tm - 1.55 - 1.22 * i for i in range(0, 3)] + [tm + 1.55 + 1.22 * i for i in range(0, 3)]:
-    if Z0 + 0.15 < zz < 5.945 - 0.05: box("Шов", X0, zz - 0.008, X0 + 0.0008, zz + 0.008, 0.08, HC, M["seam"])
-seams("z", X1, Z0, Z1, -1)
+    if Z0 + 0.15 < zz < 5.945 - 0.05:
+        if OPT.get("swap", "1") == "1":
+            if not (0.545 - 0.05 < zz < 1.345 + 0.05): box("Шов", X1 - 0.0008, zz - 0.008, X1, zz + 0.008, 0.08, HC, M["seam"])
+        else: box("Шов", X0, zz - 0.008, X0 + 0.0008, zz + 0.008, 0.08, HC, M["seam"])
+seams("z", X0, Z0, 5.945, +1) if OPT.get("swap", "1") == "1" else seams("z", X1, Z0, Z1, -1)
 seams("x", Z0, X0, X1, +1, skip=((WX0, WX1),))
 # плинтус в тон стен
 for (a, b, c, d) in ((X0, Z0, X0 + 0.015, Z1), (X1 - 0.015, Z0, X1, Z1), (WX1, Z0, X1, Z0 + 0.015), (X0, Z0, WX0, Z0 + 0.015)):
@@ -171,6 +190,7 @@ for k in range(n):
     hx = a0 + (k + 1) * w - 0.05 if k % 2 == 0 else a0 + k * w + 0.05
     box("Ручка латунь", hx - 0.008, b0 - 0.035, hx + 0.008, b0 - 0.012, 0.70, 1.55, M["brass"], 0.004)
 
+_pre_tv = set(o.name for o in sc.objects)
 # ---------------- ТВ-зона: встроенная напольная тумба 3,1 м + ТВ 85"
 k0, k1, KD, KH = tm - 1.55, tm + 1.55, 0.45, 0.62
 box("ТВ-тумба", X0, k0, X0 + KD - 0.02, k1, 0.08, KH, M["ward"]); box("Цоколь", X0, k0 + 0.02, X0 + KD - 0.06, k1 - 0.02, 0, 0.08, M["black"])
@@ -291,7 +311,34 @@ for o in _ch:
 import_bk("stol_mramor", 7.15, tm, 0.0, 90, 1.10)
 import_bk("tyulpany", 7.10, tm - 0.15, 0.47, 0, 0.32, "h")
 import_bk("knigi", 7.20, tm + 0.25, 0.47, 20)
-import_bk("rastenie_bolshoe", X1 - 0.40, Z0 + 0.55, 0.0, 0, 1.55, "h")
+SWAP = OPT.get("swap", "1") == "1"   # 12.11: ТВ у правой стены, диван у левой (поворот группы на 180° вокруг (xc, tm))
+if SWAP:
+    _R = Matrix.Translation(W((X0 + X1) / 2, tm, 0)) @ Matrix.Rotation(math.pi, 4, "Z") @ Matrix.Translation(-W((X0 + X1) / 2, tm, 0))
+    for o in [o for o in sc.objects if o.name not in _pre_tv and o.parent is None]: o.matrix_world = _R @ o.matrix_world
+import_bk("rastenie_bolshoe", (X0 + 0.32) if SWAP else (X1 - 0.30), 1.95, 0.0, 0, 1.40, "h")
+
+def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
+    """Кондиционер (BlenderKit Midea) на стене: wall = ('R'|'L'|'T'|'B', координата стены); along — центр вдоль стены."""
+    f = os.path.join(BK, "kondicioner_slim.blend")
+    if not os.path.exists(f): return
+    with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [n for n in src.objects]
+    objs = [o for o in dst.objects if o is not None and o.type not in ("LIGHT", "CAMERA")]
+    for o in objs: sc.collection.objects.link(o)
+    roots = [o for o in objs if o.parent is None or o.parent not in objs]
+    side, wc = wall
+    rz = {"R": -90, "L": 90, "T": 0, "B": 180}[side] + (180 if flip else 0)
+    R = Matrix.Rotation(math.radians(rz), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Scale(width / 0.715, 4)
+    for r in roots: r.matrix_world = R @ r.matrix_world
+    bpy.context.view_layer.update()
+    pts = [o.matrix_world @ Vector(c) for o in objs if o.type == "MESH" for c in o.bound_box]
+    mn = Vector([min(p[i] for p in pts) for i in range(3)]); mx = Vector([max(p[i] for p in pts) for i in range(3)])
+    if side == "R": tgt = Vector((wc - (mx.x - mn.x) / 2 - 0.01, -along, top - (mx.z - mn.z) / 2))
+    elif side == "L": tgt = Vector((wc + (mx.x - mn.x) / 2 + 0.01, -along, top - (mx.z - mn.z) / 2))
+    elif side == "T": tgt = Vector((along, -(wc + (mx.y - mn.y) / 2 + 0.01), top - (mx.z - mn.z) / 2))
+    else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
+    d = tgt - (mn + mx) / 2
+    for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
+ac_unit(("L", X0), 0.90, 2.54)   # К2 по плану кондиционеров
 
 # ---------------- шторы (волна) + тюль из ниши
 def drape(name, a0, a1, zc, amp, waves, m):
@@ -331,7 +378,8 @@ w = sc.world or bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True; w.no
 # ---------------- камеры
 CAMS = {"1": ("1_ot_dveri_k_oknu", W(X1 - 0.45, Z1 - 0.95, 1.45), W(X0 + 0.9, Z0 + 1.0, 1.05), 16),
         "2": ("2_ot_okna_k_shkafu", W(X0 + 0.9, Z0 + 0.6, 1.45), W(X1 - 0.6, Z1 - 0.4, 1.0), 16),
-        "3": ("3_tv_zona", W(X1 - 0.35, tm, 1.30), W(X0, tm, 1.30), 18)}
+        "3": ("3_tv_zona", W(X0 + 0.35, tm, 1.30), W(X1, tm, 1.30), 18) if OPT.get("swap", "1") == "1" else ("3_tv_zona", W(X1 - 0.35, tm, 1.30), W(X0, tm, 1.30), 18),
+        "4": ("4_dver_v_nishu", W(7.0, 3.6, 1.45), W(X1, 0.95, 1.05), 17)}
 sc.render.engine = "CYCLES"
 try:
     pr = bpy.context.preferences.addons["cycles"].preferences

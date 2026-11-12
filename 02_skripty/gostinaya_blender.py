@@ -772,6 +772,29 @@ if _sofa:
     for o in list(sc.objects):
         if o.name.startswith(("Диван", "Подушка")) and o.type == "MESH": bpy.data.objects.remove(o, do_unlink=True)
 _pz = (sz0 + sz1) / 2
+from mathutils import Matrix
+def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
+    """Кондиционер (BlenderKit Midea) на стене: wall = ('R'|'L'|'T'|'B', координата стены); along — центр вдоль стены."""
+    f = os.path.join(BK, "kondicioner_slim.blend")
+    if not os.path.exists(f): return
+    with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [n for n in src.objects]
+    objs = [o for o in dst.objects if o is not None and o.type not in ("LIGHT", "CAMERA")]
+    for o in objs: sc.collection.objects.link(o)
+    roots = [o for o in objs if o.parent is None or o.parent not in objs]
+    side, wc = wall
+    rz = {"R": -90, "L": 90, "T": 0, "B": 180}[side] + (180 if flip else 0)
+    R = Matrix.Rotation(math.radians(rz), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X") @ Matrix.Scale(width / 0.715, 4)
+    for r in roots: r.matrix_world = R @ r.matrix_world
+    bpy.context.view_layer.update()
+    pts = [o.matrix_world @ Vector(c) for o in objs if o.type == "MESH" for c in o.bound_box]
+    mn = Vector([min(p[i] for p in pts) for i in range(3)]); mx = Vector([max(p[i] for p in pts) for i in range(3)])
+    if side == "R": tgt = Vector((wc - (mx.x - mn.x) / 2 - 0.01, -along, top - (mx.z - mn.z) / 2))
+    elif side == "L": tgt = Vector((wc + (mx.x - mn.x) / 2 + 0.01, -along, top - (mx.z - mn.z) / 2))
+    elif side == "T": tgt = Vector((along, -(wc + (mx.y - mn.y) / 2 + 0.01), top - (mx.z - mn.z) / 2))
+    else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
+    d = tgt - (mn + mx) / 2
+    for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
+if KREM: ac_unit(("R", X1), 0.85, 2.50)   # К1 по плану кондиционеров
 # шторы: тюль на всю ширину + плотные по бокам, волной, из ниши до пола
 def drape(name, a0, a1, zc, amp, waves, material):
     bm = bmesh.new(); nu, nv = max(24, int((a1 - a0) * 60)), 12; grid = []
