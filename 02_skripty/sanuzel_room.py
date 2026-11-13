@@ -17,28 +17,34 @@ curtain_rail([(X0, SZ1), (SX1, SZ1), (SX1, Z0)], 2.00)
 box("Держатель карниза", SX1 - 0.006, SZ1 - 0.006, SX1 + 0.006, SZ1 + 0.006, 2.01, HC, M["black"])
 curtain_strip("Шторка (к биде)", (X0 + 0.02, SZ1 - 0.02), (SX1 - 0.03, SZ1 - 0.02), 0.03, 1.97)
 curtain_strip("Шторка собрана", (SX1 - 0.02, Z0 + 0.02), (SX1 - 0.02, Z0 + 0.22), 0.03, 1.97, amp=0.04, waves=4)
-wb("Смеситель душ", "L", 7.20, 7.32, 0, 0.04, 1.00, 1.12, M["black"], 0.01)
-wb("Штанга", "L", 7.42, 7.44, 0, 0.03, 1.00, 1.90, M["black"])
-wb("Держатель лейки", "L", 7.40, 7.46, 0.0, 0.05, 1.50, 1.54, M["black"], 0.006)      # 13.11: ручная лейка на штанге + шланг
-bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.022, depth=0.24, location=W(X0 + 0.07, 7.43, 1.60), rotation=(0, math.radians(-15), 0)); bpy.context.active_object.data.materials.append(M["black"])
-bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.045, depth=0.025, location=W(X0 + 0.10, 7.43, 1.73), rotation=(0, math.radians(75), 0)); bpy.context.active_object.data.materials.append(M["black"])
-_hc = bpy.data.curves.new("Шланг", "CURVE"); _hc.dimensions = "3D"; _hc.bevel_depth = 0.007; _hc.bevel_resolution = 3
-_sp = _hc.splines.new("NURBS"); _pts = [(7.26, 1.00), (7.27, 0.80), (7.33, 0.62), (7.40, 0.75), (7.43, 1.10), (7.43, 1.49)]
-_sp.points.add(len(_pts) - 1); _sp.use_endpoint_u = True; _sp.order_u = 4
-for _i, (_z, _h) in enumerate(_pts): _v = W(X0 + 0.05, _z, _h); _sp.points[_i].co = (_v.x, _v.y, _v.z, 1)
-_ho = bpy.data.objects.new("Шланг", _hc); sc.collection.objects.link(_ho); _hc.materials.append(M["black"])   # 13.11: шланг свисает петлёй от смесителя к лейке
-bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.15, depth=0.012, location=W(0.66, 7.25, 2.20)); bpy.context.active_object.data.materials.append(M["black"])
-box("Кронштейн", X0, 7.24, 0.66, 7.26, 2.205, 2.225, M["black"])
+# 13.11 (по заказчику): нормальный душевой комплект (BlenderKit, чёрный): тропический душ + ручная лейка со шлангом + смеситель
+bk_load("dush_komplekt_cherny", Matrix.Translation(W(X0, 7.35, 0.95)) @ Matrix.Rotation(math.radians(90), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X"))
 # 13.11 (по заказчику): в душе ниша с ТРЕМЯ полками (шампунь, гель, мыло и т.д.) — на верхней стене, напротив входа
 NA0, NA1 = X0 + 0.10, SX1 - 0.10
-wb("Ниша дно", "T", NA0, NA1, 0, 0.12, 0.88, 0.90, M["tile"])
+ND = -0.11   # 13.11 (по заказчику): ниша УТОПЛЕНА в стену — заподлицо с плиткой, наружу не выступает
+_cut = box("Вырез ниши", NA0 - 0.012, Z0 - 0.11, NA1 + 0.012, Z0 + 0.01, 0.88, 1.67, M["tile"])
+_wl = bpy.data.objects.get("Стена T")
+if _wl and _cut:
+    _bm = _wl.modifiers.new("niche", "BOOLEAN"); _bm.object = _cut; _bm.operation = "DIFFERENCE"
+    bpy.context.view_layer.objects.active = _wl; bpy.ops.object.modifier_apply(modifier="niche")
+    bpy.data.objects.remove(_cut, do_unlink=True)
+wb("Ниша дно", "T", NA0, NA1, ND, ND + 0.12, 0.88, 0.90, M["tile"])
 for hh in (1.15, 1.40):
-    wb("Полка ниши", "T", NA0, NA1, 0, 0.12, hh - 0.012, hh, M["tile"])
-wb("Ниша верх", "T", NA0, NA1, 0, 0.12, 1.65, 1.67, M["tile"])
-for a_ in (NA0 - 0.012, NA1): wb("Ниша бок", "T", a_, a_ + 0.012, 0, 0.12, 0.88, 1.67, M["tile"])
-wb("Ниша LED", "T", NA0, NA1, 0.11, 0.115, 1.66, 1.665, M["led"])
-for hh, cs in ((0.90, ("white", "black", "white")), (1.15, ("black", "white", "black")), (1.40, ("white", "white"))):
-    bottles("T", NA0 + 0.06, 0.06, hh, cs)
+    wb("Полка ниши", "T", NA0, NA1, ND, ND + 0.12, hh - 0.012, hh, M["tile"])
+wb("Ниша верх", "T", NA0, NA1, ND, ND + 0.12, 1.65, 1.67, M["tile"])
+for a_ in (NA0 - 0.012, NA1): wb("Ниша бок", "T", a_, a_ + 0.012, ND, ND + 0.12, 0.88, 1.67, M["tile"])
+wb("Ниша LED", "T", NA0, NA1, ND + 0.11, ND + 0.115, 1.66, 1.665, M["led"])
+# 13.11 (по заказчику): подсветка LED под каждой полкой + настоящие флаконы (шампунь, гель, дозатор мыла)
+for hh in (1.15, 1.40):
+    wb("Ниша LED полки", "T", NA0, NA1, ND + 0.10, ND + 0.105, hh - 0.017, hh - 0.012, M["led"])
+for hh in (0.90, 1.15, 1.40):
+    lt_ = bpy.data.lights.new("Ниша свет", "AREA"); lt_.energy = 6; lt_.size = 0.40; lt_.color = (1, 0.9, 0.78)
+    x_, z_ = pt("T", (NA0 + NA1) / 2, ND + 0.09); o_ = bpy.data.objects.new("Ниша свет", lt_); o_.location = W(x_, z_, hh + 0.225); sc.collection.objects.link(o_)
+SET = {0.90: (("flakon_shampun", 0.20), ("flakon_gel", 0.15), ("dozator_mylo", 0.15)), 1.15: (("flakon_gel", 0.15), ("flakon_shampun", 0.20)), 1.40: (("dozator_mylo", 0.15), ("flakon_gel", 0.15))}
+for hh, items in SET.items():
+    for i_, (fn_, ht_) in enumerate(items):
+        x_, z_ = pt("T", NA0 + 0.09 + i_ * 0.16, ND + 0.06)
+        bk_fit(fn_, x_, z_, hh, 0, ht_, axis="h")
 
 # ---- 13.11: раковина перенесена на верхнюю стену (справа от душа) — перед биде было 0 см; зеркало над ней
 CT = 0.85
@@ -63,24 +69,26 @@ for k in range(2):
 vessel("T", SA, 0.21, CT, r=0.17, k=0.95)
 mirror_led("T", SX1 + 0.06, 1.54, 1.20, 2.05)
 
-# ---- левая стена под душем: узкий графитовый пенал — плоский бак 200 л (500×200×2000) + насос; стоит СБОКУ от биде
-cabinet("Пенал бака 200 л (под заказ)", "L", 7.74, 8.26, 0.24, 0.0, HC, 1, "tank")
+# ---- 13.11 (по эскизу заказчика): боковой пенал бака УБРАН; бак 200 л — наверху, в шкафу до потолка над биде
 
 # ---- нижняя стена: короб инсталляций, биде (x 0.71) + унитаз (x 1.43), бойлер Б2 в шкафу над ними
 wb("Короб инсталляции", "B", X0, X1, 0, 0.20, 0, 1.12, M["tile"])
-hung("Биде", "B", 0.71, "bidet")
+hung("Биде", "B", 0.71, "bidet", depth=0.50)   # 13.11: компактное биде глубиной 500 — перед ним 610 мм
 hung("Унитаз", "B", 1.43, "wc")
 # 13.11 (по заказчику): шкаф во всю высоту от короба инсталляции до потолка; низ мелкий 200 (не мешает голове), верх 550 — бойлер
-cabinet("Отсек хранения под Б2", "B", 0.40, 1.75, 0.20, 1.12, 1.80, 3, "store", led=False)
-cabinet("Шкаф бойлера Б2", "B", 0.40, 1.75, 0.55, 1.80, HC, 2, ("boiler", 1.43), led=False)
+# 13.11 (по заказчику): шкаф ДО НИЗА — нижний ряд 1120–1400 мелкий 200 (заподлицо с коробом, не мешает голове): бумага, химия
+cabinet("Нижний ряд над инсталляцией", "B", X0 + 0.005, X1 - 0.005, 0.20, 1.12, 1.40, 4, None, led=False)
+cabinet("Шкаф бака 200 л над биде", "B", X0 + 0.005, 0.95, 0.32, 1.40, HC, 1, "tank_top", led=False)
+# 13.11 (по заказчику): бойлер ПЛОСКИЙ (как панель) — вся стена одним шкафом глубиной 300, ничего не выступает; насос бака — внизу этого шкафа
+cabinet("Шкаф бойлера Б2 (плоский) + насос", "B", 0.95, X1 - 0.005, 0.32, 1.40, HC, 2, ("flatboiler", 1.43), led=False)
 # bottles("B", 0.95, 0.10, 1.12, ("black", "white"))  (13.11: полка закрыта шкафом)
 towel_rail_bk("R", 8.04)
 spots([(0.66, 7.25), (1.40, 7.60), (1.07, 8.40)])
 
 CAMS = {"1": ("1_ot_dveri", W(1.75, 7.40, 1.60), W(0.50, 8.90, 0.80), 13),
         "2": ("2_dush_rakovina", W(1.55, 8.30, 1.60), W(0.60, 6.85, 1.10), 13),
-        "3": ("3_bak_bide", W(1.60, 7.55, 1.60), W(0.31, 8.10, 1.00), 13),
+        "3": ("3_bak_bide", W(1.45, 7.15, 1.70), W(0.80, 9.00, 1.45), 12),
         "4": ("4_iz_dusha", W(0.62, 7.05, 1.60), W(1.55, 8.75, 0.85), 13)}
 CAMS["6"] = ("6_dush_nisha", W(0.95, 7.68, 1.60), W(0.55, 6.80, 1.20), 13)
-CAMS["5"] = ("5_bojler_bak", W(1.55, 7.30, 1.55), W(0.55, 8.75, 1.45), 13)
+CAMS["5"] = ("5_bojler_bak", W(1.55, 7.30, 1.55), W(0.90, 9.00, 1.75), 13)
 if OPENC: CAMS = {k: ("open_" + v[0],) + v[1:] for k, v in CAMS.items()}

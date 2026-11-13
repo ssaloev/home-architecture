@@ -198,7 +198,7 @@ def room_box(doorwall, da0, da1):
     wb("Наличник верх", doorwall, da0, da1, -0.03, 0.003, DH - 0.012, DH, M["black"])
     wb("Ручка", doorwall, da1 - 0.20, da1 - 0.07, 0.025, 0.04, 1.0, 1.02, M["black"]); wb("Ручка ножка", doorwall, da1 - 0.09, da1 - 0.07, -0.03, 0.04, 1.0, 1.02, M["black"])
     box("Потолок", X0 - T, Z0 - T, X1 + T, Z1 + T, HC, HC + 0.05, M["ceil"])
-def hung(n, w, a, kind="wc", d0=0.20):
+def hung(n, w, a, kind="wc", d0=0.20, depth=None):
     """подвесной унитаз / биде — реальные модели BlenderKit (13.11), на коробе инсталляции, верх чаши h=400"""
     f = os.path.join(BK, ("unitaz_podv" if kind == "wc" else "bide_podv") + ".blend")
     with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [o for o in src.objects]
@@ -210,6 +210,17 @@ def hung(n, w, a, kind="wc", d0=0.20):
         sc.collection.objects.link(o); o.matrix_world = Tm @ o.matrix_world
         for i, ms in enumerate(o.data.materials):
             if ms and any(k in ms.name.lower() for k in ("chrome", "metal", "steel")): o.data.materials[i] = M["black"]
+    if depth:   # 13.11: компактная модель — глубина от короба depth (м), масштаб только вдоль нормали к стене
+        bpy.context.view_layer.update()
+        nx_, nz_ = {"T": (0, 1), "B": (0, -1), "L": (1, 0), "R": (-1, 0)}[w]; nv = W(nx_, nz_, 0) - W(0, 0, 0)
+        p0 = W(x, z, 0); cur = max((o.matrix_world @ Vector(c) - p0).dot(nv) for o in objs for c in o.bound_box)
+        k = depth / cur; S = Matrix.Identity(4)
+        for i in range(3):
+            for j in range(3): S[i][j] += (k - 1) * nv[i] * nv[j]
+        A = Matrix.Translation(p0) @ S @ Matrix.Translation(-p0)
+        for o in objs:
+            if o.parent not in objs: o.matrix_world = A @ o.matrix_world
+        print("HUNG depth", n, round(cur, 3), "->", depth)
     return objs
 def vessel(w, a, d, top, r=0.20, k=0.78):
     x, z = pt(w, a, d)
@@ -232,6 +243,7 @@ def mirror_led(w, a0, a1, h0, h1):
 OPENC = OPT.get("open", "0") == "1"      # open=1 — рендер с ОТКРЫТЫМИ дверцами шкафов: видно бойлер / бак / химию
 M["boiler"] = mat("Бойлер белый", "#EDEDEB", 0.25)
 M["inner"] = mat("Шкаф внутри", "#4A4A4D", 0.6)
+M["boilerg"] = mat("Бойлер серый металлик", "#8C8E91", 0.35)
 def _cyl(x, z, r, h0, h1, m, v=48):
     bpy.ops.mesh.primitive_cylinder_add(vertices=v, radius=r, depth=h1 - h0, location=W(x, z, (h0 + h1) / 2)); o = bpy.context.active_object; o.data.materials.append(m); return o
 def cab_content(kind, w, a0, a1, d, h0, h1):
@@ -243,10 +255,21 @@ def cab_content(kind, w, a0, a1, d, h0, h1):
         x2, z2 = pt(w, ac, 0.47); box("Дисплей бойлера", x2 - 0.04, z2 - 0.04, x2 + 0.04, z2 + 0.04, top - 0.33, top - 0.25, M["black"])
         for da in (-0.07, 0.07):
             xp, zp = pt(w, ac + da, 0.25); _cyl(xp, zp, 0.011, h0 + 0.02, top - 0.76, M["white"], 16)
+    elif kind == "flatboiler":          # 13.11 (по фото заказчика): плоский бойлер 470×875×285, серый, сверху; насос бака — внизу отсека
+        top = h1 - 0.05; bot = top - 0.875
+        wb("Бойлер плоский", w, ac - 0.235, ac + 0.235, 0.01, 0.295, bot, top, M["boilerg"], 0.06)
+        wb("Панель бойлера", w, ac - 0.06, ac + 0.06, 0.294, 0.298, bot + 0.06, bot + 0.20, M["black"])
+        for da in (-0.07, 0.07):
+            xp, zp = pt(w, ac + da, 0.12); _cyl(xp, zp, 0.011, h0 + 0.02, bot, M["white"], 16)
+        x, z = pt(w, a0 + 0.12, 0.13); _cyl(x, z, 0.07, h0 + 0.02, h0 + 0.20, M["ward"], 32)
     elif kind == "tank":                # узкий бак 200 л 500×200×1800 + насос сверху
         wb("Бак 200 л", w, a0 + 0.02, a1 - 0.02, 0.01, d - 0.03, 0.05, 1.85, M["boiler"], 0.02)
         x, z = pt(w, ac, (d - 0.02) / 2); _cyl(x, z, 0.07, 1.90, 2.15, M["ward"], 32); _cyl(x, z, 0.012, 2.15, h1, M["white"], 16)
         wb("Указатель уровня", w, ac - 0.01, ac + 0.01, d - 0.031, d - 0.029, 0.15, 1.75, M["glass"])
+    elif kind == "tank_top":            # 13.11: плоский бак 200 л 580×300×1150 в шкафу над биде (на раме), уровень сбоку
+        wb("Бак 200 л", w, a0 + 0.025, a1 - 0.025, 0.01, d - 0.03, h0 + 0.03, h1 - 0.04, M["boiler"], 0.02)
+        wb("Указатель уровня", w, ac - 0.01, ac + 0.01, d - 0.031, d - 0.029, h0 + 0.10, h1 - 0.12, M["glass"])
+        x, z = pt(w, a1 - 0.08, (d - 0.02) / 2); _cyl(x, z, 0.015, h1 - 0.04, h1, M["white"], 16)
     elif kind == "store":               # нижний отсек под бойлером: туалетная бумага, запасы, бытовая мелочь
         hb = h0 + 0.018
         for hs in ((h0 + h1) / 2,):
