@@ -154,6 +154,10 @@ def seam_z(fixed, n_, zs):
 seam_x(Z1, -1, [x for x in (BC - 0.8 - 1.22, BC - 0.8, BC + 0.8, BC + 0.8 + 1.22) if X0 + 0.15 < x < X1 - 0.15])   # стена ТВ: швы по краям тумбы, за ТВ цельный лист
 seam_x(Z0, +1, [x for x in (BC - 1.83, BC - 0.61, BC + 0.61, BC + 1.83) if X0 + 0.65 < x < LX0 - 0.1])   # стена за кроватью: листы 1220 симметрично кровати
 seam_z(X1, -1, [])
+# 13.11 (по заказчику): стены прохода в лоджию — тоже бамбуковые панели: швы листов + шов в углах
+_pm = (LZ1 + 0.09 + Z0) / 2
+seam_z(LX0, +1, [_pm, Z0 - 0.008]); seam_z(LX1, -1, [_pm, Z0 - 0.008])
+seam_x(LZ1 + 0.09, +1, [LX0 + 0.075, LX1 - 0.07])
 for (a, b, c, d) in ((X0 + 0.6, Z0, LX0, Z0 + 0.015), (X0, Z1 - 0.015, X1, Z1), (X1 - 0.015, LZ1 + 0.09, X1, Z1), (X0, 6.509, X0 + 0.015, 6.60), (X0, 7.40, X0 + 0.015, Z1), (LX0, LZ1 + 0.09, LX0 + 0.015, Z0)):   # плинтус до углов (12.11)
     box("Плинтус", a, b, c, d, 0, 0.08, M["wall"], 0.002)
 
@@ -181,15 +185,55 @@ if CUSTOM:
         box("LED подиума", a0, b0, a1, b1, 0.085, 0.095, M["led"])
     box("Матрас", BC - 0.70, zh + 0.14, BC + 0.70, zh + 2.08, 0.34, 0.56, M["linen"], 0.05)
     box("Покрывало", BC - 0.76, zh + 0.72, BC + 0.76, zh + 2.12, 0.40, 0.60, M["duvet"], 0.05)
-    box("Плед", BC - 0.79, zh + 1.70, BC + 0.79, zh + 2.06, 0.58, 0.635, M["plaid"], 0.02)
-    for xx in (BC - 0.35, BC + 0.35):
-        box("Подушка", xx - 0.32, zh + 0.18, xx + 0.32, zh + 0.58, 0.56, 0.75, M["linen"], 0.08)
-    for xx in (BC - 0.25, BC + 0.25):
-        box("Подушка декор", xx - 0.24, zh + 0.50, xx + 0.24, zh + 0.66, 0.58, 0.98, M["duvet"], 0.07)
+    # 13.11 (по заказчику): плед — мягкая ткань: перегиб через край кровати, свес по бокам, складки (сетка + solidify + subsurf)
+    def drape(name, cx, z0_, z1_, top, half, drop, m, r=0.045, nu=90, nv=24, amp=0.012):
+        Lh = half + math.pi * r / 2 + drop
+        bm = bmesh.new(); rows = []
+        for j in range(nv + 1):
+            zz = z0_ + (z1_ - z0_) * j / nv; row = []
+            for i in range(nu + 1):
+                u = -Lh + 2 * Lh * i / nu; s = 1 if u >= 0 else -1; a = abs(u)
+                if a <= half: x, h = a, top
+                elif a <= half + math.pi * r / 2:
+                    t = (a - half) / r; x, h = half + r * math.sin(t), top - r + r * math.cos(t)
+                else: x, h = half + r + 0.01 * (a - half - math.pi * r / 2) / drop, top - r - (a - half - math.pi * r / 2)
+                w_ = amp * (math.sin(zz * 41 + u * 7) * 0.6 + math.sin(zz * 17 - u * 13) * 0.4)
+                if a > half: x += w_ * 0.8
+                else: h += w_ * 0.35
+                row.append(bm.verts.new(W(cx + s * x, zz, h)))
+            rows.append(row)
+        for j in range(nv):
+            for i in range(nu): bm.faces.new((rows[j][i], rows[j][i + 1], rows[j + 1][i + 1], rows[j + 1][i]))
+        me = bpy.data.meshes.new(name); bm.to_mesh(me); bm.free()
+        o = bpy.data.objects.new(name, me); sc.collection.objects.link(o); o.data.materials.append(m)
+        sd = o.modifiers.new("t", "SOLIDIFY"); sd.thickness = 0.006
+        ss = o.modifiers.new("s", "SUBSURF"); ss.levels = 1; ss.render_levels = 2
+        for p in o.data.polygons: p.use_smooth = True
+        return o
+    drape("Плед", BC, zh + 1.60, zh + 2.02, 0.606, 0.762, 0.24, M["plaid"])
+    def _pillow(fn, cx, cz, h0, w, tilt, mm, rot=0.0):
+        objs = import_bk(fn, cx, cz, h0, rot, w)
+        p = W(cx, cz, h0)
+        R_ = Matrix.Translation(p) @ Matrix.Rotation(math.radians(tilt), 4, "X") @ Matrix.Translation(-p)
+        for o_ in objs:
+            if o_.parent is None or o_.parent not in objs: o_.matrix_world = R_ @ o_.matrix_world
+            if o_.type == "MESH":
+                for i_ in range(len(o_.data.materials)): o_.data.materials[i_] = mm
+                if not o_.data.materials: o_.data.materials.append(mm)
+    for xx in (BC - 0.36, BC + 0.36):            # спальные 50×70, наклонены к изголовью
+        _pillow("podushka_spalnaya", xx, zh + 0.36, 0.50, 0.70, -28, M["linen"])
+    for xx in (BC - 0.24, BC + 0.24):            # декоративные 45×45, серые
+        _pillow("podushka_dekor", xx, zh + 0.58, 0.55, 0.48, -18, M["plaid"])
     nch = 8; cw = 1.60 / nch
     for i in range(nch):
         a = BC - 0.80 + i * cw
-        box("Изголовье стёжка", a + 0.004, zh, a + cw - 0.004, zh + 0.13, 0.30, 1.25, M["hbf"], 0.04)
+        # 13.11 (по заказчику): мягкие «пухлые» каналы — овальное сечение, скруглённый верх, глубокие швы между ними
+        bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=cw / 2 - 0.003, depth=0.95, location=W(a + cw / 2, zh + 0.075, 0.775))
+        ch = bpy.context.active_object; ch.name = "Изголовье канал"; ch.scale = (1, 0.055 / (cw / 2 - 0.003), 1); ch.data.materials.append(M["hbf"])
+        bv = ch.modifiers.new("b", "BEVEL"); bv.width = 0.045; bv.segments = 8; bv.limit_method = "ANGLE"
+        ch.modifiers.new("s", "SUBSURF").levels = 1
+        for pp in ch.data.polygons: pp.use_smooth = True
+    box("Изголовье основа", BC - 0.80, zh, BC + 0.80, zh + 0.07, 0.30, 1.24, M["hbf"], 0.01)
     box("LED за изголовьем", BC - 0.78, zh, BC + 0.78, zh + 0.01, 1.255, 1.26, M["led"])
     for xx in (BC - 1.025, BC + 1.025):          # подвесные тумбочки графит 350
         box("Тумбочка подвесная", xx - 0.175, Z0 + 0.005, xx + 0.175, Z0 + 0.40, 0.40, 0.62, M["ward"], 0.006)

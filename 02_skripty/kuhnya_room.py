@@ -1,6 +1,7 @@
-# ======================= КУХНЯ (13.11.2026) — по листу 11 «План кухни»: линейная кухня у правой стены
-# (плита+духовка у окна → ПММ 450 → мойка → холодильник-колонна), колонна СВЧ+кладовая у нижней стены,
-# угловая банкетка (левая + верхняя стена) + стол 1300×850 + 2 стула; К4 над банкеткой.
+# ======================= КУХНЯ — ВАРИАНТ 7 (13.11.2026, согласован по схеме 01_chertezhi/shema_kuhnya7.png):
+# окно свободно; правая стена от окна: мойка 600 → ПММ 450 → плита 600 + духовка → угловой низ; у нижней стены сразу у входа
+# холодильник side-by-side, колонны (кладовая, СВЧ+кофемашина), бутылочница 320; слева от окна стол 1200×600 + 2 стула;
+# левая стена свободна (стол, буфет, ТВ убраны); К4 на левой стене.
 # Стиль квартиры: серые бамбуковые панели, мебель графит #2F2F31 без ручек (гола-профиль), столешница и фартук —
 # серый керамогранит (как в ванной), пол — тот же керамогранит 1200×600.
 X0, X1, Z0, Z1 = 9.145, 13.0, 1.909, 4.2
@@ -43,88 +44,93 @@ box("Короб шторы", WX0, Z0 - 0.06, WX1, Z0, WT - 0.02, WT + 0.06, M["w
 lt = bpy.data.lights.new("Окно", "AREA"); lt.size = 1.6; lt.size_y = 1.5; lt.energy = 260; lt.color = (1, 0.97, 0.92)
 o = bpy.data.objects.new("Окно", lt); o.location = W((WX0 + WX1) / 2, Z0 - 0.4, (WS + WT) / 2); o.rotation_euler = (math.radians(90), 0, 0); sc.collection.objects.link(o)
 
-# ---------------- правая стена: нижние модули (плита+духовка, ПММ 450, мойка), столешница, фартук, верхние шкафы
-RX = X1 - 0.60; RZ1 = 3.60; CT = 0.90
-box("Цоколь", RX + 0.05, Z0, X1, RZ1, 0, 0.10, M["black"])
-box("Корпус низ", RX + 0.02, Z0, X1, RZ1, 0.10, CT - 0.04, M["ward"])
-box("Гола-профиль", RX, Z0, RX + 0.025, RZ1, CT - 0.10, CT - 0.07, M["black"])
-MODS = [(Z0, 2.509, "плита"), (2.509, 2.959, "ПММ"), (2.959, RZ1, "мойка")]
-for (a, b, t) in MODS:
-    if t == "плита":
-        box("Духовка", RX - 0.002, a + 0.03, RX + 0.02, b - 0.03, 0.14, 0.72, M["bglass"], 0.004)
-        box("Ящик под духовкой", RX, a + 0.002, RX + 0.02, b - 0.002, 0.10, 0.13, M["ward"], 0.002)
-        box("Ящик над духовкой", RX, a + 0.002, RX + 0.02, b - 0.002, 0.73, CT - 0.11, M["ward"], 0.002)
-    else:
-        box("Фасад " + t, RX, a + 0.002, RX + 0.02, b - 0.002, 0.10, CT - 0.11, M["ward"], 0.002)
-box("Столешница", RX - 0.02, Z0, X1, RZ1, CT - 0.04, CT, M["tile"])
-box("Варочная индукция", RX + 0.05, Z0 + 0.04, X1 - 0.03, 2.50 - 0.05, CT, CT + 0.006, M["bglass"], 0.003)
-for (cx, cz, r) in ((RX + 0.17, Z0 + 0.17, 0.09), (RX + 0.42, Z0 + 0.17, 0.08), (RX + 0.17, 2.30, 0.08), (RX + 0.42, 2.30, 0.10)):
-    bpy.ops.mesh.primitive_torus_add(major_radius=r, minor_radius=0.002, location=W(cx, cz, CT + 0.007)); bpy.context.active_object.data.materials.append(M["seam"])
-box("Мойка (врезная, графит)", RX + 0.08, 3.03, X1 - 0.10, 3.53, CT - 0.002, CT + 0.001, M["black"])
-box("Смеситель стойка", X1 - 0.075, 3.26, X1 - 0.045, 3.30, CT, CT + 0.32, M["black"], 0.008)
-box("Смеситель излив", X1 - 0.30, 3.265, X1 - 0.045, 3.295, CT + 0.29, CT + 0.32, M["black"], 0.008)
-box("Фартук", X1 - 0.01, Z0, X1, RZ1, CT, 1.50, M["tile"])
+# ---------------- правая стена: мойка у окна → ПММ → плита → угловой низ; столешница до угла; фартук; верхние шкафы
+RX = X1 - 0.60; CT = 0.90
+S0, S1, P0, P1, H0, H1 = Z0, 2.509, 2.509, 2.959, 2.959, 3.559
+box("Цоколь", RX + 0.05, Z0, X1, Z1, 0, 0.10, M["black"])
+box("Корпус низ", RX + 0.02, Z0, X1, Z1, 0.10, CT - 0.04, M["ward"])
+box("Гола-профиль", RX, Z0, RX + 0.025, Z1, CT - 0.10, CT - 0.07, M["black"])
+for (a, b, t) in ((S0, S1, "мойка"), (P0, P1, "ПММ"), (H1, Z1, "угол")):
+    box("Фасад " + t, RX, a + 0.002, RX + 0.02, b - 0.002, 0.10, CT - 0.11, M["ward"], 0.002)
+box("Духовка", RX - 0.002, H0 + 0.03, RX + 0.02, H1 - 0.03, 0.14, 0.72, M["bglass"], 0.004)
+box("Ящик под духовкой", RX, H0 + 0.002, RX + 0.02, H1 - 0.002, 0.10, 0.13, M["ward"], 0.002)
+box("Ящик над духовкой", RX, H0 + 0.002, RX + 0.02, H1 - 0.002, 0.73, CT - 0.11, M["ward"], 0.002)
+box("Столешница", RX - 0.02, Z0, X1, Z1, CT - 0.04, CT, M["tile"])
+bk_fit("plita_bosch600", RX + 0.31, (H0 + H1) / 2, CT, 90, 0.59)      # индукция Bosch 600, 4 зоны
+box("Мойка (врезная, графит)", RX + 0.08, S0 + 0.10, X1 - 0.10, S1 - 0.08, CT - 0.002, CT + 0.001, M["black"])
+SC = (S0 + 0.10 + S1 - 0.08) / 2
+box("Смеситель стойка", X1 - 0.075, SC - 0.02, X1 - 0.045, SC + 0.02, CT, CT + 0.32, M["black"], 0.008)
+box("Смеситель излив", X1 - 0.30, SC - 0.015, X1 - 0.045, SC + 0.015, CT + 0.29, CT + 0.32, M["black"], 0.008)
+box("Фартук", X1 - 0.01, Z0, X1, Z1, CT, 1.50, M["tile"])
 UX = X1 - 0.35
-box("Верхние шкафы корпус", UX + 0.02, Z0, X1, RZ1, 1.50, HC, M["ward"])
-for (a, b) in ((Z0, 2.509), (2.509, 3.06), (3.06, RZ1)):
+box("Верхние шкафы корпус", UX + 0.02, Z0, X1, Z1, 1.50, HC, M["ward"])
+for (a, b) in ((Z0, S1), (S1, H0), (H0, H1), (H1, Z1)):
     box("Фасад верх", UX, a + 0.002, UX + 0.02, b - 0.002, 1.50, HC - 0.002, M["ward"], 0.002)
-box("Вытяжка (встроенная)", UX + 0.03, Z0 + 0.03, X1 - 0.02, 2.48, 1.49, 1.50, M["black"])
-box("LED под шкафами", UX + 0.04, 2.52, UX + 0.07, RZ1 - 0.02, 1.495, 1.50, M["led"])
-lt = bpy.data.lights.new("Рабочая зона", "AREA"); lt.size = 1.0; lt.size_y = 0.06; lt.energy = 22; lt.color = (1, 0.9, 0.78)
-o = bpy.data.objects.new("Рабочая зона", lt); o.location = W(X1 - 0.30, (2.52 + RZ1) / 2, 1.48); o.rotation_euler = (0, 0, math.radians(90)); sc.collection.objects.link(o)
-for (z_, c) in ((2.62, "white"), (2.69, "black")):
+box("Вытяжка (встроенная)", UX + 0.03, H0 + 0.03, X1 - 0.02, H1 - 0.03, 1.49, 1.50, M["black"])
+box("LED под шкафами", UX + 0.04, Z0 + 0.03, UX + 0.07, Z1 - 0.03, 1.495, 1.50, M["led"])
+lt = bpy.data.lights.new("Рабочая зона", "AREA"); lt.size = 2.0; lt.size_y = 0.06; lt.energy = 30; lt.color = (1, 0.9, 0.78)
+o = bpy.data.objects.new("Рабочая зона", lt); o.location = W(X1 - 0.30, (Z0 + Z1) / 2, 1.48); o.rotation_euler = (0, 0, math.radians(90)); sc.collection.objects.link(o)
+for (z_, c) in ((P0 + 0.10, "white"), (P0 + 0.17, "black")):
     bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.035, depth=0.20, location=W(X1 - 0.12, z_, CT + 0.10)); bpy.context.active_object.data.materials.append(M[c])
-bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.09, depth=0.20, location=W(X1 - 0.20, 2.80, CT + 0.10)); bpy.context.active_object.data.materials.append(M["black"])   # чайник
+bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.09, depth=0.20, location=W(X1 - 0.20, 3.85, CT + 0.10)); bpy.context.active_object.data.materials.append(M["black"])   # чайник
 
-# ---------------- холодильник-колонна (низ-право) и колонна СВЧ + кладовая (нижняя стена)
-box("Колонна холодильника", RX + 0.02, RZ1, X1, Z1, 0.10, HC, M["ward"])
-box("Цоколь колонн", 11.85, RZ1 + 0.05, X1, Z1, 0, 0.10, M["black"])
-box("Фасад холодильника", RX, RZ1 + 0.002, RX + 0.02, Z1 - 0.002, 0.10, 1.95, M["ward"], 0.002)
-box("Фасад антресоли", RX, RZ1 + 0.002, RX + 0.02, Z1 - 0.002, 1.96, HC - 0.002, M["ward"], 0.002)
-box("Колонна СВЧ", 11.80, RZ1 + 0.02, 12.40, Z1, 0.10, HC, M["ward"])
-box("СВЧ", 11.84, RZ1, 12.36, RZ1 + 0.02, 1.35, 1.73, M["bglass"], 0.004)
-for (h0, h1) in ((0.10, 1.33), (1.75, HC - 0.002)):
-    box("Фасад колонны", 11.802, RZ1, 12.398, RZ1 + 0.02, h0, h1, M["ward"], 0.002)
-box("Гола верт.", RX - 0.004, RZ1 - 0.01, RX + 0.02, RZ1 + 0.01, 0.10, HC, M["black"])
+# ---------------- нижняя стена: холодильник side-by-side сразу у входа (по эскизу заказчика), колонны до потолка, бутылочница
+M["steel"] = mat("Нержавейка холодильника", "#B9BBBD", 0.28, 1.0)
+FX0, FX1, FZ = 9.96, 10.88, Z1 - 0.70
+bk_fit("holodilnik_sbs", (FX0 + FX1) / 2, (FZ + Z1) / 2, 0.0, 180, 0.88, recolor=M["steel"], keep=("badge",))
+FS = (FX0 + FX1) / 2
+for xh in (FS + 0.015, FS - 0.055):
+    box("Ручка холодильника", xh, FZ - 0.035, xh + 0.012, FZ - 0.02, 0.70, 1.60, M["steel"], 0.004)
+    for hh in (0.74, 1.56): box("Стойка ручки", xh, FZ - 0.035, xh + 0.012, FZ + 0.01, hh - 0.01, hh + 0.01, M["steel"])
+box("Антресоль над холодильником", FX0, FZ + 0.02, FX1, Z1, 1.84, HC, M["ward"])
+box("Фасад антресоли", FX0 + 0.002, FZ, FX1 - 0.002, FZ + 0.02, 1.842, HC - 0.002, M["ward"], 0.002)
+CZ = Z1 - 0.60
+box("Колонны корпус", FX1, CZ + 0.02, RX, Z1, 0.10, HC, M["ward"])
+box("Цоколь колонн", FX1, CZ + 0.05, RX, Z1, 0, 0.10, M["black"])
+box("Фасад кладовой", FX1 + 0.002, CZ, 11.48 - 0.002, CZ + 0.02, 0.10, HC - 0.002, M["ward"], 0.002)
+box("Фасад колонны", 11.48 + 0.002, CZ, 12.08 - 0.002, CZ + 0.02, 0.10, 0.90, M["ward"], 0.002)
+box("Кофемашина (встр.)", 11.50, CZ - 0.002, 12.06, CZ + 0.02, 0.92, 1.36, M["bglass"], 0.004)
+box("СВЧ (встр.)", 11.50, CZ - 0.002, 12.06, CZ + 0.02, 1.38, 1.76, M["bglass"], 0.004)
+box("СВЧ дисплей", 11.94, CZ - 0.004, 12.03, CZ - 0.003, 1.66, 1.70, M["led"])
+box("Фасад колонны верх", 11.48 + 0.002, CZ, 12.08 - 0.002, CZ + 0.02, 1.78, HC - 0.002, M["ward"], 0.002)
+box("Бутылочница", 12.08 + 0.002, CZ, RX - 0.002, CZ + 0.02, 0.10, CT - 0.04, M["ward"], 0.002)
+box("Столешница у бутылочницы", 12.08, CZ, RX, Z1, CT - 0.04, CT, M["tile"])
+box("Шкаф над бутылочницей", 12.08 + 0.002, CZ + 0.25, RX - 0.002, Z1, 1.50, HC, M["ward"], 0.002)
+for xg in (11.48, 12.08):
+    box("Гола верт.", xg - 0.004, CZ - 0.002, xg + 0.004, CZ + 0.02, 0.10, HC, M["black"])
 
-# ---------------- угловая банкетка (левая стена + верхняя стена до окна): база графит с ящиками, мягкое сиденье и спинка
-BD = 0.50
-for (x0, z0, x1, z1) in ((X0, Z0, X0 + BD, 3.509), (X0 + BD, Z0, 11.0, Z0 + 0.48)):
-    box("Банкетка база", x0, z0, x1, z1, 0.06, 0.40, M["ward"], 0.004)
-    box("Банкетка цоколь", x0 + 0.03, z0 + 0.03, x1 - 0.03, z1 - 0.03, 0, 0.06, M["black"])
-    box("Сиденье", x0, z0, x1, z1, 0.40, 0.47, M["knit"], 0.03)
-box("Спинка L", X0, Z0 + 0.10, X0 + 0.10, 3.509, 0.47, 0.92, M["knit"], 0.035)
-box("Спинка T", X0 + 0.10, Z0, 11.0, Z0 + 0.10, 0.47, 0.92, M["knit"], 0.035)
-for (x0, z0, x1, z1) in ((X0 + 0.10, 2.70, X0 + 0.22, 3.05), (10.20, Z0 + 0.10, 10.55, Z0 + 0.22)):
-    box("Подушка", x0, z0, x1, z1, 0.47, 0.82, M["towel"], 0.05)
-
-# ---------------- стол 1300×850 (столешница керамогранит, опора чёрная) + 2 стула + подвесы
-TCX, TCZ = X0 + 1.2, Z0 + 0.975
-box("Стол столешница", TCX - 0.65, TCZ - 0.425, TCX + 0.65, TCZ + 0.425, 0.72, 0.75, M["tile"], 0.006)
-box("Стол опора", TCX - 0.30, TCZ - 0.05, TCX + 0.30, TCZ + 0.05, 0.03, 0.72, M["black"])
-box("Стол основание", TCX - 0.35, TCZ - 0.25, TCX + 0.35, TCZ + 0.25, 0.0, 0.03, M["black"])
-for (cz,) in ((TCZ - 0.24,), (TCZ + 0.24,)):
-    Tm = Matrix.Translation(W(TCX + 0.65 + 0.28, cz, 0)) @ Matrix.Rotation(math.radians(-90), 4, "Z")
+# ---------------- верхняя стена слева от окна (13.11, по заказчику): шкаф убран — стол 1200×600 у стены + 3 стула (задвинуты)
+TX0, TX1, TD = 9.83, 11.03, 0.60          # вариант Б: стол придвинут вплотную к откосу окна
+box("Стол столешница", TX0, Z0, TX1, Z0 + TD, 0.72, 0.75, M["tile"], 0.006)
+for xl in (TX0 + 0.06, TX1 - 0.10):
+    box("Ножка стола", xl, Z0 + TD - 0.10, xl + 0.04, Z0 + TD - 0.06, 0.0, 0.72, M["black"])
+box("Царга", TX0 + 0.06, Z0 + 0.02, TX1 - 0.06, Z0 + TD - 0.06, 0.66, 0.72, M["black"])
+for (xc, zc, rz) in ((10.13, Z0 + TD + 0.04, 180), (10.73, Z0 + TD + 0.04, 180), (TX1 + 0.20, Z0 + 0.30, -90)):   # по эскизу: 2 стула с длинной стороны, 1 — с торца у окна
+    Tm = Matrix.Translation(W(xc, zc, 0)) @ Matrix.Rotation(math.radians(rz), 4, "Z")
     for o_ in bk_load("stul_minimal", Tm):
         for i_, ms in enumerate(o_.data.materials):
             o_.data.materials[i_] = M["knit"] if (ms and "cuir" in ms.name.lower()) else M["black"]
-bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.12, depth=0.012, location=W(TCX - 0.15, TCZ, 0.756)); bpy.context.active_object.data.materials.append(M["white"])  # блюдо
-for dx in (-0.33, 0.33):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.09, depth=0.26, location=W(TCX + dx, TCZ, 1.70)); bpy.context.active_object.data.materials.append(M["black"])
-    bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.082, depth=0.004, location=W(TCX + dx, TCZ, 1.568)); bpy.context.active_object.data.materials.append(M["shade"])
-    box("Шнур", TCX + dx - 0.003, TCZ - 0.003, TCX + dx + 0.003, TCZ + 0.003, 1.83, HC, M["black"])
-    lt = bpy.data.lights.new("Подвес", "SPOT"); lt.energy = 18; lt.spot_size = math.radians(70); lt.spot_blend = 0.5; lt.color = (1, 0.88, 0.72)
-    o = bpy.data.objects.new("Подвес", lt); o.location = W(TCX + dx, TCZ, 1.56); sc.collection.objects.link(o)
+bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.12, depth=0.012, location=W(10.43, Z0 + 0.30, 0.756)); bpy.context.active_object.data.materials.append(M["white"])
+pz = Z0 + 0.32
+bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.09, depth=0.26, location=W(10.43, pz, 1.85)); bpy.context.active_object.data.materials.append(M["black"])
+bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.082, depth=0.004, location=W(10.43, pz, 1.718)); bpy.context.active_object.data.materials.append(M["shade"])
+box("Шнур", 10.427, pz - 0.003, 10.433, pz + 0.003, 1.98, HC, M["black"])
+lt = bpy.data.lights.new("Подвес", "SPOT"); lt.energy = 18; lt.spot_size = math.radians(70); lt.spot_blend = 0.5; lt.color = (1, 0.88, 0.72)
+o = bpy.data.objects.new("Подвес", lt); o.location = W(10.43, pz, 1.71); sc.collection.objects.link(o)
+
+# ---------------- левая стена свободна (13.11: стол, буфет и ТВ убраны по заказчику)
 
 #==AC==
-ac_unit(("L", X0), 2.50, 2.54)        # К4 над банкеткой
+ac_unit(("L", X0), 2.90, 2.58)        # К4
 
 # ---------------- потолок: споты + LED по периметру
-spots([(11.6, 2.45), (11.6, 3.40), (12.55, 2.45), (12.55, 3.40)], 30)
+spots([(11.0, 2.70), (11.0, 3.40), (11.8, 2.70), (11.8, 3.40), (12.55, 2.40), (12.55, 3.40)], 30)
 for (x0, z0, x1, z1) in ((X0, Z0, X1, Z0 + 0.02), (X0, Z1 - 0.02, X1, Z1), (X0, Z0, X0 + 0.02, Z1), (X1 - 0.02, Z0, X1, Z1)):
     box("LED периметр", x0, z0, x1, z1, HC - 0.012, HC - 0.008, M["led"])
 
-CAMS = {"1": ("1_ot_vhoda", W(9.70, 4.05, 1.60), W(12.60, 2.30, 1.00), 15),
-        "2": ("2_rabochaya_zona", W(10.60, 3.55, 1.60), W(12.90, 2.70, 1.05), 16),
-        "3": ("3_stolovaya", W(12.20, 3.45, 1.60), W(9.40, 2.25, 0.80), 15),
-        "4": ("4_ot_okna", W(11.70, 2.05, 1.70), W(10.80, 4.15, 0.95), 15)}
+CAMS = {"1": ("1_ot_vhoda", W(9.85, 3.45, 1.60), W(12.70, 2.30, 1.00), 15),
+        "2": ("2_rabochaya_zona", W(10.40, 3.20, 1.60), W(12.90, 2.60, 1.05), 16),
+        "3": ("3_stol", W(11.70, 3.30, 1.60), W(9.60, 1.95, 0.85), 15),
+        "4": ("4_ot_okna", W(11.80, 2.20, 1.65), W(10.40, 4.15, 0.95), 15),
+        "9": ("9_sverhu_stol", W(10.43, 2.75, 2.60), W(10.43, 2.30, 0.0), 15),
+        "5": ("5_holodilnik", W(11.60, 2.50, 1.55), W(10.40, 4.15, 0.95), 16)}

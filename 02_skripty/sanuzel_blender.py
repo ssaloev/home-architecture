@@ -228,16 +228,80 @@ def mirror_led(w, a0, a1, h0, h1):
     for (p0, p1, q0, q1) in ((a0 + 0.04, a1 - 0.04, h0 + 0.04, h0 + 0.05), (a0 + 0.04, a1 - 0.04, h1 - 0.05, h1 - 0.04),
                              (a0 + 0.04, a0 + 0.05, h0 + 0.04, h1 - 0.04), (a1 - 0.05, a1 - 0.04, h0 + 0.04, h1 - 0.04)):
         wb("LED за зеркалом", w, p0, p1, 0.030, 0.034, q0, q1, M["ledm"])
-def cabinet(n, w, a0, a1, d, h0, h1, doors=2):
-    """графитовый навесной шкаф (прячет бойлер / бак), гладкие фасады, чёрные ручки, LED снизу"""
-    wb(n, w, a0, a1, 0, d - 0.02, h0, h1, M["ward"])
+OPENC = OPT.get("open", "0") == "1"      # open=1 — рендер с ОТКРЫТЫМИ дверцами шкафов: видно бойлер / бак / химию
+M["boiler"] = mat("Бойлер белый", "#EDEDEB", 0.25)
+M["inner"] = mat("Шкаф внутри", "#4A4A4D", 0.6)
+def _cyl(x, z, r, h0, h1, m, v=48):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=v, radius=r, depth=h1 - h0, location=W(x, z, (h0 + h1) / 2)); o = bpy.context.active_object; o.data.materials.append(m); return o
+def cab_content(kind, w, a0, a1, d, h0, h1):
+    kind, ac = kind if isinstance(kind, tuple) else (kind, (a0 + a1) / 2)
+    if kind == "boiler":                # Ariston Lydos Eco 80 V ≈ Ø450×760, трубы и кабель вниз
+        x, z = pt(w, ac, 0.25); top = h1 - 0.06
+        o = _cyl(x, z, 0.225, top - 0.76, top, M["boiler"], 64); bv = o.modifiers.new("b", "BEVEL"); bv.width = 0.03; bv.segments = 4
+        _cyl(x, z, 0.06, top - 0.79, top - 0.76, M["black"])
+        x2, z2 = pt(w, ac, 0.47); box("Дисплей бойлера", x2 - 0.04, z2 - 0.04, x2 + 0.04, z2 + 0.04, top - 0.33, top - 0.25, M["black"])
+        for da in (-0.07, 0.07):
+            xp, zp = pt(w, ac + da, 0.25); _cyl(xp, zp, 0.011, h0 + 0.02, top - 0.76, M["white"], 16)
+    elif kind == "tank":                # узкий бак 200 л 500×200×1800 + насос сверху
+        wb("Бак 200 л", w, a0 + 0.02, a1 - 0.02, 0.01, d - 0.03, 0.05, 1.85, M["boiler"], 0.02)
+        x, z = pt(w, ac, (d - 0.02) / 2); _cyl(x, z, 0.07, 1.90, 2.15, M["ward"], 32); _cyl(x, z, 0.012, 2.15, h1, M["white"], 16)
+        wb("Указатель уровня", w, ac - 0.01, ac + 0.01, d - 0.031, d - 0.029, 0.15, 1.75, M["glass"])
+    elif kind == "store":               # нижний отсек под бойлером: туалетная бумага, запасы, бытовая мелочь
+        hb = h0 + 0.018
+        for hs in ((h0 + h1) / 2,):
+            wb("Полка отсека", w, a0 + 0.02, a1 - 0.02, 0.01, d - 0.03, hs, hs + 0.018, M["ward"])
+        for i in range(4):
+            x, z = pt(w, a0 + 0.08 + i * 0.115, d * 0.45); _cyl(x, z, 0.055, hb, hb + 0.10, M["white"], 32)
+            _cyl(x, z, 0.055, hb + 0.10, hb + 0.20, M["white"], 32)
+        wb("Коробка", w, a1 - 0.22, a1 - 0.04, 0.03, d - 0.06, hb, hb + 0.18, M["towel"], 0.01)
+    elif kind == "laundry":             # полки: порошки, гели, сухие полотенца
+        SH_ = (h0 + 0.02, (h0 + h1) / 2) if h1 - h0 < 1.2 else (h0 + 0.02, h0 + 0.42, h0 + 0.86)
+        for hh in SH_:
+            wb("Полка шкафа", w, a0 + 0.02, a1 - 0.02, 0.01, d - 0.03, hh, hh + 0.018, M["ward"])
+        if len(SH_) == 3:               # верхняя полка — корзины с запасами
+            for j in range(3):
+                wb("Корзина", w, a0 + 0.04 + j * ((a1 - a0 - 0.08) / 3), a0 + 0.02 + (j + 1) * ((a1 - a0 - 0.08) / 3), 0.03, d - 0.05, SH_[2] + 0.018, SH_[2] + 0.22, M["black"], 0.015)
+        hb = h0 + 0.038
+        for i, c in enumerate(("white", "black", "white", "white")):
+            x, z = pt(w, a0 + 0.07 + i * 0.075, d * 0.45)
+            box("Бытовая химия", x - 0.03, z - 0.03, x + 0.03, z + 0.03, hb, hb + (0.24 if i % 2 else 0.20), M[c], 0.008)
+        wb("Коробка порошка", w, a1 - 0.24, a1 - 0.04, 0.03, d - 0.06, hb, hb + 0.28, M["white"], 0.01)
+        hm = SH_[1] + 0.018
+        for k in range(3):
+            for j in range(2):
+                wb("Сухое полотенце", w, a0 + 0.04 + j * 0.27, a0 + 0.29 + j * 0.27, 0.03, d - 0.06, hm + k * 0.075, hm + (k + 1) * 0.075 - 0.004, M["towel" if k % 2 else "white"], 0.02)
+def _door_open(w, p0, p1, d, h0, h1, hinge_lo):
+    """фасад, повёрнутый на 100° вокруг петли (открыт)"""
+    hx, hz = pt(w, p0 if hinge_lo else p1, d)
+    fx, fz = pt(w, p1 if hinge_lo else p0, d); nx, nz = pt(w, p0, d + 1.0)
+    bx, bz = pt(w, p0, d)
+    u = Vector((fx - hx, fz - hz)); nrm = Vector((nx - bx, nz - bz))
+    ang = math.atan2(u.x * nrm.y - u.y * nrm.x, u.dot(nrm))      # в плоскости (x,z) — поворот u к нормали
+    ang = math.copysign(math.radians(100), ang)
+    piv = bpy.data.objects.new("Петля фасада", None); piv.location = W(hx, hz, 0); sc.collection.objects.link(piv)
+    parts = [wb("Фасад", w, p0, p1, d - 0.02, d, h0 + 0.002, h1 - 0.002, M["ward"], 0.002)]
+    ah = p1 - 0.05 if hinge_lo else p0 + 0.05
+    parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, h0 + 0.33, M["black"], 0.002))
+    for o_ in parts: o_.parent = piv; o_.matrix_parent_inverse = Matrix.Translation(piv.location).inverted()
+    piv.rotation_euler = (0, 0, -ang)        # ось z мира; (x,z)-план → (x,-y): знак меняется
+def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
+    """графитовый навесной шкаф (прячет бойлер / бак / химию), гладкие фасады, чёрные ручки, LED снизу"""
+    if OPENC and content:
+        for (q0, q1, e0, e1) in ((a0, a1, 0, d - 0.02), ):
+            wb(n + " зад", w, q0, q1, 0, 0.01, h0, h1, M["inner"])
+            wb(n + " бок", w, q0, q0 + 0.018, 0, d - 0.02, h0, h1, M["ward"]); wb(n + " бок", w, q1 - 0.018, q1, 0, d - 0.02, h0, h1, M["ward"])
+            wb(n + " дно", w, q0, q1, 0, d - 0.02, h0, h0 + 0.018, M["ward"]); wb(n + " верх", w, q0, q1, 0, d - 0.02, h1 - 0.018, h1, M["ward"])
+        cab_content(content, w, a0, a1, d, h0, h1)
+    else:
+        wb(n, w, a0, a1, 0, d - 0.02, h0, h1, M["ward"])
     step = (a1 - a0) / doors
     for k in range(doors):
         p0, p1 = a0 + k * step + 0.002, a0 + (k + 1) * step - 0.002
+        if OPENC and content: _door_open(w, p0, p1, d, h0, h1, k % 2 == 0); continue
         wb("Фасад", w, p0, p1, d - 0.02, d, h0 + 0.002, h1 - 0.002, M["ward"], 0.002)
         ah = p1 - 0.05 if k % 2 == 0 else p0 + 0.05
         wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, h0 + 0.33, M["black"], 0.002)
-    wb("LED под шкафом", w, a0 + 0.03, a1 - 0.03, 0.05, d - 0.05, h0 - 0.005, h0, M["led"])
+    if led: wb("LED под шкафом", w, a0 + 0.03, a1 - 0.03, 0.05, d - 0.05, h0 - 0.005, h0, M["led"])
 def spots(P, e=None):
     for (xx, zz) in P:
         bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.04, depth=0.004, location=W(xx, zz, HC - 0.002)); bpy.context.active_object.data.materials.append(M["spot"])
@@ -286,43 +350,101 @@ def bath_bk(x0, x1, z0, z1, h=0.56):
     """ванна (модель BlenderKit 1476×742×515) масштабом в прямоугольник плана"""
     Tm = Matrix.Translation(W((x0 + x1) / 2, (z0 + z1) / 2, 0)) @ Matrix.Diagonal(((x1 - x0) / 1.476, (z1 - z0) / 0.742, h / 0.515, 1.0))
     return bk_load("vanna_akril", Tm, M["acryl"], keep=("metal", "black"))
+def bk_fit(fname, cx, cz, h0, rot=0.0, target=None, axis="w", recolor=None, keep=()):
+    """модель BlenderKit: центр габарита в (cx, cz), низ на h0, поворот rot° вокруг вертикали, масштаб по ширине target"""
+    objs = bk_load(fname, Matrix.Identity(4), recolor, keep)
+    allo = [o for o in bpy.data.objects if o in objs or (o.parent in objs)]
+    bpy.context.view_layer.update()
+    pts = [o.matrix_world @ Vector(c) for o in objs for c in o.bound_box]
+    if not pts: return objs
+    mn = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts))); mx_ = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
+    size = {"w": max(mx_.x - mn.x, mx_.y - mn.y), "h": mx_.z - mn.z}[axis]
+    k = (target / size) if target else 1.0; ctr = (mn + mx_) / 2
+    T_ = Matrix.Translation(W(cx, cz, h0)) @ Matrix.Rotation(math.radians(rot), 4, "Z") @ Matrix.Scale(k, 4) @ Matrix.Translation(Vector((-ctr.x, -ctr.y, -mn.z)))
+    roots = set()
+    for o in objs:
+        r = o
+        while r.parent is not None: r = r.parent
+        roots.add(r)
+    print("BKFIT", fname, tuple(round(v,3) for v in mn), tuple(round(v,3) for v in mx_), round(k,3), len(objs), len(roots))
+    for r in roots: r.matrix_world = T_ @ r.matrix_world
+    return objs
 
 room_box("R", DZ0, DZ1)
 
 # ---- душ 700×900 в углу (лев/верх): трап, стекло в чёрном профиле, тропический душ, ниша с LED
 SX1, SZ1 = 1.018, 7.709
 box("Трап", X0 + 0.05, SZ1 - 0.10, SX1 - 0.05, SZ1 - 0.06, 0.0, 0.003, M["black"])
-box("Стекло душа фронт", X0, SZ1 - 0.006, SX1, SZ1 + 0.002, 0.0, 2.00, M["glass"])
+# 13.11 (по заказчику): РАЗДВИЖНАЯ дверь «как в купе» — одно стекло 700 едет вправо по верхнему рельсу снаружи душа,
+# в комнату не открывается (не мешает раковине и биде). Бок — глухое стекло. Дверь показана приоткрытой на 300.
 box("Стекло душа бок", SX1 - 0.006, Z0, SX1 + 0.002, SZ1, 0.0, 2.00, M["glass"])
-box("Профиль верх", X0, SZ1 - 0.012, SX1 + 0.008, SZ1 + 0.008, 1.985, 2.00, M["black"])
 box("Профиль верх2", SX1 - 0.012, Z0, SX1 + 0.008, SZ1, 1.985, 2.00, M["black"])
 box("Профиль стойка", SX1 - 0.012, SZ1 - 0.012, SX1 + 0.008, SZ1 + 0.008, 0, 2.00, M["black"])
-box("Ручка душ", SX1 - 0.25, SZ1 + 0.002, SX1 - 0.23, SZ1 + 0.03, 0.85, 1.25, M["black"])
+box("Профиль у стены (уплотнитель)", X0, SZ1 - 0.005, X0 + 0.02, SZ1 + 0.035, 0, 2.00, M["black"])
+SZD = SZ1 + 0.02                                         # плоскость двери — снаружи стойки
+box("Рельс", X0, SZD - 0.012, X0 + 1.42, SZD + 0.012, 2.03, 2.06, M["black"], 0.004)
+box("Держатель рельса (к потолку)", X0 + 1.40, SZD - 0.008, X0 + 1.416, SZD + 0.008, 2.06, HC, M["black"])
+OPEN = 0.30; DA = X0 + 0.02 + OPEN; DB = DA + 0.70
+box("Дверь-купе стекло", DA, SZD - 0.004, DB, SZD + 0.004, 0.015, 2.00, M["glass"])
+box("Дверь-купе профиль край", DA, SZD - 0.007, DA + 0.02, SZD + 0.007, 0.015, 2.00, M["black"])
+box("Дверь-купе профиль низ", DA, SZD - 0.007, DB, SZD + 0.007, 0.015, 0.03, M["black"])
+for xr in (DA + 0.10, DB - 0.10):
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.03, depth=0.03, location=W(xr, SZD + 0.02, 2.045), rotation=(math.radians(90), 0, 0)); bpy.context.active_object.data.materials.append(M["black"])
+    box("Кронштейн ролика", xr - 0.02, SZD - 0.006, xr + 0.02, SZD + 0.006, 1.97, 2.03, M["black"])
+for s_ in (1, -1):
+    box("Ручка-скоба", DA + 0.06, SZD + s_ * 0.045 - 0.007, DA + 0.075, SZD + s_ * 0.045 + 0.007, 0.80, 1.40, M["black"], 0.004)
+for zz in (0.85, 1.35):
+    box("Стойка ручки", DA + 0.062, SZD - 0.05, DA + 0.073, SZD + 0.05, zz - 0.006, zz + 0.006, M["black"])
+box("Нижняя направляющая", SX1 - 0.03, SZD - 0.01, SX1 + 0.02, SZD + 0.01, 0, 0.03, M["black"])
 wb("Смеситель душ", "L", 7.20, 7.32, 0, 0.04, 1.00, 1.12, M["black"], 0.01)
 wb("Штанга", "L", 7.42, 7.44, 0, 0.03, 1.00, 1.90, M["black"])
 bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.15, depth=0.012, location=W(0.66, 7.25, 2.20)); bpy.context.active_object.data.materials.append(M["black"])
 box("Кронштейн", X0, 7.24, 0.66, 7.26, 2.205, 2.225, M["black"])
-wb("Ниша LED", "L", 6.95, 7.55, 0, 0.005, 1.385, 1.39, M["led"])
-wb("Полочка ниши", "L", 6.95, 7.55, 0, 0.10, 1.10, 1.12, M["tile"])
-bottles("L", 7.05, 0.05, 1.12)
+# 13.11 (по заказчику): в душе ниша с ТРЕМЯ полками (шампунь, гель, мыло и т.д.) — на верхней стене, напротив входа
+NA0, NA1 = X0 + 0.10, SX1 - 0.10
+wb("Ниша дно", "T", NA0, NA1, 0, 0.12, 0.88, 0.90, M["tile"])
+for hh in (1.15, 1.40):
+    wb("Полка ниши", "T", NA0, NA1, 0, 0.12, hh - 0.012, hh, M["tile"])
+wb("Ниша верх", "T", NA0, NA1, 0, 0.12, 1.65, 1.67, M["tile"])
+for a_ in (NA0 - 0.012, NA1): wb("Ниша бок", "T", a_, a_ + 0.012, 0, 0.12, 0.88, 1.67, M["tile"])
+wb("Ниша LED", "T", NA0, NA1, 0.11, 0.115, 1.66, 1.665, M["led"])
+for hh, cs in ((0.90, ("white", "black", "white")), (1.15, ("black", "white", "black")), (1.40, ("white", "white"))):
+    bottles("T", NA0 + 0.06, 0.06, hh, cs)
 
 # ---- 13.11: раковина перенесена на верхнюю стену (справа от душа) — перед биде было 0 см; зеркало над ней
 CT = 0.85
 wb("Столешница", "T", SX1 + 0.04, 1.56, 0, 0.40, CT - 0.05, CT, M["tile"])
-wb("Опора столешницы", "T", SX1 + 0.04, 1.56, 0, 0.38, 0.10, 0.12, M["tile"])
-for k in range(2): wb("Полотенце", "T", SX1 + 0.08 + k * 0.22, SX1 + 0.27 + k * 0.22, 0.05, 0.34, 0.12, 0.24, M["towel"], 0.03)
-vessel("T", (SX1 + 0.04 + 1.56) / 2, 0.21, CT, r=0.17, k=0.95)
+SA = (SX1 + 0.04 + 1.56) / 2
+# 13.11 (по заказчику): под столешницей виден чёрный бутылочный сифон, ниже — небольшая подвесная тумба-полка для полотенец
+bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.016, depth=0.22, location=W(SA, Z0 + 0.21, CT - 0.05 - 0.11)); bpy.context.active_object.data.materials.append(M["black"])
+bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.035, depth=0.13, location=W(SA, Z0 + 0.21, 0.62)); s_ = bpy.context.active_object; s_.data.materials.append(M["black"])
+md = s_.modifiers.new("bv", "BEVEL"); md.width = 0.012; md.segments = 4
+wb("Сифон отвод в стену", "T", SA - 0.016, SA + 0.016, 0, 0.21, 0.63, 0.662, M["black"], 0.006)
+wb("Розетка сифона", "T", SA - 0.035, SA + 0.035, 0, 0.006, 0.61, 0.68, M["black"], 0.004)
+TA0, TA1, TD, TH0, TH1 = SX1 + 0.06, 1.54, 0.36, 0.14, 0.46
+wb("Тумба полотенец корпус", "T", TA0, TA1, 0, TD, TH0, TH0 + 0.02, M["ward"])
+wb("Тумба полотенец верх", "T", TA0, TA1, 0, TD, TH1 - 0.02, TH1, M["ward"])
+wb("Тумба бок 1", "T", TA0, TA0 + 0.02, 0, TD, TH0, TH1, M["ward"])
+wb("Тумба бок 2", "T", TA1 - 0.02, TA1, 0, TD, TH0, TH1, M["ward"])
+wb("Тумба LED", "T", TA0 + 0.03, TA1 - 0.03, 0.02, 0.025, TH1 - 0.025, TH1 - 0.02, M["led"])
+for k in range(2):
+    a_ = TA0 + 0.05 + k * 0.22
+    wb("Полотенце", "T", a_, a_ + 0.19, 0.04, 0.32, TH0 + 0.02, TH0 + 0.13, M["towel"], 0.03)
+    wb("Полотенце", "T", a_ + 0.01, a_ + 0.18, 0.05, 0.31, TH0 + 0.13, TH0 + 0.24, M["white"], 0.03)
+vessel("T", SA, 0.21, CT, r=0.17, k=0.95)
 mirror_led("T", SX1 + 0.06, 1.54, 1.20, 2.05)
 
 # ---- левая стена под душем: узкий графитовый пенал — плоский бак 200 л (500×200×2000) + насос; стоит СБОКУ от биде
-cabinet("Пенал бака 200 л (под заказ)", "L", 7.74, 8.26, 0.24, 0.0, HC, 1)
+cabinet("Пенал бака 200 л (под заказ)", "L", 7.74, 8.26, 0.24, 0.0, HC, 1, "tank")
 
 # ---- нижняя стена: короб инсталляций, биде (x 0.71) + унитаз (x 1.43), бойлер Б2 в шкафу над ними
 wb("Короб инсталляции", "B", X0, X1, 0, 0.20, 0, 1.12, M["tile"])
 hung("Биде", "B", 0.71, "bidet")
 hung("Унитаз", "B", 1.43, "wc")
-cabinet("Шкаф бойлера Б2", "B", 0.40, 1.75, 0.55, 1.70, HC, 2)
-bottles("B", 0.95, 0.10, 1.12, ("black", "white"))
+# 13.11 (по заказчику): шкаф во всю высоту от короба инсталляции до потолка; низ мелкий 200 (не мешает голове), верх 550 — бойлер
+cabinet("Отсек хранения под Б2", "B", 0.40, 1.75, 0.20, 1.12, 1.80, 3, "store", led=False)
+cabinet("Шкаф бойлера Б2", "B", 0.40, 1.75, 0.55, 1.80, HC, 2, ("boiler", 1.43), led=False)
+# bottles("B", 0.95, 0.10, 1.12, ("black", "white"))  (13.11: полка закрыта шкафом)
 towel_rail_bk("R", 8.04)
 spots([(0.66, 7.25), (1.40, 7.60), (1.07, 8.40)])
 
@@ -330,6 +452,9 @@ CAMS = {"1": ("1_ot_dveri", W(1.75, 7.40, 1.60), W(0.50, 8.90, 0.80), 13),
         "2": ("2_dush_rakovina", W(1.55, 8.30, 1.60), W(0.60, 6.85, 1.10), 13),
         "3": ("3_bak_bide", W(1.60, 7.55, 1.60), W(0.31, 8.10, 1.00), 13),
         "4": ("4_iz_dusha", W(0.62, 7.05, 1.60), W(1.55, 8.75, 0.85), 13)}
+CAMS["6"] = ("6_dush_nisha", W(0.95, 7.68, 1.60), W(0.55, 6.80, 1.20), 13)
+CAMS["5"] = ("5_bojler_bak", W(1.55, 7.30, 1.55), W(0.55, 8.75, 1.45), 13)
+if OPENC: CAMS = {k: ("open_" + v[0],) + v[1:] for k, v in CAMS.items()}
 
 sc.render.engine = "CYCLES"
 try:

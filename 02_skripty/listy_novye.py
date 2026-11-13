@@ -641,11 +641,16 @@ SH = [("gostinaya/_kremA_1_ot_dveri_k_oknu", "Гостиная", "от двер�
       ("koridor/1_koridor_k_prihozhey", "Коридор", "вид к прихожей"), ("koridor/2_vhodnaya_dver", "Прихожая", "входная дверь, обувница"),
       ("koridor/4_prihozhaya_gosti", "Прихожая", "шкаф и место для гостей"), ("koridor/3_prihozhaya_zerkalo", "Прихожая", "обувница и зеркало"),
       ("vannaya/1_ot_dveri", "Ванная", "от двери: унитаз, ванна"), ("vannaya/2_rakovina_stiralka", "Ванная", "раковина и стиральная машина"),
-      ("vannaya/3_vanna", "Ванная", "ванна 1300"), ("vannaya/4_k_dveri", "Ванная", "вид к двери"),
+      ("vannaya/3_vanna", "Ванная", "ванна 1300"), ("vannaya/5_bojler_shkaf", "Ванная", "шкаф над унитазом до потолка"),
       ("sanuzel/1_ot_dveri", "Санузел", "от двери: биде и унитаз"), ("sanuzel/2_dush_rakovina", "Санузел", "душ и раковина"),
       ("sanuzel/3_bak_bide", "Санузел", "пенал бака 200 л и биде"), ("sanuzel/4_iz_dusha", "Санузел", "вид из душа"),
-      ("kuhnya/1_ot_vhoda", "Кухня", "от входа"), ("kuhnya/2_rabochaya_zona", "Кухня", "рабочая зона"),
-      ("kuhnya/3_stolovaya", "Кухня", "банкетка и стол"), ("kuhnya/4_ot_okna", "Кухня", "от окна к входу")]
+      ("kuhnya/1_ot_vhoda", "Кухня", "от входа"), ("kuhnya/2_rabochaya_zona", "Кухня", "рабочая зона: мойка у окна, плита"),
+      ("kuhnya/3_stol", "Кухня", "стол у окна, 3 стула"), ("kuhnya/4_ot_okna", "Кухня", "от окна: холодильник и колонны"),
+      ("kuhnya/5_holodilnik", "Кухня", "холодильник у входа"),
+      ("vannaya/open_5_bojler_shkaf", "Ванная", "шкаф над унитазом открыт: бойлер Б1, отсек хранения"),
+      ("vannaya/open_2_rakovina_stiralka", "Ванная", "шкаф над стиралкой открыт: химия, полотенца"),
+      ("sanuzel/open_5_bojler_bak", "Санузел", "шкафы открыты: бойлер Б2 и бак 200 л"),
+      ("sanuzel/6_dush_nisha", "Санузел", "душ: раздвижная дверь, ниша на 3 полки")]
 for k, (fn, room, cap) in enumerate(SH, 1):        # как в образце: один ракурс — один лист, картинка на весь лист
     s = Sheet("", 0)
     f = os.path.join(VZ, fn + ".jpg")
