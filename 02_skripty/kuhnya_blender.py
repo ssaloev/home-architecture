@@ -309,7 +309,7 @@ def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
 def spots(P, e=None):
     for (xx, zz) in P:
         bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.04, depth=0.004, location=W(xx, zz, HC - 0.002)); bpy.context.active_object.data.materials.append(M["spot"])
-        lt = bpy.data.lights.new("Спот", "SPOT"); lt.energy = float(OPT.get("spot", "60")); lt.spot_size = math.radians(80); lt.spot_blend = 0.7; lt.color = (1, 0.92, 0.82)
+        lt = bpy.data.lights.new("Спот", "SPOT"); lt.energy = float(OPT.get("spot", "110")); lt.spot_size = math.radians(80); lt.spot_blend = 0.7; lt.color = (1, 0.92, 0.82)   # 13.11: светлее (по заказчику)
         o = bpy.data.objects.new("Спот", lt); o.location = W(xx, zz, HC - 0.02); sc.collection.objects.link(o)
     w_ = sc.world or bpy.data.worlds.new("W"); sc.world = w_; w_.use_nodes = True; w_.node_tree.nodes["Background"].inputs[1].default_value = 0.6
 def towel_rail(w, a0, a1):
@@ -373,6 +373,29 @@ def bk_fit(fname, cx, cz, h0, rot=0.0, target=None, axis="w", recolor=None, keep
     print("BKFIT", fname, tuple(round(v,3) for v in mn), tuple(round(v,3) for v in mx_), round(k,3), len(objs), len(roots))
     for r in roots: r.matrix_world = T_ @ r.matrix_world
     return objs
+M["curtain"] = mat("Шторка ткань светло-серая", "#C9C8C4", 0.95, transm=0.15)
+def curtain_strip(n, a, b, h0, h1, amp=0.025, waves=None, m=None):
+    """тканевая шторка (волнами) между точками плана a=(x,z) и b=(x,z), по высоте h0..h1"""
+    ax_, az_ = a; bx_, bz_ = b
+    L = math.hypot(bx_ - ax_, bz_ - az_); ux, uz = (bx_ - ax_) / L, (bz_ - az_) / L; nx, nz = -uz, ux
+    nw = waves or max(2, int(L / 0.09)); nu = nw * 8
+    bm = bmesh.new(); rows = []
+    for j, h in enumerate((h0, (h0 + h1) / 2, h1)):
+        row = []
+        for i in range(nu + 1):
+            t = i / nu; off = amp * math.sin(t * nw * 2 * math.pi)
+            row.append(bm.verts.new(W(ax_ + ux * L * t + nx * off, az_ + uz * L * t + nz * off, h)))
+        rows.append(row)
+    for j in range(2):
+        for i in range(nu): bm.faces.new((rows[j][i], rows[j][i + 1], rows[j + 1][i + 1], rows[j + 1][i]))
+    me = bpy.data.meshes.new(n); bm.to_mesh(me); bm.free(); o = bpy.data.objects.new(n, me); sc.collection.objects.link(o)
+    o.data.materials.append(m or M["curtain"]); sd = o.modifiers.new("t", "SOLIDIFY"); sd.thickness = 0.003
+    for p in o.data.polygons: p.use_smooth = True
+    return o
+def curtain_rail(pts, h=2.00):
+    """Г-образный карниз (чёрная труба Ø20) по точкам плана + кольца"""
+    for (p, q) in zip(pts[:-1], pts[1:]):
+        box("Карниз шторки", min(p[0], q[0]) - 0.01, min(p[1], q[1]) - 0.01, max(p[0], q[0]) + 0.01, max(p[1], q[1]) + 0.01, h - 0.01, h + 0.01, M["black"], 0.004)
 
 WALLC = "#BDBBB5"
 M["wall"] = tex(mat("Бамбуковые панели серые", WALLC, 0.38), "washed_grey_oak_veneer", 1.6, WALLC, 1.55, 0.7)
@@ -508,7 +531,7 @@ def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
 ac_unit(("L", X0), 2.90, 2.58)        # К4
 
 # ---------------- потолок: споты + LED по периметру
-spots([(11.0, 2.70), (11.0, 3.40), (11.8, 2.70), (11.8, 3.40), (12.55, 2.40), (12.55, 3.40)], 30)
+spots([(11.0, 2.70), (11.0, 3.40), (11.8, 2.70), (11.8, 3.40), (12.55, 2.40), (12.55, 3.40)], 60)   # 13.11: светлее (по заказчику)
 for (x0, z0, x1, z1) in ((X0, Z0, X1, Z0 + 0.02), (X0, Z1 - 0.02, X1, Z1), (X0, Z0, X0 + 0.02, Z1), (X1 - 0.02, Z0, X1, Z1)):
     box("LED периметр", x0, z0, x1, z1, HC - 0.012, HC - 0.008, M["led"])
 

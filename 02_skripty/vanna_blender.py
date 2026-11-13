@@ -306,7 +306,7 @@ def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
 def spots(P, e=None):
     for (xx, zz) in P:
         bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.04, depth=0.004, location=W(xx, zz, HC - 0.002)); bpy.context.active_object.data.materials.append(M["spot"])
-        lt = bpy.data.lights.new("Спот", "SPOT"); lt.energy = float(OPT.get("spot", "60")); lt.spot_size = math.radians(80); lt.spot_blend = 0.7; lt.color = (1, 0.92, 0.82)
+        lt = bpy.data.lights.new("Спот", "SPOT"); lt.energy = float(OPT.get("spot", "110")); lt.spot_size = math.radians(80); lt.spot_blend = 0.7; lt.color = (1, 0.92, 0.82)   # 13.11: светлее (по заказчику)
         o = bpy.data.objects.new("Спот", lt); o.location = W(xx, zz, HC - 0.02); sc.collection.objects.link(o)
     w_ = sc.world or bpy.data.worlds.new("W"); sc.world = w_; w_.use_nodes = True; w_.node_tree.nodes["Background"].inputs[1].default_value = 0.6
 def towel_rail(w, a0, a1):
@@ -370,6 +370,29 @@ def bk_fit(fname, cx, cz, h0, rot=0.0, target=None, axis="w", recolor=None, keep
     print("BKFIT", fname, tuple(round(v,3) for v in mn), tuple(round(v,3) for v in mx_), round(k,3), len(objs), len(roots))
     for r in roots: r.matrix_world = T_ @ r.matrix_world
     return objs
+M["curtain"] = mat("Шторка ткань светло-серая", "#C9C8C4", 0.95, transm=0.15)
+def curtain_strip(n, a, b, h0, h1, amp=0.025, waves=None, m=None):
+    """тканевая шторка (волнами) между точками плана a=(x,z) и b=(x,z), по высоте h0..h1"""
+    ax_, az_ = a; bx_, bz_ = b
+    L = math.hypot(bx_ - ax_, bz_ - az_); ux, uz = (bx_ - ax_) / L, (bz_ - az_) / L; nx, nz = -uz, ux
+    nw = waves or max(2, int(L / 0.09)); nu = nw * 8
+    bm = bmesh.new(); rows = []
+    for j, h in enumerate((h0, (h0 + h1) / 2, h1)):
+        row = []
+        for i in range(nu + 1):
+            t = i / nu; off = amp * math.sin(t * nw * 2 * math.pi)
+            row.append(bm.verts.new(W(ax_ + ux * L * t + nx * off, az_ + uz * L * t + nz * off, h)))
+        rows.append(row)
+    for j in range(2):
+        for i in range(nu): bm.faces.new((rows[j][i], rows[j][i + 1], rows[j + 1][i + 1], rows[j + 1][i]))
+    me = bpy.data.meshes.new(n); bm.to_mesh(me); bm.free(); o = bpy.data.objects.new(n, me); sc.collection.objects.link(o)
+    o.data.materials.append(m or M["curtain"]); sd = o.modifiers.new("t", "SOLIDIFY"); sd.thickness = 0.003
+    for p in o.data.polygons: p.use_smooth = True
+    return o
+def curtain_rail(pts, h=2.00):
+    """Г-образный карниз (чёрная труба Ø20) по точкам плана + кольца"""
+    for (p, q) in zip(pts[:-1], pts[1:]):
+        box("Карниз шторки", min(p[0], q[0]) - 0.01, min(p[1], q[1]) - 0.01, max(p[0], q[0]) + 0.01, max(p[1], q[1]) + 0.01, h - 0.01, h + 0.01, M["black"], 0.004)
 
 room_box("T", DX0, DX1)
 
@@ -399,9 +422,11 @@ BX0, BX1, BZ0 = X1 - 1.30, X1, Z1 - 0.70
 tub = box("Ванна", BX0, BZ0, BX1, Z1 - 0.003, 0, 0.58, M["acryl"], 0.015)
 cav = box("Чаша", BX0 + 0.07, BZ0 + 0.07, BX1 - 0.07, Z1 - 0.07, 0.16, 0.9, M["acryl"])
 md = tub.modifiers.new("cav", "BOOLEAN"); md.operation = "DIFFERENCE"; md.object = cav; cav.hide_render = True; cav.display_type = "WIRE"
-box("Шторка стекло", BX1 - 0.80, BZ0 + 0.004, BX1, BZ0 + 0.012, 0.58, 2.00, M["glass"])
-box("Профиль шторки", BX1 - 0.80, BZ0, BX1, BZ0 + 0.016, 1.985, 2.00, M["black"])
-box("Стойка шторки", BX1 - 0.80, BZ0, BX1 - 0.784, BZ0 + 0.016, 0.58, 2.00, M["black"])
+# 13.11 (по заказчику): вместо стеклянной шторки — тканевая шторка на Г-карнизе (вдоль ванны и у торца), собрана у стены
+curtain_rail([(X1, BZ0), (BX0, BZ0), (BX0, Z1)], 2.00)
+box("Держатель карниза", BX0 - 0.006, BZ0 - 0.006, BX0 + 0.006, BZ0 + 0.006, 2.01, HC, M["black"])
+curtain_strip("Шторка собрана", (X1 - 0.30, BZ0 + 0.02), (X1 - 0.02, BZ0 + 0.02), 0.62, 1.97, amp=0.04, waves=4)
+curtain_strip("Шторка (торец)", (BX0 + 0.02, BZ0 + 0.03), (BX0 + 0.02, Z1 - 0.02), 0.62, 1.97)
 box("Смеситель", 5.45, Z1 - 0.05, 5.65, Z1, 0.82, 0.90, M["black"], 0.006)
 box("Излив", 5.53, Z1 - 0.20, 5.57, Z1 - 0.05, 0.70, 0.73, M["black"], 0.006)
 box("Штанга душа", 5.85, Z1 - 0.03, 5.87, Z1, 1.00, 1.90, M["black"])

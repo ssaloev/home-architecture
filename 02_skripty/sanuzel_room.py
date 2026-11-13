@@ -10,30 +10,23 @@ room_box("R", DZ0, DZ1)
 
 # ---- душ 700×900 в углу (лев/верх): трап, стекло в чёрном профиле, тропический душ, ниша с LED
 SX1, SZ1 = 1.018, 7.709
-box("Трап", X0 + 0.05, SZ1 - 0.10, SX1 - 0.05, SZ1 - 0.06, 0.0, 0.003, M["black"])
-# 13.11 (по заказчику): РАЗДВИЖНАЯ дверь «как в купе» — одно стекло 700 едет вправо по верхнему рельсу снаружи душа,
-# в комнату не открывается (не мешает раковине и биде). Бок — глухое стекло. Дверь показана приоткрытой на 300.
-box("Стекло душа бок", SX1 - 0.006, Z0, SX1 + 0.002, SZ1, 0.0, 2.00, M["glass"])
-box("Профиль верх2", SX1 - 0.012, Z0, SX1 + 0.008, SZ1, 1.985, 2.00, M["black"])
-box("Профиль стойка", SX1 - 0.012, SZ1 - 0.012, SX1 + 0.008, SZ1 + 0.008, 0, 2.00, M["black"])
-box("Профиль у стены (уплотнитель)", X0, SZ1 - 0.005, X0 + 0.02, SZ1 + 0.035, 0, 2.00, M["black"])
-SZD = SZ1 + 0.02                                         # плоскость двери — снаружи стойки
-box("Рельс", X0, SZD - 0.012, X0 + 1.42, SZD + 0.012, 2.03, 2.06, M["black"], 0.004)
-box("Держатель рельса (к потолку)", X0 + 1.40, SZD - 0.008, X0 + 1.416, SZD + 0.008, 2.06, HC, M["black"])
-OPEN = 0.30; DA = X0 + 0.02 + OPEN; DB = DA + 0.70
-box("Дверь-купе стекло", DA, SZD - 0.004, DB, SZD + 0.004, 0.015, 2.00, M["glass"])
-box("Дверь-купе профиль край", DA, SZD - 0.007, DA + 0.02, SZD + 0.007, 0.015, 2.00, M["black"])
-box("Дверь-купе профиль низ", DA, SZD - 0.007, DB, SZD + 0.007, 0.015, 0.03, M["black"])
-for xr in (DA + 0.10, DB - 0.10):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.03, depth=0.03, location=W(xr, SZD + 0.02, 2.045), rotation=(math.radians(90), 0, 0)); bpy.context.active_object.data.materials.append(M["black"])
-    box("Кронштейн ролика", xr - 0.02, SZD - 0.006, xr + 0.02, SZD + 0.006, 1.97, 2.03, M["black"])
-for s_ in (1, -1):
-    box("Ручка-скоба", DA + 0.06, SZD + s_ * 0.045 - 0.007, DA + 0.075, SZD + s_ * 0.045 + 0.007, 0.80, 1.40, M["black"], 0.004)
-for zz in (0.85, 1.35):
-    box("Стойка ручки", DA + 0.062, SZD - 0.05, DA + 0.073, SZD + 0.05, zz - 0.006, zz + 0.006, M["black"])
-box("Нижняя направляющая", SX1 - 0.03, SZD - 0.01, SX1 + 0.02, SZD + 0.01, 0, 0.03, M["black"])
+box("Трап", X0 + 0.05, Z0 + 0.15, X0 + 0.09, SZ1 - 0.15, 0.0, 0.003, M["black"])   # трап у стены — уклон от входа
+# 13.11 (по заказчику, вар. 3): БЕЗ СТЕКЛА — тканевая шторка на Г-образном карнизе под потолком (легко снять и постирать);
+# сторона к биде — шторка задёрнута, сторона к раковине — шторка собрана у стены (вход открыт). Пол душа с уклоном к трапу.
+curtain_rail([(X0, SZ1), (SX1, SZ1), (SX1, Z0)], 2.00)
+box("Держатель карниза", SX1 - 0.006, SZ1 - 0.006, SX1 + 0.006, SZ1 + 0.006, 2.01, HC, M["black"])
+curtain_strip("Шторка (к биде)", (X0 + 0.02, SZ1 - 0.02), (SX1 - 0.03, SZ1 - 0.02), 0.03, 1.97)
+curtain_strip("Шторка собрана", (SX1 - 0.02, Z0 + 0.02), (SX1 - 0.02, Z0 + 0.22), 0.03, 1.97, amp=0.04, waves=4)
 wb("Смеситель душ", "L", 7.20, 7.32, 0, 0.04, 1.00, 1.12, M["black"], 0.01)
 wb("Штанга", "L", 7.42, 7.44, 0, 0.03, 1.00, 1.90, M["black"])
+wb("Держатель лейки", "L", 7.40, 7.46, 0.0, 0.05, 1.50, 1.54, M["black"], 0.006)      # 13.11: ручная лейка на штанге + шланг
+bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.022, depth=0.24, location=W(X0 + 0.07, 7.43, 1.60), rotation=(0, math.radians(-15), 0)); bpy.context.active_object.data.materials.append(M["black"])
+bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.045, depth=0.025, location=W(X0 + 0.10, 7.43, 1.73), rotation=(0, math.radians(75), 0)); bpy.context.active_object.data.materials.append(M["black"])
+_hc = bpy.data.curves.new("Шланг", "CURVE"); _hc.dimensions = "3D"; _hc.bevel_depth = 0.007; _hc.bevel_resolution = 3
+_sp = _hc.splines.new("NURBS"); _pts = [(7.26, 1.00), (7.27, 0.80), (7.33, 0.62), (7.40, 0.75), (7.43, 1.10), (7.43, 1.49)]
+_sp.points.add(len(_pts) - 1); _sp.use_endpoint_u = True; _sp.order_u = 4
+for _i, (_z, _h) in enumerate(_pts): _v = W(X0 + 0.05, _z, _h); _sp.points[_i].co = (_v.x, _v.y, _v.z, 1)
+_ho = bpy.data.objects.new("Шланг", _hc); sc.collection.objects.link(_ho); _hc.materials.append(M["black"])   # 13.11: шланг свисает петлёй от смесителя к лейке
 bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.15, depth=0.012, location=W(0.66, 7.25, 2.20)); bpy.context.active_object.data.materials.append(M["black"])
 box("Кронштейн", X0, 7.24, 0.66, 7.26, 2.205, 2.225, M["black"])
 # 13.11 (по заказчику): в душе ниша с ТРЕМЯ полками (шампунь, гель, мыло и т.д.) — на верхней стене, напротив входа
