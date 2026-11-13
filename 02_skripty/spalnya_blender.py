@@ -103,16 +103,40 @@ def import_bk(name, cx, cz, h0=0.0, rot_deg=0.0, target=None, axis="w"):
 
 WALLC = "#" + OPT.get("walls", "BDBBB5"); GRAF = "#" + OPT.get("ward", "2F2F31")
 M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.38), "washed_grey_oak_veneer", 1.6, WALLC, 1.55, 0.7),
-         seam=mat("Шов панелей", "#2E2C2A", 0.6), floor=plank_floor("D5D4D0", "C4C3BE"),
+         seam=mat("Шов панелей", "#2E2C2A", 0.6), floor=plank_floor(*OPT.get("floor", "7E6A58-776350").split("-")),   # 14.11: пол везде один — дымчатый дуб 7E6A58
          ward=mat("Графит матовый", GRAF, 0.45), frame=mat("Рамки фасадов", "#3A3A3D", 0.45),
          top=mat("Столешница камень", "#E9E6E0", 0.15), brass=mat("Латунь", "#B8925A", 0.25, 1.0),
          ceil=mat("Потолок", "#EEECE7", 0.9), door=mat("Двери", "#E2E0DB", 0.45), black=mat("Чёрный", "#1C1B1A", 0.35, 0.3),
          tv=mat("ТВ", "#0A0A0B", 0.2), wframe=mat("Рама окна", "#F2F1EE", 0.4), glass=mat("Стекло", "#FFFFFF", 0.0, transm=1.0),
          curt=mat("Шторы", "#" + OPT.get("curt", "8A8B8F"), 0.95), tulle=mat("Тюль", "#F6F3EE", 0.9, transm=0.5, alpha=0.7),
          led=emis("LED", "#FFE6C8", 6), spot=emis("Спот", "#FFF4E2", 12))
+# 13.11.2026 (заказчик): ВСЯ мебель — орех, как в первой гостиной (american walnut, тон #5E4434); вернуть графит: oreh=0
+_MB = OPT.get("mebel", "ivory")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
+if _MB == "oreh":
+    M["ward"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
+elif _MB == "dub":
+    M["ward"] = tex(mat("Шпон дуб светлый", "#C9A87F", 0.45), "washed_grey_oak_veneer", 1.6, "#CBAA80", 2.0)
+elif _MB == "dymdub":   # дымчатый дуб — в тон полу «тёплого графита»
+    M["ward"] = tex(mat("Шпон дуб дымчатый", "#6A5646", 0.45), "washed_grey_oak_veneer", 1.6, "#6B5747", 1.45)
+elif _MB == "umber":    # умбра — тёплый графитово-коричневый матовый
+    M["ward"] = mat("Фасады умбра", "#4A4038", 0.5)
+elif _MB in ("white", "mushroom", "ivory"):
+    M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
+if _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
+    M["oreh_tv"] = M["ward"]
+    if "frame" in M: M["frame"] = mat("Рамки фасадов", "#4A3628" if _MB == "oreh" else "#8C8478", 0.45)
 try: M["tulle"].blend_method = "BLEND"
 except Exception: pass
 
+# ---------------- коробка комнаты
+T = 0.2
+box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["floor"])
+# 14.11 (заказчик): обои «тауп, рогожка» вместо панелей, без швов листов; панели: oboi=0
+OBOI = OPT.get("oboi", "rough_linen:B9B3AA")   # 14.11 вар.2: тёплый серый лён
+if OBOI and OBOI != "0":
+    _t, _c = OBOI.split(":")
+    M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5, "#" + _c, 1.9, 0.6)
+else: OBOI = None
 
 # ================= СПАЛЬНЯ 2 — вариант 3 (12.11.2026)
 T = 0.2
@@ -148,8 +172,10 @@ for a in np.linspace(WZ0, WZ1, 3): box("Импост", X1 + 0.06, a - 0.03, X1 +
 for (h0, h1) in ((WS, WS + 0.06), (WT - 0.06, WT)): box("Рама", X1 + 0.06, WZ0, X1 + 0.12, WZ1, h0, h1, M["wframe"], 0.004)
 box("Стекло", X1 + 0.085, WZ0, X1 + 0.095, WZ1, WS, WT, M["glass"])
 def seam_x(fixed, n_, xs):
+    if OBOI: return
     for p in xs: box("Шов", p - 0.008, fixed, p + 0.008, fixed + n_ * 0.0008, 0.08, HC, M["seam"])
 def seam_z(fixed, n_, zs):
+    if OBOI: return
     for p in zs: box("Шов", fixed, p - 0.008, fixed + n_ * 0.0008, p + 0.008, 0.08, HC, M["seam"])
 seam_x(Z1, -1, [x for x in (BC - 0.8 - 1.22, BC - 0.8, BC + 0.8, BC + 0.8 + 1.22) if X0 + 0.15 < x < X1 - 0.15])   # стена ТВ: швы по краям тумбы, за ТВ цельный лист
 seam_x(Z0, +1, [x for x in (BC - 1.83, BC - 0.61, BC + 0.61, BC + 1.83) if X0 + 0.65 < x < LX0 - 0.1])   # стена за кроватью: листы 1220 симметрично кровати
@@ -273,10 +299,38 @@ for (a, b) in ((DZ0, DZ0 + 0.03), (DZ1 - 0.03, DZ1)): box("Рамка", xf - 0.0
 box("Рамка", xf - 0.03, DZ0, xf + 0.03, DZ1, DH - 0.03, DH, M["black"], 0.002)
 box("Ручка", xf + 0.02, DZ1 - 0.10, xf + 0.07, DZ1 - 0.09, 1.0, 1.02, M["black"]); box("Ручка", xf + 0.055, DZ1 - 0.22, xf + 0.07, DZ1 - 0.09, 1.0, 1.02, M["black"])   # петли у шкафа, ручка у угла — дверь открывается к ТВ-стене
 
-# ---------------- ТВ напротив кровати: подвесная тумба графит + ТВ 55"
-t0, t1 = BC - 0.8, BC + 0.8
-box("ТВ-тумба", t0, Z1 - 0.40, t1, Z1, 0.30, 0.62, M["ward"]); box("Столешница", t0 - 0.01, Z1 - 0.41, t1 + 0.01, Z1, 0.62, 0.645, M["top"], 0.003)
-for k in range(2):
+
+def oreh_tv_unit(a0, a1, wall_x=None, wall_z=None, D=0.40, UH=0.30, ndoors=6, name="ТВ-тумба орех"):
+    """13.11.2026 (заказчик: «везде, где телевизор — такой стиль»): низкая тумба h300 как в гостиной — рифлёный шпон ореха,
+    дверцы, латунные ручки-планки. wall_x — тумба у стены x=const (вдоль z от a0 до a1), wall_z — у стены z=const (вдоль x)."""
+    if "oreh_tv" not in M: M["oreh_tv"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
+    if "brass" not in M: M["brass"] = mat("Латунь", "#B8925A", 0.25, metal=1.0)
+    m = M["oreh_tv"]
+    def bx(n, p0, p1, d0, d1, h0, h1, mm, bev=0.0):     # p — вдоль стены, d — от стены
+        if wall_x is not None:
+            sg = 1 if wall_x < 5.0 + 999 and d1 >= 0 else 1
+            box(n, wall_x + d0 * WS_, p0, wall_x + d1 * WS_, p1, h0, h1, mm, bev) if WS_ > 0 else box(n, wall_x + d1 * WS_, p0, wall_x + d0 * WS_, p1, h0, h1, mm, bev)
+        else:
+            box(n, p0, wall_z + d0 * WS_, p1, wall_z + d1 * WS_, h0, h1, mm, bev) if WS_ > 0 else box(n, p0, wall_z + d1 * WS_, p1, wall_z + d0 * WS_, h0, h1, mm, bev)
+    bx(name + " корпус", a0, a1, 0, D - 0.02, 0.0, UH, m)
+    p = a0 + 0.01
+    while p < a1 - 0.02:
+        bx(name + " рифление", p, p + 0.02, D - 0.02, D, 0.01, UH - 0.005, m, 0.006); p += 0.03
+    bx(name + " крышка", a0 - 0.005, a1 + 0.005, 0, D + 0.005, UH, UH + 0.02, m, 0.003)
+    dw = (a1 - a0) / ndoors
+    for k in range(ndoors):
+        c = a0 + (k + 0.5) * dw
+        if k: bx(name + " шов", a0 + k * dw - 0.002, a0 + k * dw + 0.002, D - 0.001, D + 0.001, 0.01, UH - 0.005, M["black"])
+        bx(name + " ручка латунь", c - min(0.13, dw * 0.35), c + min(0.13, dw * 0.35), D + 0.002, D + 0.016, UH - 0.06, UH - 0.048, M["brass"], 0.004)
+WS_ = 1
+# ---------------- ТВ напротив кровати: 13.11 — низкая рифлёная тумба орех h300 (как в гостиной) + ТВ 55"
+t0, t1 = BC - 1.0, BC + 1.0
+ORT = OPT.get("orehtv", "1") == "1"
+if ORT:
+    WS_ = -1; oreh_tv_unit(t0, t1, wall_z=Z1, ndoors=4)
+else:
+    box("ТВ-тумба", t0, Z1 - 0.40, t1, Z1, 0.30, 0.62, M["ward"]); box("Столешница", t0 - 0.01, Z1 - 0.41, t1 + 0.01, Z1, 0.62, 0.645, M["top"], 0.003)
+for k in (range(2) if not ORT else ()):
     u0, u1 = t0 + k * 0.8 + 0.003, t0 + (k + 1) * 0.8 - 0.003
     box("Фасад", u0, Z1 - 0.42, u1, Z1 - 0.40, 0.305, 0.615, M["ward"], 0.002)
     box("Ручка", (u0 + u1) / 2 - 0.1, Z1 - 0.435, (u0 + u1) / 2 + 0.1, Z1 - 0.42, 0.55, 0.562, M["black"], 0.003)
@@ -388,10 +442,41 @@ try: sc.view_settings.view_transform = "AgX"
 except Exception: pass
 sc.view_settings.exposure = float(OPT.get("exp", "-0.6"))
 tag = OPT.get("tag", "")
+# ---- 14.11: БЫСТРЫЙ ПРОСМОТР (аргумент fast): EEVEE, 1280×720, файлы q_*.jpg — финал (Cycles) не перезаписывается
+if "fast" in ARGS:
+    for _e in ("BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
+        try: sc.render.engine = _e; break
+        except Exception: pass
+    try:
+        _ee = sc.eevee; _ee.taa_render_samples = 32
+        for _a, _v in (("use_raytracing", True), ("use_shadows", True), ("use_gtao", True), ("use_bloom", True)):
+            if hasattr(_ee, _a): setattr(_ee, _a, _v)
+    except Exception: pass
+    sc.render.resolution_x, sc.render.resolution_y = 1280, 720; QUICK = True
+    sc.view_settings.exposure = sc.view_settings.exposure + 0.7   # EEVEE без полного отражённого света — темнее Cycles
+# ---- 14.11: РЕАЛИЗМ (аргумент real): фаски на всех мебельных деталях, небо HDRI в окне, долгий расчёт, ровная камера 24 мм
+if "real" in ARGS:
+    for _o in [o for o in sc.objects if o.type == "MESH" and len(o.data.vertices) <= 24 and not o.name.startswith(("Пол", "Стена", "Потолок", "Окно", "Над", "Под", "Стекло"))]:
+        _d = max(_o.dimensions); 
+        if _d < 0.01: continue
+        _b = _o.modifiers.new("fаска", "BEVEL"); _b.width = min(0.004, min(x for x in _o.dimensions if x > 0) * 0.3); _b.segments = 2; _b.limit_method = "ANGLE"
+    _hd = os.path.join(PROJ, "03_materialy", "hdri", "sky.hdr")
+    if os.path.exists(_hd):
+        _w = sc.world or bpy.data.worlds.new("W"); sc.world = _w; _w.use_nodes = True; _nt = _w.node_tree
+        _bg = _nt.nodes.get("Background") or _nt.nodes.new("ShaderNodeBackground"); _env = _nt.nodes.new("ShaderNodeTexEnvironment")
+        _env.image = bpy.data.images.load(_hd, check_existing=True); _nt.links.new(_env.outputs["Color"], _bg.inputs["Color"]); _bg.inputs["Strength"].default_value = 1.0
+    sc.cycles.samples = int(OPT.get("samples", "700")); sc.cycles.adaptive_threshold = 0.01
+    sc.cycles.max_bounces = 12; sc.cycles.diffuse_bounces = 6; sc.cycles.glossy_bounces = 6; sc.cycles.sample_clamp_indirect = 8
+    try: sc.view_settings.look = "AgX - Medium High Contrast"
+    except Exception: pass
+    sc.render.resolution_x, sc.render.resolution_y = 1920, 1080; QUICK = False; tag = tag if "tag" in OPT else "_real"
 for s_ in SHOTS:
     if s_ not in CAMS: continue
     n_, loc, tgt, lens = CAMS[s_]
     cd = bpy.data.cameras.new(n_); cd.lens = lens; cd.sensor_width = 36; cd.clip_start = 0.02
     co = bpy.data.objects.new(n_, cd); co.location = loc; co.rotation_euler = (tgt - loc).to_track_quat("-Z", "Y").to_euler(); sc.collection.objects.link(co)
+    if "real" in ARGS:     # ровная камера (вертикали вертикальны), объектив ~22–24 мм, вверх/вниз — сдвигом
+        _dv = tgt - loc; _hd2 = math.hypot(_dv.x, _dv.y); co.rotation_euler = (math.radians(90), 0, math.atan2(_dv.y, _dv.x) - math.radians(90))
+        cd.lens = lens if lens < 15 else max(lens, 20); cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n_ + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)

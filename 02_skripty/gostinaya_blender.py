@@ -425,7 +425,12 @@ def frames_in(side, a0, a1):
 if KREM and OPTC.get("tumbatex"):     # шпон с текстурой для встроенной мебели
     for k in ("tumba", "tumba_frame"):
         pbr(M[k], "washed_grey_oak_veneer", 2.0, tint="#" + OPTC.get("tumba", "C9A57A"), use_diff=True, nstr=0.4, rough_mul=0.7)
-if GREYW: pbr(M["wall"], "washed_grey_oak_veneer", 1.6, tint="#BDBBB5", use_diff=True, nstr=0.35, rough_mul=0.55)
+OBOI = next((x_[5:] for x_ in ARGS if x_.startswith("oboi=")), None)   # 14.11: обои «текстиль» (лён) вместо панелей, oboi=HEX
+if OBOI:
+    M["wall"] = mat("Обои текстиль (лён)", "#" + OBOI, rough=0.85)
+    pbr(M["wall"], "rough_linen", 3.0, tint="#" + OBOI, use_diff=True, nstr=0.25, rough_mul=1.0)
+    M["mold"].node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = hexlin("#" + OBOI)   # молдинги в тон обоев
+elif GREYW: pbr(M["wall"], "washed_grey_oak_veneer", 1.6, tint="#BDBBB5", use_diff=True, nstr=0.35, rough_mul=0.55)
 else: pbr(M["wall"], "white_plaster_02", 1.2, nstr=0.4, rough_mul=1.0)
 pbr(M["mold"], "white_plaster_02", 2.0, nstr=0.2)
 pbr(M["sofa"], "velour_velvet", 3.0, tint=SOFA or "#7B9C88", use_diff=True, nstr=0.6, rough_mul=0.9)
@@ -1278,6 +1283,18 @@ if VARIANTS:
         sc.render.filepath = os.path.join(vd, f"{k:02d}.jpg"); bpy.ops.render.render(write_still=True)
         print("VARIANT", k)
     raise SystemExit
+# ---- 14.11: БЫСТРЫЙ ПРОСМОТР (аргумент fast): EEVEE, 1280×720, файлы q_*.jpg — финал (Cycles) не перезаписывается
+if "fast" in ARGS:
+    for _e in ("BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
+        try: sc.render.engine = _e; break
+        except Exception: pass
+    try:
+        _ee = sc.eevee; _ee.taa_render_samples = 32
+        for _a, _v in (("use_raytracing", True), ("use_shadows", True), ("use_gtao", True), ("use_bloom", True)):
+            if hasattr(_ee, _a): setattr(_ee, _a, _v)
+    except Exception: pass
+    sc.render.resolution_x, sc.render.resolution_y = 1280, 720; QUICK = True
+    sc.view_settings.exposure = sc.view_settings.exposure + 0.7   # EEVEE без полного отражённого света — темнее Cycles
 for i, (n, co) in enumerate(cams, 1):
     if SHOTS and i not in SHOTS: continue
     sc.camera = co

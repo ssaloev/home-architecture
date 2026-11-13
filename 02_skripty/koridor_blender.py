@@ -9,7 +9,7 @@ from mathutils import Vector, Matrix
 ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 QUICK = "quick" in ARGS
 OPT = dict(a.split("=", 1) for a in ARGS if "=" in a)
-FLOOR = OPT.get("floor", "oak")
+FLOOR = "grey" if OPT.get("floor") == "grey" else "oak"   # 14.11: пол везде один — дымчатый дуб
 SHOTS = OPT.get("shots", "1,2,3,4").split(",")
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(HERE), "08_vizualizacii", "koridor"); os.makedirs(OUT, exist_ok=True)
@@ -122,7 +122,7 @@ def plank_floor(A, B, PL=0.6, PW=0.09):
 M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.38), "washed_grey_oak_veneer", 1.6, WALLC, 1.55, 0.7),
          ward=mat("Шкафы крем матовые", "#" + OPT.get("ward", "2F2F31"), 0.55),
          slat=tex(mat("Рейки дуб", "#C9A57A", 0.5), "washed_grey_oak_veneer", 2.0, "#C79F72", 1.6),
-         floor=(plank_floor("D5D4D0", "C4C3BE") if FLOOR == "oak"
+         floor=(plank_floor(*OPT.get("floor", "7E6A58-776350").split("-")) if FLOOR == "oak"   # 14.11: пол везде один — дымчатый дуб 7E6A58
                 else mat("Пол светло-серый", "#CFCDC8", 0.5)),
          rug=mat("Дорожка", "#" + OPT.get("rug", "9C9890"), 1.0),
          ceil=mat("Потолок", "#EEE8DF", 0.9), door=mat("Двери крем", "#" + OPT.get("door", "E2E0DB"), 0.45),
@@ -131,6 +131,27 @@ M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.3
          vase=mat("Ваза керамика", "#D8CFC2", 0.8), shade=emis("Абажур", "#FFE2B8", 3.0), led=emis("LED", "#FFE6C8", 6),
          disc=emis("Светильник", "#FFF0D8", 9), glass=mat("Стекло тёмное", "#3A2E22", 0.1))
 
+# 13.11.2026 (заказчик): ВСЯ мебель — орех, как в первой гостиной (american walnut, тон #5E4434); вернуть графит: oreh=0
+_MB = OPT.get("mebel", "ivory")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
+if _MB == "oreh":
+    M["ward"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
+elif _MB == "dub":
+    M["ward"] = tex(mat("Шпон дуб светлый", "#C9A87F", 0.45), "washed_grey_oak_veneer", 1.6, "#CBAA80", 2.0)
+elif _MB == "dymdub":   # дымчатый дуб — в тон полу «тёплого графита»
+    M["ward"] = tex(mat("Шпон дуб дымчатый", "#6A5646", 0.45), "washed_grey_oak_veneer", 1.6, "#6B5747", 1.45)
+elif _MB == "umber":    # умбра — тёплый графитово-коричневый матовый
+    M["ward"] = mat("Фасады умбра", "#4A4038", 0.5)
+elif _MB in ("white", "mushroom", "ivory"):
+    M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
+if _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
+    M["oreh_tv"] = M["ward"]
+    if "frame" in M: M["frame"] = mat("Рамки фасадов", "#4A3628" if _MB == "oreh" else "#8C8478", 0.45)
+# 14.11 (заказчик): обои «тауп, рогожка» вместо панелей (кроме 1-й гостиной), без швов листов; панели: oboi=0
+OBOI = OPT.get("oboi", "rough_linen:B9B3AA")   # 14.11 вар.2: тёплый серый лён
+if OBOI and OBOI != "0":
+    _t, _c = OBOI.split(":")
+    M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5 if _t == "hessian_230" else 3.0, "#" + _c, 1.9, 0.6)
+else: OBOI = None
 # ---------------------------------------------------------------- геометрия по плану (kvartira.json)
 CX0, CX1, CZ0, CZ1 = 1.945, 9.945, 6.672, 7.909        # коридор
 PX0, PX1, PZ1 = 1.945, 3.455, 9.509                     # прихожая (до входной двери)
@@ -166,6 +187,7 @@ wall(PX0, PZ1, PX1, PZ1 + T, [(2.254, 3.145, 2.1)])
 # швы бамбуковых листов (1220 мм) — тонкая тёмная V-канавка
 M["seam"] = mat("Шов панелей", "#2E2C2A", 0.6)
 def seams(axis, fixed, a0, a1, n_, skip=()):
+    if OBOI: return
     p = a0 + 1.22
     while p < a1 - 0.15:
         if not any(s0 - 0.05 < p < s1 + 0.05 for (s0, s1) in skip):
@@ -381,6 +403,18 @@ try:
 except Exception: pass
 sc.view_settings.exposure = float(OPT.get("exp", "-2.0"))
 tag = OPT.get("tag", "")
+# ---- 14.11: БЫСТРЫЙ ПРОСМОТР (аргумент fast): EEVEE, 1280×720, файлы q_*.jpg — финал (Cycles) не перезаписывается
+if "fast" in ARGS:
+    for _e in ("BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
+        try: sc.render.engine = _e; break
+        except Exception: pass
+    try:
+        _ee = sc.eevee; _ee.taa_render_samples = 32
+        for _a, _v in (("use_raytracing", True), ("use_shadows", True), ("use_gtao", True), ("use_bloom", True)):
+            if hasattr(_ee, _a): setattr(_ee, _a, _v)
+    except Exception: pass
+    sc.render.resolution_x, sc.render.resolution_y = 1280, 720; QUICK = True
+    sc.view_settings.exposure = sc.view_settings.exposure + 0.7   # EEVEE без полного отражённого света — темнее Cycles
 for s in SHOTS:
     if s not in CAMS: continue
     n, loc, tgt, lens = CAMS[s]

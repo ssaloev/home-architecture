@@ -1,3 +1,9 @@
+# 14.11 (заказчик): обои «тауп, рогожка» вместо панелей, без швов листов; панели: oboi=0
+OBOI = OPT.get("oboi", "rough_linen:B9B3AA")   # 14.11 вар.2: тёплый серый лён
+if OBOI and OBOI != "0":
+    _t, _c = OBOI.split(":")
+    M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5, "#" + _c, 1.9, 0.6)
+else: OBOI = None
 
 # ================= СПАЛЬНЯ 2 — вариант 3 (12.11.2026)
 T = 0.2
@@ -33,8 +39,10 @@ for a in np.linspace(WZ0, WZ1, 3): box("Импост", X1 + 0.06, a - 0.03, X1 +
 for (h0, h1) in ((WS, WS + 0.06), (WT - 0.06, WT)): box("Рама", X1 + 0.06, WZ0, X1 + 0.12, WZ1, h0, h1, M["wframe"], 0.004)
 box("Стекло", X1 + 0.085, WZ0, X1 + 0.095, WZ1, WS, WT, M["glass"])
 def seam_x(fixed, n_, xs):
+    if OBOI: return
     for p in xs: box("Шов", p - 0.008, fixed, p + 0.008, fixed + n_ * 0.0008, 0.08, HC, M["seam"])
 def seam_z(fixed, n_, zs):
+    if OBOI: return
     for p in zs: box("Шов", fixed, p - 0.008, fixed + n_ * 0.0008, p + 0.008, 0.08, HC, M["seam"])
 seam_x(Z1, -1, [x for x in (BC - 0.8 - 1.22, BC - 0.8, BC + 0.8, BC + 0.8 + 1.22) if X0 + 0.15 < x < X1 - 0.15])   # стена ТВ: швы по краям тумбы, за ТВ цельный лист
 seam_x(Z0, +1, [x for x in (BC - 1.83, BC - 0.61, BC + 0.61, BC + 1.83) if X0 + 0.65 < x < LX0 - 0.1])   # стена за кроватью: листы 1220 симметрично кровати
@@ -158,10 +166,38 @@ for (a, b) in ((DZ0, DZ0 + 0.03), (DZ1 - 0.03, DZ1)): box("Рамка", xf - 0.0
 box("Рамка", xf - 0.03, DZ0, xf + 0.03, DZ1, DH - 0.03, DH, M["black"], 0.002)
 box("Ручка", xf + 0.02, DZ1 - 0.10, xf + 0.07, DZ1 - 0.09, 1.0, 1.02, M["black"]); box("Ручка", xf + 0.055, DZ1 - 0.22, xf + 0.07, DZ1 - 0.09, 1.0, 1.02, M["black"])   # петли у шкафа, ручка у угла — дверь открывается к ТВ-стене
 
-# ---------------- ТВ напротив кровати: подвесная тумба графит + ТВ 55"
-t0, t1 = BC - 0.8, BC + 0.8
-box("ТВ-тумба", t0, Z1 - 0.40, t1, Z1, 0.30, 0.62, M["ward"]); box("Столешница", t0 - 0.01, Z1 - 0.41, t1 + 0.01, Z1, 0.62, 0.645, M["top"], 0.003)
-for k in range(2):
+
+def oreh_tv_unit(a0, a1, wall_x=None, wall_z=None, D=0.40, UH=0.30, ndoors=6, name="ТВ-тумба орех"):
+    """13.11.2026 (заказчик: «везде, где телевизор — такой стиль»): низкая тумба h300 как в гостиной — рифлёный шпон ореха,
+    дверцы, латунные ручки-планки. wall_x — тумба у стены x=const (вдоль z от a0 до a1), wall_z — у стены z=const (вдоль x)."""
+    if "oreh_tv" not in M: M["oreh_tv"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
+    if "brass" not in M: M["brass"] = mat("Латунь", "#B8925A", 0.25, metal=1.0)
+    m = M["oreh_tv"]
+    def bx(n, p0, p1, d0, d1, h0, h1, mm, bev=0.0):     # p — вдоль стены, d — от стены
+        if wall_x is not None:
+            sg = 1 if wall_x < 5.0 + 999 and d1 >= 0 else 1
+            box(n, wall_x + d0 * WS_, p0, wall_x + d1 * WS_, p1, h0, h1, mm, bev) if WS_ > 0 else box(n, wall_x + d1 * WS_, p0, wall_x + d0 * WS_, p1, h0, h1, mm, bev)
+        else:
+            box(n, p0, wall_z + d0 * WS_, p1, wall_z + d1 * WS_, h0, h1, mm, bev) if WS_ > 0 else box(n, p0, wall_z + d1 * WS_, p1, wall_z + d0 * WS_, h0, h1, mm, bev)
+    bx(name + " корпус", a0, a1, 0, D - 0.02, 0.0, UH, m)
+    p = a0 + 0.01
+    while p < a1 - 0.02:
+        bx(name + " рифление", p, p + 0.02, D - 0.02, D, 0.01, UH - 0.005, m, 0.006); p += 0.03
+    bx(name + " крышка", a0 - 0.005, a1 + 0.005, 0, D + 0.005, UH, UH + 0.02, m, 0.003)
+    dw = (a1 - a0) / ndoors
+    for k in range(ndoors):
+        c = a0 + (k + 0.5) * dw
+        if k: bx(name + " шов", a0 + k * dw - 0.002, a0 + k * dw + 0.002, D - 0.001, D + 0.001, 0.01, UH - 0.005, M["black"])
+        bx(name + " ручка латунь", c - min(0.13, dw * 0.35), c + min(0.13, dw * 0.35), D + 0.002, D + 0.016, UH - 0.06, UH - 0.048, M["brass"], 0.004)
+WS_ = 1
+# ---------------- ТВ напротив кровати: 13.11 — низкая рифлёная тумба орех h300 (как в гостиной) + ТВ 55"
+t0, t1 = BC - 1.0, BC + 1.0
+ORT = OPT.get("orehtv", "1") == "1"
+if ORT:
+    WS_ = -1; oreh_tv_unit(t0, t1, wall_z=Z1, ndoors=4)
+else:
+    box("ТВ-тумба", t0, Z1 - 0.40, t1, Z1, 0.30, 0.62, M["ward"]); box("Столешница", t0 - 0.01, Z1 - 0.41, t1 + 0.01, Z1, 0.62, 0.645, M["top"], 0.003)
+for k in (range(2) if not ORT else ()):
     u0, u1 = t0 + k * 0.8 + 0.003, t0 + (k + 1) * 0.8 - 0.003
     box("Фасад", u0, Z1 - 0.42, u1, Z1 - 0.40, 0.305, 0.615, M["ward"], 0.002)
     box("Ручка", (u0 + u1) / 2 - 0.1, Z1 - 0.435, (u0 + u1) / 2 + 0.1, Z1 - 0.42, 0.55, 0.562, M["black"], 0.003)

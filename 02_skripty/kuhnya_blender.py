@@ -137,9 +137,13 @@ def marble_img(name, nx, ny, tiles_u, tiles_v, seed=3, kind="dark"):
         "white":  ((0.91, 0.90, 0.885), (0.55, 0.53, 0.52), SOFT, 0.015),   # белый мрамор
         "grafit": ((0.30, 0.30, 0.31), (0.80, 0.80, 0.80), SPARSE, 0.06),   # графит, редкие прожилки
         "grey":   ((0.50, 0.495, 0.49), (0.90, 0.90, 0.89), DENSE * 0.8, 0.05),  # серый мрамор с белыми прожилками
-        "greige": ((0.55, 0.52, 0.48), (0.88, 0.86, 0.82), SPARSE, 0.05),   # тёплый серо-бежевый камень
+        "greige": ((0.78, 0.75, 0.70), (0.90, 0.88, 0.85), SPARSE, 0.03),   # 14.11: СВЕТЛЫЙ грейж-камень (было 0.55 — выходило тёмно-коричневым)   # тёплый серо-бежевый камень
         "beton":  ((0.40, 0.395, 0.39), (0.40, 0.40, 0.40), SPARSE * 0, 0.12),
         # 13.11 серая гамма (заказчик: «серый, тёмно-серый, чёрно-серый, графитово-серый»), одна плитка на всю ванную
+        "mokko": ((0.43, 0.38, 0.33), (0.70, 0.66, 0.60), SOFT, 0.02),   # тёплый тёмный камень (мокко) — в тон дымчатому дубу
+        "sand":  ((0.80, 0.76, 0.69), (0.70, 0.66, 0.60), SOFT, 0.01),   # песочный / травертин-беж (джапанди)
+        "calac": ((0.93, 0.925, 0.91), (0.62, 0.60, 0.58), SOFT, 0.03),  # белый мрамор calacatta (классика)
+        "light": ((0.74, 0.69, 0.62), (0.86, 0.83, 0.78), SOFT, 0.02),   # 14.11: светлый тауп — в тон обоям, но светлее  # 14.11: светлый тёплый мрамор (заказчик: «кафель светлый везде»)
         "g1": ((0.56, 0.56, 0.56), (0.86, 0.86, 0.86), DENSE * 0.55, 0.06),   # серый
         "g2": ((0.42, 0.42, 0.425), (0.84, 0.84, 0.84), DENSE * 0.55, 0.07),  # тёмно-серый
         "g3": ((0.31, 0.31, 0.32), (0.82, 0.82, 0.82), DENSE * 0.55, 0.08),   # графит
@@ -163,7 +167,7 @@ def marble_mat(name, img, S, rough=0.12):
     tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = S
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs[0], t.inputs["Vector"]); nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     return m
-ALL = OPT.get("all", "g1")      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
+ALL = OPT.get("all", "greige")   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
 IMG_W = marble_img("мрамор тёмный стены", 1024, 2048, 2, 2, 3, ALL or "dark")     # плитка 600×1200 вертикально
 IMG_L = marble_img("мрамор белый стены", 1024, 2048, 2, 2, 21, ALL or "white")
 IMG_F = marble_img("мрамор тёмный пол", 2048, 1024, 2, 2, 11, ALL or "dark")      # пол 1200×600
@@ -176,6 +180,21 @@ M = dict(tile=marble_mat("Керамогранит тёмный", IMG_W, (1 / 1.
          mirror=mat("Зеркало", "#E3E7E8", 0.02, 1.0), glass=mat("Стекло", "#FFFFFF", 0.0, transm=1.0),
          dglass=mat("Стекло дверцы", "#202426", 0.05), towel=mat("Полотенце", "#8A8B8F", 1.0),
          led=emis("LED", "#FFE6C8", 6), ledm=emis("LED за зеркалом", "#FFE6C8", 40), spot=emis("Спот", "#FFF4E2", 12))
+# 13.11.2026 (заказчик): ВСЯ мебель — орех, как в первой гостиной (american walnut, тон #5E4434); вернуть графит: oreh=0
+_MB = OPT.get("mebel", "ivory")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
+if _MB == "oreh":
+    M["ward"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
+elif _MB == "dub":
+    M["ward"] = tex(mat("Шпон дуб светлый", "#C9A87F", 0.45), "washed_grey_oak_veneer", 1.6, "#CBAA80", 2.0)
+elif _MB == "dymdub":   # дымчатый дуб — в тон полу «тёплого графита»
+    M["ward"] = tex(mat("Шпон дуб дымчатый", "#6A5646", 0.45), "washed_grey_oak_veneer", 1.6, "#6B5747", 1.45)
+elif _MB == "umber":    # умбра — тёплый графитово-коричневый матовый
+    M["ward"] = mat("Фасады умбра", "#4A4038", 0.5)
+elif _MB in ("white", "mushroom", "ivory"):
+    M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
+if _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
+    M["oreh_tv"] = M["ward"]
+    if "frame" in M: M["frame"] = mat("Рамки фасадов", "#4A3628" if _MB == "oreh" else "#8C8478", 0.45)
 T = 0.12
 def wb(n, w, a0, a1, d0, d1, h0, h1, m, bev=0.0):
     """коробка у стены w (L/R/T/B): a — вдоль стены, d — отступ от стены в комнату"""
@@ -430,7 +449,10 @@ M["blind"] = mat("Рулонная штора", "#D9D7D2", 0.9, transm=0.25)
 M["shade"] = emis("Плафон", "#FFE2B8", 8)
 
 # ---------------- коробка: пол, стены (бамбук, листы 1220 со швами), окно, проём
-box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["tilef"])
+M["kfloor"] = tex(mat("Пол дуб дымчатый (влагостойкий SPC)", "#7E6A58", 0.45), "laminate_floor_02", 0.6, "#7E6A58", 1.3)   # 14.11: пол как во всей квартире
+box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["kfloor"])
+for _o in [o for o in sc.objects if o.name.startswith("Пол") and o.type == "MESH"]:   # общий короб комнаты кладёт плитку — заменить на пол квартиры
+    _o.data.materials.clear(); _o.data.materials.append(M["kfloor"])
 box("Стена L", X0 - T, Z0 - T, X0, Z1 + T, 0, H, M["wall"])
 box("Стена R", X1, Z0 - T, X1 + T, Z1 + T, 0, H, M["wall"])
 box("Стена T1", X0 - T, Z0 - T, WX0, Z0, 0, H, M["wall"]); box("Стена T2", WX1, Z0 - T, X1 + T, Z0, 0, H, M["wall"])
@@ -582,10 +604,41 @@ try: sc.view_settings.view_transform = "AgX"
 except Exception: pass
 sc.view_settings.exposure = float(OPT.get("exp", "-0.6"))
 tag = OPT.get("tag", "")
+# ---- 14.11: БЫСТРЫЙ ПРОСМОТР (аргумент fast): EEVEE, 1280×720, файлы q_*.jpg — финал (Cycles) не перезаписывается
+if "fast" in ARGS:
+    for _e in ("BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
+        try: sc.render.engine = _e; break
+        except Exception: pass
+    try:
+        _ee = sc.eevee; _ee.taa_render_samples = 32
+        for _a, _v in (("use_raytracing", True), ("use_shadows", True), ("use_gtao", True), ("use_bloom", True)):
+            if hasattr(_ee, _a): setattr(_ee, _a, _v)
+    except Exception: pass
+    sc.render.resolution_x, sc.render.resolution_y = 1280, 720; QUICK = True
+    sc.view_settings.exposure = sc.view_settings.exposure + 0.7   # EEVEE без полного отражённого света — темнее Cycles
+# ---- 14.11: РЕАЛИЗМ (аргумент real): фаски на всех мебельных деталях, небо HDRI в окне, долгий расчёт, ровная камера 24 мм
+if "real" in ARGS:
+    for _o in [o for o in sc.objects if o.type == "MESH" and len(o.data.vertices) <= 24 and not o.name.startswith(("Пол", "Стена", "Потолок", "Окно", "Над", "Под", "Стекло"))]:
+        _d = max(_o.dimensions); 
+        if _d < 0.01: continue
+        _b = _o.modifiers.new("fаска", "BEVEL"); _b.width = min(0.004, min(x for x in _o.dimensions if x > 0) * 0.3); _b.segments = 2; _b.limit_method = "ANGLE"
+    _hd = os.path.join(PROJ, "03_materialy", "hdri", "sky.hdr")
+    if os.path.exists(_hd):
+        _w = sc.world or bpy.data.worlds.new("W"); sc.world = _w; _w.use_nodes = True; _nt = _w.node_tree
+        _bg = _nt.nodes.get("Background") or _nt.nodes.new("ShaderNodeBackground"); _env = _nt.nodes.new("ShaderNodeTexEnvironment")
+        _env.image = bpy.data.images.load(_hd, check_existing=True); _nt.links.new(_env.outputs["Color"], _bg.inputs["Color"]); _bg.inputs["Strength"].default_value = 1.0
+    sc.cycles.samples = int(OPT.get("samples", "700")); sc.cycles.adaptive_threshold = 0.01
+    sc.cycles.max_bounces = 12; sc.cycles.diffuse_bounces = 6; sc.cycles.glossy_bounces = 6; sc.cycles.sample_clamp_indirect = 8
+    try: sc.view_settings.look = "AgX - Medium High Contrast"
+    except Exception: pass
+    sc.render.resolution_x, sc.render.resolution_y = 1920, 1080; QUICK = False; tag = tag if "tag" in OPT else "_real"
 for s_ in SHOTS:
     if s_ not in CAMS: continue
     n_, loc, tgt, lens = CAMS[s_]
     cd = bpy.data.cameras.new(n_); cd.lens = lens; cd.sensor_width = 36; cd.clip_start = 0.02
     co = bpy.data.objects.new(n_, cd); co.location = loc; co.rotation_euler = (tgt - loc).to_track_quat("-Z", "Y").to_euler(); sc.collection.objects.link(co)
+    if "real" in ARGS:     # ровная камера (вертикали вертикальны), объектив ~22–24 мм, вверх/вниз — сдвигом
+        _dv = tgt - loc; _hd2 = math.hypot(_dv.x, _dv.y); co.rotation_euler = (math.radians(90), 0, math.atan2(_dv.y, _dv.x) - math.radians(90))
+        cd.lens = lens if lens < 15 else max(lens, 20); cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n_ + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)
