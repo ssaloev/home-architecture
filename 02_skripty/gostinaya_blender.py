@@ -15,6 +15,10 @@ ARGS = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 QUICK = "quick" in ARGS
 KREM = "krem" in ARGS
 OPTC = dict(a.split("=", 1) for a in ARGS if a.startswith(("tumba=", "tumbaf=", "tumbatex=")))
+DAST = "dast" in ARGS
+SMC = "smceil" in ARGS
+LYUS = "lyustra" in ARGS      # люстра-кольца — только по флагу (13.11: заказчик: «люстру пока убери»)        # 13.11: потолок КАК У SM — широкий короб, скрытая подсветка за карнизом, лепные уголки, трек по кругу, люстра-кольца, БЕЗ световых линий
+STR = DAST or ("stroitel" in ARGS)   # 13.11.2026: ТОЛЬКО правки строителя — крупные рамки, шпон за ТВ, одна рамка на потолке + треки          # 13.11.2026: по примеру SM — дастархан, диван в углу у окна, шпон за ТВ, крупные рамки, треки
 GREYW = "greywalls" in ARGS    # 12.11: стены — серые бамбуковые панели (фактура шпона, сатин), как в коридоре          # 12.11.2026: стиль заказчика — крем + дуб + латунь, встроенная мебель
 SHOTS = None
 VARIANTS = None; VAR = "A"; SOFA = None; CHAIR = None; CEIL = 0; NIGHT = False; FL = None; PLANK = (1.2, 0.15); TAG = ""; WMODE = None; W2 = "#C2BDB3"
@@ -280,6 +284,23 @@ def mold_strip(side, a0, a1, h0, h1, horiz):
 _PRF = [(-0.035, 0), (-0.035, 0.005), (-0.030, 0.006), (-0.026, 0.008), (-0.022, 0.013), (-0.016, 0.018), (-0.010, 0.021),
         (-0.004, 0.022), (0.002, 0.020), (0.006, 0.015), (0.010, 0.012), (0.014, 0.013), (0.018, 0.016), (0.022, 0.016),
         (0.026, 0.012), (0.029, 0.008), (0.032, 0.006), (0.035, 0.004), (0.035, 0)]
+if SMC:   # 13.11: тонкий ступенчатый профиль 50×15 (как у SM), прежний 70×22 выглядел грубо
+    _PRF = [(-0.025, 0), (-0.025, 0.003), (-0.021, 0.004), (-0.019, 0.007), (-0.015, 0.008), (-0.012, 0.011), (-0.008, 0.014),
+            (-0.004, 0.015), (0.0, 0.015), (0.004, 0.013), (0.007, 0.010), (0.010, 0.009), (0.013, 0.010), (0.016, 0.008),
+            (0.019, 0.005), (0.022, 0.004), (0.025, 0.003), (0.025, 0)]
+_PRF90 = [(-0.045, 0), (-0.045, 0.006), (-0.041, 0.007), (-0.041, 0.011), (-0.036, 0.013), (-0.031, 0.019), (-0.025, 0.024),
+          (-0.019, 0.027), (-0.013, 0.028), (-0.008, 0.026), (-0.006, 0.022), (-0.002, 0.021), (0.002, 0.023), (0.006, 0.026),
+          (0.010, 0.026), (0.014, 0.023), (0.016, 0.019), (0.020, 0.017), (0.024, 0.018), (0.030, 0.016), (0.035, 0.012),
+          (0.039, 0.009), (0.042, 0.006), (0.045, 0.005), (0.045, 0)]
+_PRFL = [(-0.015, 0), (-0.015, 0.004), (-0.012, 0.005), (-0.010, 0.010), (-0.006, 0.014), (-0.001, 0.016), (0.004, 0.015), (0.008, 0.012), (0.011, 0.009), (0.013, 0.006), (0.015, 0.004), (0.015, 0)]
+_profs = {}
+def prof_obj(key, pts):
+    if key in _profs: return _profs[key]
+    cu = bpy.data.curves.new("профиль " + key, "CURVE"); cu.dimensions = "2D"
+    sp = cu.splines.new("POLY"); sp.points.add(len(pts) - 1)
+    for k, (x, y) in enumerate(pts): sp.points[k].co = (x, y, 0, 1)
+    o = bpy.data.objects.new("профиль " + key, cu); sc.collection.objects.link(o); o.hide_render = True
+    _profs[key] = o; return o
 _prof = None
 def profile_obj():
     global _prof
@@ -297,11 +318,19 @@ def wall_matrix(side):
     m = Matrix(((xl[0], yl[0], zl[0], org[0]), (xl[1], yl[1], zl[1], org[1]), (xl[2], yl[2], zl[2], org[2]), (0, 0, 0, 1)))
     return m
 
-def swept_frame(side, a0, a1, h0, h1, inset=0.035):
+def sm_frame(side, a0, a1, h0=None, h1=None, corners=False):     # 13.11 (заказчик): лепные уголки УБРАЛИ
+    """Рамка по системе SM (лист 53): внешний профиль 90, тонкая линия-валик на 30 внутрь, лепные уголки 170 на углах."""
+    h0 = 0.18 if h0 is None else h0; h1 = (H - 0.21 - 0.13 - 0.08) if h1 is None else h1
+    swept_frame(side, a0, a1, h0, h1, inset=0.045, prof=prof_obj("90", _PRF90))
+    swept_frame(side, a0 + 0.09 + 0.045, a1 - 0.09 - 0.045, h0 + 0.09 + 0.045, h1 - 0.09 - 0.045, inset=0.015, prof=prof_obj("линия", _PRFL))
+    if corners:
+        for (ac, hc, du, dv) in ((a0, h1, 1, -1), (a1, h1, -1, -1), (a0, h0, 1, 1), (a1, h0, -1, 1)):
+            orn_corner(side, ac, hc, du, dv, 0.26, lift=0.026)
+def swept_frame(side, a0, a1, h0, h1, inset=0.035, prof=None):
     """Рамка: классический профиль, выдавленный по прямоугольнику на стене (углы — «на ус»)."""
     sg = _AX[side][2]
     cu = bpy.data.curves.new("рамка", "CURVE"); cu.dimensions = "2D"; cu.fill_mode = "NONE"
-    cu.bevel_mode = "OBJECT"; cu.bevel_object = profile_obj(); cu.use_fill_caps = False
+    cu.bevel_mode = "OBJECT"; cu.bevel_object = prof or profile_obj(); cu.use_fill_caps = False
     sp = cu.splines.new("POLY"); pts = [(a0 + inset, h0 + inset), (a1 - inset, h0 + inset), (a1 - inset, h1 - inset), (a0 + inset, h1 - inset)]
     sp.points.add(3)
     for k, (a, h) in enumerate(pts): sp.points[k].co = (sg * a, h, 0.0005, 1)
@@ -343,16 +372,50 @@ def acanthus(side, ac, hc, du, dv, size=0.15, thick=0.012):
     sphere_w = wellip(side, ac + du * 0.13 * size, hc + dv * 0.13 * size, 0.012, 0.012, 0.012, M["mold"], "Лепнина бусина")
     return o
 
+_ORN = {}
+def orn_mesh(name):
+    if name in _ORN: return _ORN[name]
+    f_ = os.path.join(os.path.dirname(HERE), "03_materialy", "blenderkit", name + ".blend")
+    if not os.path.exists(f_): _ORN[name] = None; return None
+    with bpy.data.libraries.load(f_, link=False) as (src, dst): dst.objects = [n for n in src.objects]
+    ms = [o for o in dst.objects if o is not None and o.type == "MESH"]
+    if not ms: _ORN[name] = None; return None
+    o = max(ms, key=lambda q: len(q.data.vertices)); me = o.data.copy(); me.transform(o.matrix_world)
+    me.materials.clear(); me.materials.append(M["mold"])
+    vs = [v.co for v in me.vertices]; mn = Vector([min(v[i] for v in vs) for i in range(3)]); mx = Vector([max(v[i] for v in vs) for i in range(3)])
+    _ORN[name] = (me, mn, mx); return _ORN[name]
+def orn_corner(side, ac, hc, du, dv, size, lift=0.0):
+    """Барочный уголок на стене: (ac, hc) — внутренний угол рамки, du/dv — куда «смотрит» орнамент (внутрь рамки)."""
+    d = orn_mesh("lepnina_ugol_barokko")
+    if not d: return False
+    me, mn, mx = d; from mathutils import Matrix as _M3
+    k = size / max(mx.x - mn.x, mx.y - mn.y); sg = _AX[side][2]
+    # модель: вершина угла орнамента в (mx.x, mn.y) (проверено рендером 13.11) → ставим в угол рамки, отражая по осям в сторону du/dv
+    T = (wall_matrix(side) @ _M3.Translation((sg * ac, hc, lift)) @ _M3.Diagonal((-sg * du, dv, 1, 1)) @ _M3.Scale(k, 4) @ _M3.Translation((-mx.x, -mn.y, -mn.z)))
+    o = bpy.data.objects.new("Лепнина уголок", me); o.matrix_world = T; sc.collection.objects.link(o)
+    return True
 def frame_on_wall(side, a0, a1, h0, h1, t=0.07, deco=True):
     """Рамка-молдинг (неоклассика): профиль 70×24 + лепные уголки-акант во всех углах (узел Б)."""
     if WMODE == "insets": wbox(side, a0 + 0.02, a1 - 0.02, 0.0, 0.0025, h0 + 0.02, h1 - 0.02, M["wall2"], name="Вставка")
     swept_frame(side, a0, a1, h0, h1)
     if deco and (a1 - a0) > 0.3 and (h1 - h0) > 0.3:
-        e = t + 0.005
+        e = (0.045 if SMC else t + 0.005)
         for (ac, hc, du, dv) in ((a0 + e, h1 - e, 1, -1), (a1 - e, h1 - e, -1, -1), (a0 + e, h0 + e, 1, 1), (a1 - e, h0 + e, -1, 1)):
+            if SMC: continue      # 13.11: рамки без лепных уголков (как SM «Гостиная 4»)
             acanthus(side, ac, hc, du, dv, size=0.22 if (h1 - h0) > 0.9 else 0.15)
 
 def frames_in(side, a0, a1):
+    if SMC:      # 13.11 согласовано (лист 53 SM): одна высокая рамка, двойной профиль 90 + линия, уголки, отступы 80
+        if a1 - a0 < 0.45: return
+        n = max(1, round((a1 - a0) / 1.6)); g = 0.10; m = 0.10; w_ = ((a1 - a0) - 2 * m - g * (n - 1)) / n; u = a0 + m
+        for k in range(n):
+            sm_frame(side, u, u + w_); u += w_ + g
+        return
+    if STR:      # по строителю: рамки крупнее — одна высокая рамка на ~1,8 м стены
+        if a1 - a0 < 0.45: return
+        n = max(1, round((a1 - a0) / 1.8)); w = (a1 - a0) / n
+        for k in range(n): frame_on_wall(side, a0 + k * w + 0.15, a0 + (k + 1) * w - 0.15, 0.30, H - 0.45)
+        return
     n = max(1, round((a1 - a0) / 1.1)); w = (a1 - a0) / n
     for k in range(n):
         u0, u1 = a0 + k * w + 0.12, a0 + (k + 1) * w - 0.12
@@ -455,7 +518,7 @@ for (a, b, c, d) in ((X0, Z0, X0 + 0.015, Z1), (X1 - 0.015, Z0, X1, Z1), (X0, Z1
     box("Плинтус", a, b, c, d, 0, 0.12, M["mold"], 0.004)
     ex = 0.012 if c - a < 0.05 else 0; ez = 0.012 if d - b < 0.05 else 0
     box("Плинтус валик", a - (ex if a > X0 + 0.5 else -0.0) * 0, b, c + 0, d, 0.105, 0.125, M["mold"], 0.008, 4) if False else None
-CH = H - 0.16 if CEIL != 8 else H - 0.10   # при коробе карниз встаёт под короб
+CH = H - 0.16 if CEIL != 8 else ((H - 0.21) if SMC else H - 0.10)   # при коробе карниз встаёт под короб
 for (a, b, c, d, la, lb, lc, ld) in (
         (X0, Z0 + NI, X0 + 0.10, Z1, X0 + 0.02, Z0 + NI, X0 + 0.04, Z1),
         (X1 - 0.10, Z0 + NI, X1, Z1, X1 - 0.04, Z0 + NI, X1 - 0.02, Z1),
@@ -485,7 +548,7 @@ elif CEIL == 3:   # рамка, разделённая на 3 квадрата (
 elif CEIL == 4:   # три отдельных прямоугольника вдоль комнаты
     L3 = (fb1 - fb0 - 0.4) / 3
     for k in range(3): led_rect(fa0, fa1, fb0 + k * (L3 + 0.2), fb0 + k * (L3 + 0.2) + L3)
-else:
+elif not SMC:
     led_rect(fa0, fa1, fb0, fb1)
 def ceil_frame(a0, a1, b0, b1, w=0.06, dep=0.025):
     """Потолочный молдинг (рамка) — скруглённые планки на потолке."""
@@ -508,40 +571,189 @@ def _ornament_side():
 ORN_C = _ornament_side()
 ORN_C = ORN_C + [([(v, u) for (u, v) in pts], r0, r1) for (pts, r0, r1) in ORN_C]            # зеркально по диагонали
 ORN_C += [(_arc((0.05, 0.05), (0.22, 0.22), 0.0), 1.1, 0.9), (_spiral(0.10, 0.10, 0.06, 0.01, 0.0, 1.0, 20), 0.9, 0.3)]   # центр угла
-def acanthus_ceil(xc, zc, dx, dz, size=0.26, thick=0.014, shape=None):
+def acanthus_ceil(xc, zc, dx, dz, size=0.26, thick=0.014, shape=None, hz=None):
     """Лепной уголок-акант на потолке (тот же рисунок, что на стенах)."""
     cu = bpy.data.curves.new("акант-потолок", "CURVE"); cu.dimensions = "3D"
     cu.bevel_depth = thick; cu.bevel_resolution = 4; cu.use_fill_caps = True
     for (pts, r0, r1) in (shape or ORN_C):
         sp = cu.splines.new("POLY"); sp.points.add(len(pts) - 1)
         for k, (u, v) in enumerate(pts):
-            t = k / max(1, len(pts) - 1); pw = W(xc + dx * u * size, zc + dz * v * size, H - thick * 0.55)
+            t = k / max(1, len(pts) - 1); pw = W(xc + dx * u * size, zc + dz * v * size, (hz if hz is not None else H) - thick * 0.55)
             sp.points[k].co = (pw.x, pw.y, pw.z, 1); sp.points[k].radius = r0 + (r1 - r0) * t
     o = bpy.data.objects.new("Лепнина потолок", cu); sc.collection.objects.link(o); o.data.materials.append(M["mold"])
-BW, BD = 0.34, 0.10                # короб ГКЛ по периметру 340×100 (как фото 1), у окна — ниша штор
+BW, BD = (0.58, 0.21) if SMC else (0.34, 0.10)                # короб ГКЛ по периметру 340×100 (как фото 1), у окна — ниша штор
 COVE = []
 if CEIL == 8:
     zb0 = Z0 + NI                      # у окна короб начинается за нишей штор
     # короб по кругу: внешняя часть (у стен) — во всю высоту; внутри — полка под ленту и бортик по контуру
     ia0, ia1, ib0, ib1 = X0 + BW, X1 - BW, zb0 + BW, Z1 - BW          # внутренний контур короба
-    # 12.11: без шва в углах — куски не перекрываются и без фаски на стыках (иначе в углу видна линия)
-    for (a0_, b0_, a1_, b1_) in ((X0, zb0, X0 + 0.20, Z1), (X1 - 0.20, zb0, X1, Z1), (X0 + 0.20, Z1 - 0.20, X1 - 0.20, Z1), (X0 + 0.20, zb0, X1 - 0.20, zb0 + 0.20)):
-        box("Короб", a0_, b0_, a1_, b1_, H - BD, H, M["ceil"])
-    for (a0_, b0_, a1_, b1_) in ((X0 + 0.20, zb0 + 0.20, ia0, Z1 - 0.20), (ia1, zb0 + 0.20, X1 - 0.20, Z1 - 0.20),
-                                  (ia0, ib1, ia1, Z1 - 0.20), (ia0, zb0 + 0.20, ia1, ib0)):
-        box("Короб полка", a0_, b0_, a1_, b1_, H - BD, H - 0.065, M["ceil"])
-    for (a0_, b0_, a1_, b1_) in ((ia0 - 0.02, ib0 - 0.02, ia0, ib1 + 0.02), (ia1, ib0 - 0.02, ia1 + 0.02, ib1 + 0.02),
-                                  (ia0, ib1, ia1, ib1 + 0.02), (ia0, ib0 - 0.02, ia1, ib0)):
-        box("Короб бортик", a0_, b0_, a1_, b1_, H - 0.065, H - 0.045, M["ceil"])
-    # лента — непрерывно по кругу, углы тоже светятся
-    COVE = [("L", ia0 - 0.05, (ib0 + ib1) / 2, 0.03, ib1 - ib0 + 0.10), ("R", ia1 + 0.05, (ib0 + ib1) / 2, 0.03, ib1 - ib0 + 0.10),
-            ("B", (ia0 + ia1) / 2, ib1 + 0.05, ia1 - ia0 + 0.10, 0.03), ("T", (ia0 + ia1) / 2, ib0 - 0.05, ia1 - ia0 + 0.10, 0.03)]
-    ceil_frame(X0 + 0.45, X1 - 0.45, Z0 + NI + 0.45, Z1 - 0.45, w=0.08, dep=0.05)     # по эскизу: одна рамка в двойную линию
-    ceil_frame(X0 + 0.54, X1 - 0.54, Z0 + NI + 0.54, Z1 - 0.54, w=0.035, dep=0.03)
+    if not SMC:
+        # 12.11: без шва в углах — куски не перекрываются и без фаски на стыках (иначе в углу видна линия)
+        for (a0_, b0_, a1_, b1_) in ((X0, zb0, X0 + 0.20, Z1), (X1 - 0.20, zb0, X1, Z1), (X0 + 0.20, Z1 - 0.20, X1 - 0.20, Z1), (X0 + 0.20, zb0, X1 - 0.20, zb0 + 0.20)):
+            box("Короб", a0_, b0_, a1_, b1_, H - BD, H, M["ceil"])
+        for (a0_, b0_, a1_, b1_) in ((X0 + 0.20, zb0 + 0.20, ia0, Z1 - 0.20), (ia1, zb0 + 0.20, X1 - 0.20, Z1 - 0.20),
+                                      (ia0, ib1, ia1, Z1 - 0.20), (ia0, zb0 + 0.20, ia1, ib0)):
+            box("Короб полка", a0_, b0_, a1_, b1_, H - BD, H - 0.065, M["ceil"])
+        for (a0_, b0_, a1_, b1_) in ((ia0 - 0.02, ib0 - 0.02, ia0, ib1 + 0.02), (ia1, ib0 - 0.02, ia1 + 0.02, ib1 + 0.02),
+                                      (ia0, ib1, ia1, ib1 + 0.02), (ia0, ib0 - 0.02, ia1, ib0)):
+            box("Короб бортик", a0_, b0_, a1_, b1_, H - 0.065, H - 0.045, M["ceil"])
+        # лента — непрерывно по кругу, углы тоже светятся
+        COVE = [("L", ia0 - 0.05, (ib0 + ib1) / 2, 0.03, ib1 - ib0 + 0.10), ("R", ia1 + 0.05, (ib0 + ib1) / 2, 0.03, ib1 - ib0 + 0.10),
+                ("B", (ia0 + ia1) / 2, ib1 + 0.05, ia1 - ia0 + 0.10, 0.03), ("T", (ia0 + ia1) / 2, ib0 - 0.05, ia1 - ia0 + 0.10, 0.03)]
+    if SMC:   # 13.11 — ТОЧНО ПО ЧЕРТЕЖУ SM (листы 49–50): короб 280 (самый низ) | карниз 65 | 2-й уровень 215 + трек 35 + 150 | карниз 155 | поле (выше всех)
+        L1D, L2D, FD = BD, 0.15, 0.03      # 13.11 согласовано: Узел-1 SM ×0,6 — низ короба 2490, 2-й уровень 2550, поле 2670
+        d1, d2 = 0.28, 0.28 + 0.215 + 0.035 + 0.15
+        ia0, ia1, ib0, ib1 = X0 + d2, X1 - d2, zb0 + d2, Z1 - d2
+        def ring(a, b, h0, h1, nm, m, bev=0.0):     # прямоугольное кольцо между отступами a и b от стен
+            for (a0_, b0_, a1_, b1_) in ((X0 + a, zb0 + a, X0 + b, Z1 - a), (X1 - b, zb0 + a, X1 - a, Z1 - a),
+                                          (X0 + b, zb0 + a, X1 - b, zb0 + b), (X0 + b, Z1 - b, X1 - b, Z1 - a)):
+                box(nm, a0_, b0_, a1_, b1_, h0, h1, m, bev)
+        ring(0, d1, H - L1D, H, "Потолок уровень 1 (короб 280)", M["ceil"])
+        ring(d1, d2, H - L2D, H, "Потолок уровень 2", M["ceil"])
+        box("Потолок поле", X0 + d2, zb0 + d2, X1 - d2, Z1 - d2, H - FD, H, M["ceil"])
+        def crown(base, prof, htop, name):
+            """Профильный карниз: профиль (d — к центру от грани, dy — от плоскости htop) протянут по прямоугольнику, углы на ус."""
+            bm = bmesh.new(); rows = []
+            for (dd, dy) in prof:
+                o_ = base + dd
+                rows.append([bm.verts.new(W(x_, z_, htop + dy)) for (x_, z_) in ((X0 + o_, zb0 + o_), (X1 - o_, zb0 + o_), (X1 - o_, Z1 - o_), (X0 + o_, Z1 - o_))])
+            for i in range(len(rows) - 1):
+                for k in range(4):
+                    bm.faces.new((rows[i][k], rows[i][(k + 1) % 4], rows[i + 1][(k + 1) % 4], rows[i + 1][k]))
+            o_ = obj(name, bm, M["mold"])
+            for pp in o_.data.polygons: pp.use_smooth = True
+            return o_
+        def cyma(P, Hh, n=10):
+            """Классический профиль карниза: полочка, выкружка-гусёк, валик, полочки (от потолка к стене)."""
+            pts = [(P, 0.0), (P, -0.06 * Hh), (0.93 * P, -0.06 * Hh), (0.93 * P, -0.12 * Hh)]
+            for k in range(1, n + 1):
+                t = k / n; pts.append((0.88 * P - 0.60 * P * t, -0.14 * Hh - 0.56 * Hh * (3 * t * t - 2 * t ** 3)))
+            for k in range(1, 7):                                 # валик (полукруг)
+                a_ = math.pi * k / 6; pts.append((0.28 * P + 0.07 * P * math.sin(a_), -0.70 * Hh - 0.10 * Hh * (1 - math.cos(a_))))
+            pts += [(0.18 * P, -0.90 * Hh), (0.12 * P, -0.90 * Hh), (0.12 * P, -0.96 * Hh), (0.0, -0.96 * Hh), (0.0, -Hh)]
+            return pts
+        crown(d1, cyma(0.065, 0.06), H - L2D, "Карниз 60×65 профильный")
+        # 13.11 (заказчик: «что за 3 линии»): у стен ОДИН профильный карниз 130 под коробом (как SM, лист 53) вместо трёх полос
+        for o_ in [o for o in sc.objects if o.name.startswith(("Карниз-галтель", "Карниз ступень", "Карниз валик"))]:
+            bpy.data.objects.remove(o_, do_unlink=True)
+        crown(0.0, cyma(0.08, 0.13), H - L1D, "Карниз 130 у стен")              # на ступени короб 280 / 2-й уровень
+        # карниз 155 у поля: широкий гусёк по 2-му уровню + бортик, за которым лента светит на поле
+        # карниз 100×105 на грани подъёма к полю (по Узлу-1): верх на 30 ниже поля, на нём лента — светит на поле
+        p105 = [(0.0, 0.0), (0.105, 0.0), (0.105, -0.012), (0.095, -0.012), (0.095, -0.020)]
+        for k in range(1, 11):
+            t = k / 10; p105.append((0.090 - 0.060 * t, -0.022 - 0.058 * (3 * t * t - 2 * t ** 3)))
+        p105 += [(0.026, -0.085), (0.026, -0.092), (0.012, -0.092), (0.012, -0.100), (0.0, -0.100)]
+        crown(d2, p105, H - FD - 0.03, "Карниз 100×105 профильный")
+        ring(d2 + 0.02, d2 + 0.035, H - FD - 0.03, H - FD - 0.027, "LED на карнизе", M["led"])
+        box_led = None
+        # барочная лепнина (BlenderKit): уголки на 2-м уровне + завитки по центру сторон
+        def bk_ceil(name, cx_, cz_, rotz, wtarget, hz_=None):
+            f_ = os.path.join(BK, name + ".blend")
+            if not os.path.exists(f_): return
+            with bpy.data.libraries.load(f_, link=False) as (src, dst): dst.objects = [n for n in src.objects]
+            objs_ = [o for o in dst.objects if o is not None and o.type == "MESH"]
+            for o in objs_: sc.collection.objects.link(o); o.data.materials.clear(); o.data.materials.append(M["mold"])
+            roots_ = [o for o in objs_ if o.parent is None or o.parent not in objs_]
+            bpy.context.view_layer.update()
+            pts_ = [o.matrix_world @ Vector(c) for o in objs_ for c in o.bound_box]
+            mn_ = Vector([min(q[i] for q in pts_) for i in range(3)]); mx_ = Vector([max(q[i] for q in pts_) for i in range(3)])
+            ctr_ = (mn_ + mx_) / 2; k_ = wtarget / max(mx_.x - mn_.x, mx_.y - mn_.y); th_ = (mx_.z - mn_.z) * k_
+            from mathutils import Matrix as _M2
+            T_ = _M2.Translation(W(cx_, cz_, (hz_ if hz_ is not None else H - L2D) - th_ / 2 + 0.002)) @ _M2.Rotation(math.radians(rotz), 4, "Z") @ _M2.Rotation(math.pi, 4, "X") @ _M2.Scale(k_, 4) @ _M2.Translation(-ctr_)
+            for r_ in roots_: r_.matrix_world = T_ @ r_.matrix_world
+        cw_ = 0.25; mcx, mcz = 0.14, 0.14     # 13.11: лепнина на нижнем коробе 280 (как у SM — у карниза)
+        for (x_, z_, rz) in ((X0 + mcx, zb0 + mcz, 0), (X1 - mcx, zb0 + mcz, 90), (X1 - mcx, Z1 - mcz, 180), (X0 + mcx, Z1 - mcz, 270)):
+            pass   # 13.11: лепнину на потолке убрали (заказчик, как SM «Гостиная 4»)
+        mid_ = 0.14
+        for (x_, z_, rz, wt) in ((X0 + mid_, (zb0 + Z1) / 2, 90, 0.55), (X1 - mid_, (zb0 + Z1) / 2, 270, 0.55), ((X0 + X1) / 2, Z1 - mid_, 0, 0.55), ((X0 + X1) / 2, zb0 + mid_, 180, 0.55)):
+            pass
+        # встроенные круглые светильники Ø80 в коробе 280 (как у SM): по длинным сторонам и у шкафа
+        DL = [(X0 + 0.14, zb0 + 0.9 + k * (Z1 - zb0 - 1.8) / 3) for k in range(4)] + [(X1 - 0.14, zb0 + 0.9 + k * (Z1 - zb0 - 1.8) / 3) for k in range(4)] + [((X0 + X1) / 2 + dx_, Z1 - 0.14) for dx_ in (-0.8, 0.8)]
+        for (x_, z_) in DL:
+            ellipse_prism("Встроенный светильник", x_, z_, 0.045, 0.045, H - L1D - 0.002, H - L1D + 0.001, M["black"], seg=24)
+            ellipse_prism("Встроенный светильник линза", x_, z_, 0.028, 0.028, H - L1D - 0.003, H - L1D - 0.001, M["led"], seg=24)
+            lt = bpy.data.lights.new("Встроенный", "SPOT"); lt.energy = 7 if not NIGHT else 14; lt.spot_size = math.radians(60); lt.spot_blend = 0.6; lt.color = (1.0, 0.9, 0.78); lt.shadow_soft_size = 0.02
+            lo = bpy.data.objects.new("Встроенный", lt); lo.location = W(x_, z_, H - L1D - 0.01); sc.collection.objects.link(lo)
+        L_ = Z1 - zb0 - 2 * d2; Wd = X1 - X0 - 2 * d2
+        COVE = [("L", X0 + d2 + 0.03, (zb0 + Z1) / 2, 0.03, L_), ("R", X1 - d2 - 0.03, (zb0 + Z1) / 2, 0.03, L_),
+                ("B", (X0 + X1) / 2, Z1 - d2 - 0.03, Wd, 0.03), ("T", (X0 + X1) / 2, zb0 + d2 + 0.03, Wd, 0.03)]
+        # лепные уголки на втором уровне, по углам ступени
+        for (x_, z_, dx, dz) in ((X0 + d1 + 0.07, zb0 + d1 + 0.07, 1, 1), (X1 - d1 - 0.07, zb0 + d1 + 0.07, -1, 1), (X0 + d1 + 0.07, Z1 - d1 - 0.07, 1, -1), (X1 - d1 - 0.07, Z1 - d1 - 0.07, -1, -1)):
+            pass
+        # чёрный магнитный трек 35 по кругу во 2-м уровне + линейные модули (как на плане SM)
+        tr = d1 + 0.215 + 0.0175
+        tx0, tx1, tz0_, tz1_ = X0 + tr, X1 - tr, zb0 + tr, Z1 - tr
+        for (a0_, b0_, a1_, b1_) in ((tx0 - 0.0175, tz0_, tx0 + 0.0175, tz1_), (tx1 - 0.0175, tz0_, tx1 + 0.0175, tz1_), (tx0, tz0_ - 0.0175, tx1, tz0_ + 0.0175), (tx0, tz1_ - 0.0175, tx1, tz1_ + 0.0175)):
+            box("Трек 35", a0_, b0_, a1_, b1_, H - L2D - 0.004, H - L2D + 0.001, M["black"])
+        for zz in ((zb0 + Z1) / 2 - 0.9, (zb0 + Z1) / 2 + 0.9):
+            for xx in (tx0, tx1):
+                box("Трек линейный модуль", xx - 0.016, zz - 0.25, xx + 0.016, zz + 0.25, H - L2D - 0.025, H - L2D - 0.004, M["black"])
+                box("Трек линейный LED", xx - 0.010, zz - 0.24, xx + 0.010, zz + 0.24, H - L2D - 0.027, H - L2D - 0.025, M["led"])
+        for xx in ((X0 + X1) / 2,):
+            for zz in (tz0_, tz1_):
+                box("Трек линейный модуль", xx - 0.25, zz - 0.016, xx + 0.25, zz + 0.016, H - L2D - 0.025, H - L2D - 0.004, M["black"])
+                box("Трек линейный LED", xx - 0.24, zz - 0.010, xx + 0.24, zz + 0.010, H - L2D - 0.027, H - L2D - 0.025, M["led"])
+        from mathutils import Matrix as _Mx
+        SPOTS = [(tx0, z_, 1, 0) for z_ in (zb0 + 0.95, zb0 + 1.08, (zb0 + Z1) / 2 - 0.08, (zb0 + Z1) / 2 + 0.08, Z1 - 1.08, Z1 - 0.95)] + \
+                [(tx1, z_, -1, 0) for z_ in (zb0 + 0.95, zb0 + 1.08, (zb0 + Z1) / 2 - 0.08, (zb0 + Z1) / 2 + 0.08, Z1 - 1.08, Z1 - 0.95)]
+        for (sx_, sz_, dx, dz) in SPOTS:
+            hb = H - L2D
+            ellipse_prism("Трек спот", sx_, sz_, 0.025, 0.025, hb - 0.13, hb - 0.002, M["black"], seg=20, bevel=0.004)
+            ellipse_prism("Трек спот кольцо", sx_, sz_, 0.027, 0.027, hb - 0.135, hb - 0.125, M["brass"], seg=20)
+            lt = bpy.data.lights.new("Трек свет", "SPOT"); lt.energy = 10 if not NIGHT else 20; lt.spot_size = math.radians(40); lt.spot_blend = 0.5
+            lt.color = (1.0, 0.9, 0.78); lt.shadow_soft_size = 0.02
+            lo = bpy.data.objects.new("Трек свет", lt); lo.location = W(sx_, sz_, hb - 0.14)
+            lo.rotation_euler = (math.radians(-20 * dz), math.radians(20 * dx), 0); sc.collection.objects.link(lo)
+        RINGS_ON = LYUS
+        # люстра из ХРУСТАЛЬНЫХ КОЛЕЦ (как у SM): призмы шампань на золотом ободе, на тонких подвесах, свет внутри
+        M["crystal"] = mat("Хрусталь шампань", "#EBCDB0", rough=0.03, transm=1.0)
+        try: M["crystal"].node_tree.nodes["Principled BSDF"].inputs["IOR"].default_value = 1.55
+        except Exception: pass
+        M["ringled"] = emit("LED кольца", "#FFD9A8", 6.0)
+        lcx, lcz = (X0 + X1) / 2, (zb0 + Z1) / 2
+        RINGS = [(0.00, -0.30, 0.48, 2.02), (0.30, 0.35, 0.36, 1.86), (-0.38, 0.40, 0.28, 1.74), (0.42, -0.55, 0.26, 1.80), (-0.05, 0.05, 0.20, 1.64)]
+        for (dx_, dz_, rr, hb_) in (RINGS if RINGS_ON else ()):
+            cx_, cz_ = lcx + dx_, lcz + dz_; hh_ = 0.13 if rr > 0.3 else 0.10
+            bm = bmesh.new(); n_ = int(2 * math.pi * rr / 0.021)
+            for k in range(n_):
+                a_ = 2 * math.pi * k / n_
+                r_ = bmesh.ops.create_cube(bm, size=1.0)["verts"]
+                for v in r_: v.co = Vector((v.co.x * 0.010, v.co.y * 0.026, v.co.z * hh_))
+                bmesh.ops.rotate(bm, verts=r_, cent=(0, 0, 0), matrix=__import__("mathutils").Matrix.Rotation(a_ + math.radians(35), 3, "Z"))
+                bmesh.ops.translate(bm, verts=r_, vec=W(cx_ + rr * math.cos(a_), cz_ + rr * math.sin(a_), hb_ + hh_ / 2))
+            o_ = obj("Люстра хрусталь", bm, M["crystal"])
+            for (h_, th_) in ((hb_ - 0.006, 0.012), (hb_ + hh_ - 0.006, 0.012)):
+                bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=False, segments=96, radius1=rr + 0.016, radius2=rr + 0.016, depth=th_)
+                bmesh.ops.translate(bm, verts=bm.verts, vec=W(cx_, cz_, h_ + th_ / 2)); obj("Люстра обод", bm, M["brass"])
+            bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=False, segments=96, radius1=rr - 0.02, radius2=rr - 0.02, depth=0.01)
+            bmesh.ops.translate(bm, verts=bm.verts, vec=W(cx_, cz_, hb_ + 0.01)); obj("Люстра LED", bm, M["ringled"])
+            for k in range(3):
+                a_ = 2 * math.pi * k / 3 + 0.4
+                box("Люстра подвес", cx_ + rr * math.cos(a_) - 0.0012, cz_ + rr * math.sin(a_) - 0.0012, cx_ + rr * math.cos(a_) + 0.0012, cz_ + rr * math.sin(a_) + 0.0012, hb_ + hh_, H, M["brass"])
+            box("Люстра крепление", cx_ - 0.012, cz_ - 0.012, cx_ + 0.012, cz_ + 0.012, H - 0.06, H, M["brass"], 0.004)
+            lt = bpy.data.lights.new("Люстра", "POINT"); lt.energy = (14 if rr > 0.3 else 8) * (1.6 if NIGHT else 1.0); lt.color = (1.0, 0.84, 0.62); lt.shadow_soft_size = rr * 0.8
+            lo = bpy.data.objects.new("Люстра", lt); lo.location = W(cx_, cz_, hb_ + hh_ / 2); sc.collection.objects.link(lo)
+    if not SMC: ceil_frame(X0 + 0.45, X1 - 0.45, Z0 + NI + 0.45, Z1 - 0.45, w=0.08, dep=0.05)     # по эскизу: одна рамка в двойную линию
+    if not STR and not SMC: ceil_frame(X0 + 0.54, X1 - 0.54, Z0 + NI + 0.54, Z1 - 0.54, w=0.035, dep=0.03)
     e = 0.58
-    for (x_, z_, dx, dz) in ((X0 + e, Z0 + NI + e, 1, 1), (X1 - e, Z0 + NI + e, -1, 1), (X0 + e, Z1 - e, 1, -1), (X1 - e, Z1 - e, -1, -1)):
+    for (x_, z_, dx, dz) in (() if SMC else ((X0 + e, Z0 + NI + e, 1, 1), (X1 - e, Z0 + NI + e, -1, 1), (X0 + e, Z1 - e, 1, -1), (X1 - e, Z1 - e, -1, -1))):
         acanthus_ceil(x_, z_, dx, dz, size=0.45, thick=0.017)
-    for zz in [Z0 + 1.4 + k * (Z1 - Z0 - 2.8) / 2 for k in range(3)]:   # по 3 круглых спота Ø100 с боков
+    if STR and not SMC:      # по строителю: трековые светильники (чёрные треки вдоль длинных сторон, по 4 поворотных спота)
+        from mathutils import Matrix as _Mx
+        for xx in (X0 + 0.80, X1 - 0.80):
+            box("Трек", xx - 0.017, Z0 + 0.9, xx + 0.017, Z1 - 0.9, H - 0.035, H, M["black"], 0.004)
+            sg = 1 if xx < (X0 + X1) / 2 else -1
+            for k in range(4):
+                zz = Z0 + 1.3 + k * (Z1 - Z0 - 2.6) / 3
+                box("Трек кронштейн", xx - 0.008, zz - 0.008, xx + 0.008, zz + 0.008, H - 0.09, H - 0.035, M["black"])
+                bm = bmesh.new(); bmesh.ops.create_cone(bm, cap_ends=True, segments=24, radius1=0.032, radius2=0.032, depth=0.13)
+                bmesh.ops.rotate(bm, verts=bm.verts, cent=(0, 0, 0), matrix=_Mx.Rotation(math.radians(25 * sg), 3, "Y"))
+                bmesh.ops.translate(bm, verts=bm.verts, vec=W(xx + 0.03 * sg, zz, H - 0.14)); obj("Трек спот", bm, M["black"])
+                lt = bpy.data.lights.new("Трек свет", "SPOT"); lt.energy = 9 if not NIGHT else 18; lt.spot_size = math.radians(45); lt.spot_blend = 0.5
+                lt.color = (1.0, 0.9, 0.78); lt.shadow_soft_size = 0.03
+                lo = bpy.data.objects.new("Трек свет", lt); lo.location = W(xx + 0.06 * sg, zz, H - 0.20)
+                lo.rotation_euler = (0, math.radians(25 * sg), 0); sc.collection.objects.link(lo)
+    for zz in ([] if STR else [Z0 + 1.4 + k * (Z1 - Z0 - 2.8) / 2 for k in range(3)]):   # по 3 круглых спота Ø100 с боков
         for xx in (X0 + 0.80, X1 - 0.80):
             ellipse_prism("Спот круглый", xx, zz, 0.05, 0.05, H - 0.006, H - 0.001, M["frame_led"], seg=24)
             lt = bpy.data.lights.new("Спот", "SPOT"); lt.energy = 6 if not NIGHT else 14; lt.spot_size = math.radians(70); lt.spot_blend = 0.6
@@ -560,9 +772,48 @@ elif CEIL == 7:   # C: лепная рамка снаружи LED + розетк
 
 # ---------------------------------------------------------------- стены: молдинги
 TVF = F("ТВ-тумба")[0]; tz0, tz1 = TVF["z"], TVF["z"] + TVF["d"]; tm = (tz0 + tz1) / 2
-frames_in("L", Z0, tz0); frames_in("L", tz1, Z1)
-frame_on_wall("L", tm - 1.12, tm + 1.12, 0.68, 2.00)                       # ТВ в рамке молдинга
-frames_in("R", Z0, Z1 - 0.62)
+SH0, SH1 = (tz0 - 0.85, tz0 - 0.03), (tz1 + 0.03, tz1 + 0.85)              # стеллажи по бокам ТВ (только вариант dast)
+if DAST:
+    frames_in("L", Z0, SH0[0]); frames_in("L", SH1[1], Z1)
+elif SMC:     # 13.11: ТВ-стена SM (лист 53) — рамки слева/справа от стеллажей 550
+    frames_in("L", Z0, tm - 1.55 - 0.55); frames_in("L", tm + 1.55 + 0.55, Z1)
+elif STR:     # шпон за ТВ вместо рамки-молдинга
+    frames_in("L", Z0, tz0); frames_in("L", tz1, Z1)
+else:
+    frames_in("L", Z0, tz0); frames_in("L", tz1, Z1)
+    frame_on_wall("L", tm - 1.12, tm + 1.12, 0.68, 2.00)                       # ТВ в рамке молдинга
+if SMC: M["walnut"] = mat("Шпон орех", "#5C4636", rough=0.45); pbr(M["walnut"], "american_walnut_veneer", 1.6, tint="#5E4434", use_diff=True, nstr=0.4, rough_mul=0.8)
+if SMC:     # 13.11 согласовано: 740 у кондиционера | 2100 над диваном с картиной | 1215 до шкафа
+    _s0, _s1 = 2.24, 4.64
+    # 13.11 (заказчик: «почему узкая — сделай большую»): после кондиционера — 2 большие равные рамки
+    # 13.11 (заказчик: «как у SM», лист 53): одна большая рамка 2100 по центру за диваном,
+    # по бокам — пары полос шпона ореха 200 с латунными вставками 20: 100 | 20 | 200 | 20 | 50 | 20 | 200 | 20 (от рамки наружу)
+    # 13.11 (заказчик): полосы ореха убрали, рамку — больше: одна рамка по центру дивана, от кондиционера (+150)
+    _fc = (_s0 + _s1) / 2; _hw = _fc - (Z0 + 0.30 + 1.10 + 0.15); _f0, _f1 = _fc - _hw, _fc + _hw
+    _RK = next((x_[3:] for x_ in ARGS if x_.startswith("rk=")), "3")   # 13.11 заказчик выбрал Б — три рамки
+    if _RK == "2":     # 2 равные рамки по центру дивана
+        _g = 0.10; sm_frame("R", _f0, _fc - _g / 2); sm_frame("R", _fc + _g / 2, _f1)
+    elif _RK == "3":   # 3 равные рамки на всю стену, кондиционер внутри первой
+        _e0, _e1 = Z0 + 0.10, Z1 - 0.62 - 0.12; _wm = (_e1 - _e0 - 0.20) / 3
+        for _k in range(3): sm_frame("R", _e0 + _k * (_wm + 0.10), _e0 + _k * (_wm + 0.10) + _wm)
+    else:
+        sm_frame("R", _f0, _f1)
+    _ht = H - 0.21 - 0.13
+    for _sg, _st in ():
+        _u = _st + _sg * 0.10
+        for (_w, _m) in ((0.02, "brass"), (0.20, "walnut"), (0.02, "brass"), (0.05, None), (0.02, "brass"), (0.20, "walnut"), (0.02, "brass")):
+            if _m:
+                _a0, _a1 = sorted((_u, _u + _sg * _w))
+                box("Полоса " + _m, X1 - (0.012 if _m == "walnut" else 0.008), _a0, X1, _a1, 0.0, _ht, M[_m], 0.002)
+            _u += _sg * _w
+    M["canvas"] = mat("Картина холст", "#33465C", rough=0.7)
+    _nt = M["canvas"].node_tree; _bs = _nt.nodes["Principled BSDF"]; _nz = _nt.nodes.new("ShaderNodeTexNoise"); _nz.inputs["Scale"].default_value = 3.0; _nz.inputs["Detail"].default_value = 12
+    _cr = _nt.nodes.new("ShaderNodeValToRGB"); _cr.color_ramp.elements[0].color = hexlin("#1E2A3A") + (1,) if len(hexlin("#1E2A3A")) == 3 else hexlin("#1E2A3A"); _cr.color_ramp.elements[1].color = hexlin("#A7B1BC") + (1,) if len(hexlin("#A7B1BC")) == 3 else hexlin("#A7B1BC")
+    _nt.links.new(_nz.outputs["Fac"], _cr.inputs["Fac"]); _nt.links.new(_cr.outputs["Color"], _bs.inputs["Base Color"])
+    _pc = (_s0 + _s1) / 2
+    # 13.11 (заказчик): картину над диваном УБРАЛИ
+else:
+    frames_in("R", Z0 + (2.55 if DAST else 0), Z1 - 0.62)   # SMC: рамки после кондиционера   # DAST: у окна вдоль стены — диван
 frames_in("T", X0, WX0) if WX0 - X0 > 0.5 else None
 frames_in("T", WX1, X1) if X1 - WX1 > 0.5 else None
 
@@ -574,7 +825,7 @@ if WMODE == "lower":
     wbox("T", WX0, WX1, 0.0, 0.0025, 0.0, WS - 0.03, M["wall2"], name="Низ стены")
 # ---------------------------------------------------------------- мебель
 # ТВ-зона: подвесная тумба в цвет стен + ТВ на стене
-if KREM:   # встроенная напольная тумба во всю ТВ-зону: рамки-фасады, латунные ручки, каменная столешница
+if KREM and not SMC:   # встроенная напольная тумба во всю ТВ-зону: рамки-фасады, латунные ручки, каменная столешница
     k0, k1, KD, KH = tm - 1.55, tm + 1.55, 0.45, 0.62
     box("ТВ-тумба корпус", X0, k0, X0 + KD - 0.02, k1, 0.08, KH, M["tumba"])
     box("Цоколь", X0, k0 + 0.02, X0 + KD - 0.06, k1 - 0.02, 0.0, 0.08, M["tumba"])
@@ -588,7 +839,7 @@ if KREM:   # встроенная напольная тумба во всю ТВ
             box("Рамка тумбы", X0 + KD, p0, X0 + KD + 0.008, p1, q0, q1, M["tumba_frame"], 0.002)
         mz = (u0 + u1) / 2
         box("Ручка латунь", X0 + KD + 0.008, mz - 0.11, X0 + KD + 0.022, mz + 0.11, KH - 0.115, KH - 0.103, M["brass"], 0.004)
-else:
+elif not SMC:
     box("ТВ-тумба", X0, tz0, X0 + TVF["w"], tz1, 0.25, 0.55, M["tumba"], 0.006)
     for zz in np.linspace(tz0, tz1, 4)[1:-1]:
         box("Шов фасада", X0 + TVF["w"] - 0.001, zz - 0.0015, X0 + TVF["w"] + 0.0005, zz + 0.0015, 0.26, 0.54, M["dark"])
@@ -598,10 +849,83 @@ else:
         for (p0, p1, q0, q1) in ((u0, u1, 0.49, 0.51), (u0, u1, 0.29, 0.31), (u0, u0 + 0.02, 0.29, 0.51), (u1 - 0.02, u1, 0.29, 0.51)):
             box("Рамка тумбы", _tf, p0, _tf + 0.01, p1, q0, q1, M["tumba_frame"], 0.002)
         sphere("Кнопка латунь", _tf + 0.02, (_seg[k] + _seg[k + 1]) / 2, 0.40, 0.014, M["brass"])
-box("ТВ 85\"", X0 + 0.01, tm - 0.95, X0 + 0.045, tm + 0.95, 0.80, 1.87, M["tv"], 0.004)   # ТВ 85" ~1900×1070
+TVX = X0 + (0.03 if STR else 0.0)
+box("ТВ 85\"", TVX + 0.01, tm - 0.95, TVX + 0.045, tm + 0.95, 0.80, 1.87, M["tv"], 0.004)
+if STR:
+    # по строителю: за ТВ — панель ШПОНА (орех), ламели, LED по контуру
+    M["veneer"] = mat("Шпон ореха за ТВ", "#6B4C36", rough=0.4)
+    pbr(M["veneer"], "washed_grey_oak_veneer", 1.2, tint="#7A5A40", use_diff=True, nstr=0.5, rough_mul=0.6)
+    vh1 = H - BD - 0.02 if CEIL == 8 else H - 0.18
+    if SMC:
+        # 13.11 согласовано (лист 53 SM; строитель: «под телевизором — шпон»): низкая рифлёная тумба 300 (орех) во всю зону,
+        # стеллажи 550 с подсветкой по бокам, рифлёная вставка 500 (светлое дерево) с LED за ТВ, рамка-молдинг вокруг центра
+        if "walnut" not in M: M["walnut"] = mat("Шпон орех", "#5C4636", rough=0.45); pbr(M["walnut"], "american_walnut_veneer", 1.6, tint="#5E4434", use_diff=True, nstr=0.4, rough_mul=0.8)
+        M["oaklt"] = mat("Рейки светлое дерево", "#D9C7AE", rough=0.5); pbr(M["oaklt"], "washed_grey_oak_veneer", 1.2, tint="#E2CFB2", use_diff=True, nstr=0.3, rough_mul=0.7)
+        TOPW = H - 0.21 - 0.13 - 0.08; UH, UD = 0.30, 0.40
+        C0, C1 = tm - 1.55, tm + 1.55; SA, SB = (C0 - 0.55, C0), (C1, C1 + 0.55)
+        # тумба 300 во всю зону: корпус орех + рифлёный фасад (рейки 20 через 30)
+        box("Тумба корпус", X0, SA[0], X0 + UD - 0.02, SB[1], 0.0, UH, M["walnut"])
+        z_ = SA[0] + 0.01
+        while z_ < SB[1] - 0.02:
+            box("Тумба рифление", X0 + UD - 0.02, z_, X0 + UD, z_ + 0.02, 0.01, UH - 0.005, M["walnut"], 0.006); z_ += 0.03
+        box("Тумба крышка", X0, SA[0] - 0.005, X0 + UD + 0.005, SB[1] + 0.005, UH, UH + 0.02, M["walnut"], 0.003)
+        nd_ = 6; dw_ = (SB[1] - SA[0]) / nd_          # 13.11 (заказчик): ручки — 6 дверец, латунные планки
+        for k in range(nd_):
+            zc_ = SA[0] + (k + 0.5) * dw_
+            if k: box("Тумба шов", X0 + UD - 0.001, SA[0] + k * dw_ - 0.002, X0 + UD + 0.001, SA[0] + k * dw_ + 0.002, 0.01, UH - 0.005, M["dark"])
+            box("Тумба ручка латунь", X0 + UD + 0.002, zc_ - 0.13, X0 + UD + 0.016, zc_ + 0.13, UH - 0.06, UH - 0.048, M["brass"], 0.004)
+        # стеллажи 550: короб крем (рамка 30), внутри орех, 4 полки с LED
+        for (s0_, s1_) in (SA, SB):
+            box("Стеллаж задник", X0, s0_, X0 + 0.02, s1_, UH + 0.02, TOPW, M["walnut"])
+            for (p0_, p1_) in ((s0_, s0_ + 0.03), (s1_ - 0.03, s1_)):
+                box("Стеллаж бок", X0, p0_, X0 + 0.35, p1_, UH + 0.02, TOPW, M["mold"], 0.003)
+            box("Стеллаж верх", X0, s0_, X0 + 0.35, s1_, TOPW - 0.03, TOPW, M["mold"], 0.003)
+            for hh in (0.78, 1.22, 1.66, 2.06):
+                box("Полка орех", X0, s0_ + 0.03, X0 + 0.34, s1_ - 0.03, hh - 0.02, hh, M["walnut"], 0.002)
+                box("LED полки", X0 + 0.30, s0_ + 0.035, X0 + 0.31, s1_ - 0.035, hh - 0.024, hh - 0.02, M["led"])
+                lt = bpy.data.lights.new("Полка свет", "AREA"); lt.energy = 3; lt.size = s1_ - s0_ - 0.08; lt.size_y = 0.04; lt.color = (1, 0.86, 0.66)
+                lo = bpy.data.objects.new("Полка свет", lt); lo.location = W(X0 + 0.26, (s0_ + s1_) / 2, hh - 0.03); lo.rotation_euler = (0, 0, math.radians(90)); sc.collection.objects.link(lo)
+                try: lo.visible_camera = False
+                except Exception: pass
+            import_bk("knigi", X0 + 0.17, (s0_ + s1_) / 2, 1.22, 90, 0.30)
+            import_bk("knigi", X0 + 0.17, (s0_ + s1_) / 2 - 0.08, 0.80, 90, 0.26)
+        # рамка-молдинг вокруг центральной зоны (без уголков — как у SM на ТВ-стене)
+        sm_frame("L", C0 + 0.10, C1 - 0.10, UH + 0.10, TOPW, corners=False)
+        # рифлёная вставка 500 светлого дерева с LED по краям — левее центра, за ТВ (как у SM)
+        FL0 = C0 + 0.65; FL1 = FL0 + 0.50
+        # 13.11 (заказчик): рифлёную вставку за ТВ УБРАЛИ — «так красивее»
+        z_ = FL1
+        while False:
+            box("Вставка рейка", X0 + 0.012, z_, X0 + 0.03, z_ + 0.022, UH + 0.02, TOPW, M["oaklt"], 0.004); z_ += 0.034
+        pass
+    else:
+        box("Панель шпона", X0, tz0, X0 + 0.03, tz1, 0.665, vh1, M["veneer"], 0.003)
+        nl = 14
+        for k in range(1, nl):
+            zz = tz0 + k * (tz1 - tz0) / nl
+            box("Шпон шов", X0 + 0.029, zz - 0.002, X0 + 0.031, zz + 0.002, 0.67, vh1 - 0.005, M["dark"])
+        for zz in (tz0 + 0.005, tz1 - 0.005):
+            box("LED шпон", X0 + 0.03, zz - 0.004, X0 + 0.036, zz + 0.004, 0.67, vh1, M["led"])
+    # графитовые стеллажи с подсветкой полок (наш цвет), низ — закрытые дверцы — только вариант dast
+    SD = 0.35; sh_top = vh1
+    for (s0, s1) in ((SH0, SH1) if DAST else ()):
+        box("Стеллаж бок", X0, s0, X0 + SD, s0 + 0.025, 0, sh_top, M["tumba"])
+        box("Стеллаж бок", X0, s1 - 0.025, X0 + SD, s1, 0, sh_top, M["tumba"])
+        box("Стеллаж задник", X0, s0, X0 + 0.02, s1, 0, sh_top, M["tumba"])
+        box("Стеллаж верх", X0, s0, X0 + SD, s1, sh_top - 0.03, sh_top, M["tumba"])
+        box("Стеллаж низ", X0, s0, X0 + SD, s1, 0.0, 0.62, M["tumba"])
+        for (p0, p1, q0, q1) in ((s0 + 0.08, s1 - 0.08, 0.52, 0.535), (s0 + 0.08, s1 - 0.08, 0.10, 0.115), (s0 + 0.08, s0 + 0.095, 0.10, 0.535), (s1 - 0.095, s1 - 0.08, 0.10, 0.535)):
+            box("Рамка стеллажа", X0 + SD, p0, X0 + SD + 0.008, p1, q0, q1, M["tumba_frame"], 0.002)
+        box("Ручка латунь", X0 + SD + 0.008, (s0 + s1) / 2 - 0.09, X0 + SD + 0.022, (s0 + s1) / 2 + 0.09, 0.50, 0.512, M["brass"], 0.004)
+        for hh in (1.05, 1.50, 1.95):
+            box("Полка", X0, s0 + 0.025, X0 + SD - 0.01, s1 - 0.025, hh - 0.025, hh, M["tumba"])
+            box("LED полки", X0 + SD - 0.05, s0 + 0.03, X0 + SD - 0.04, s1 - 0.03, hh - 0.029, hh - 0.025, M["led"])
+            lt = bpy.data.lights.new("Полка свет", "AREA"); lt.energy = 4; lt.size = s1 - s0 - 0.08; lt.size_y = 0.05; lt.color = (1, 0.88, 0.7)
+            lo = bpy.data.objects.new("Полка свет", lt); lo.location = W(X0 + SD - 0.06, (s0 + s1) / 2, hh - 0.035); lo.rotation_euler = (0, 0, math.radians(90)); sc.collection.objects.link(lo)   # ТВ 85" ~1900×1070
 
 # диван — СУЩЕСТВУЮЩИЙ у заказчика: зелёный бархат, спинка с вертикальной стёжкой «каналами» (размер уточнить)
 S = F("Диван")[0]; sx0, sz0, sx1, sz1 = S["x"], S["z"], S["x"] + S["w"], S["z"] + S["d"]
+if DAST: sz0, sz1 = Z0 + 0.05, Z0 + 0.05 + S["d"]        # 13.11: диван в УГЛУ у окна, лицом к ТВ
 box("Диван основание", sx0 + 0.04, sz0 + 0.03, sx1, sz1 - 0.03, 0.10, 0.40, M["sofa"], 0.06, 5)
 for (lz0, lz1) in ((sz0 + 0.09, sz0 + 0.13), (sz1 - 0.13, sz1 - 0.09)):        # ножки
     for lx in (sx0 + 0.10, sx1 - 0.10):
@@ -696,18 +1020,55 @@ def tub_chair(cx, cz, face_z):
     xa, xb = sorted((zb + f * 0.14, zb + f * 0.76))
     box("Кресло подушка", cx - 0.31, xa, cx + 0.31, xb, 0.45, 0.56, M["chair"], 0.06, 6)
 TB = (F("Журн") or F("Столик"))[0]; tcx, tcz = TB["x"] + TB["w"] / 2, TB["z"] + TB["d"] / 2
-for c in F("Кресло"):
+DX_0, DX_1, DZ_0, DZ_1 = 3.70, 4.60, 3.35, 5.35          # дастархан 2000×900
+if DAST: tcx, tcz = (DX_0 + DX_1) / 2, (DZ_0 + DZ_1) / 2
+for c in ([{"x": 2.85 - 0.425, "z": Z0 + 0.25, "w": 0.85, "d": 0.85}, {"x": 4.05 - 0.425, "z": Z0 + 0.25, "w": 0.85, "d": 0.85}] if DAST else F("Кресло")):
     cx, cz = c["x"] + c["w"] / 2, c["z"] + c["d"] / 2
     if not import_ph("GreenChair_01", cx, cz, 0.75, 0 if cz < tcz else 180):
         tub_chair(cx, cz, +1 if cz < tcz else -1)
 
 # журнальный стол: овал 1200×700, мрамор на тёмном основании
-_tbl = import_bk("stol_mramor", tcx, tcz, 0.0, 90, 1.20) if KREM else []
+_tbl = import_bk("stol_mramor", tcx, tcz, 0.0, 90, 1.20) if (KREM and not DAST) else []
+if DAST:
+    _st = import_bk("stol_mramor", 3.45, Z0 + 0.62, 0.0, 0, 0.45)    # столик между креслами у окна
+    if _st: recolor_metal(_st, M["brass"])
+    # ---- ДАСТАРХАН: низкий стол 2000×900, h 400 — тёмное дерево, мраморная столешница
+    box("Дастархан столешница", DX_0, DZ_0, DX_1, DZ_1, 0.36, 0.40, M["marble"], 0.008)
+    box("Дастархан рама", DX_0 - 0.02, DZ_0 - 0.02, DX_1 + 0.02, DZ_1 + 0.02, 0.33, 0.365, M["wood"], 0.01)
+    box("Дастархан царга", DX_0 + 0.05, DZ_0 + 0.05, DX_1 - 0.05, DZ_1 - 0.05, 0.25, 0.33, M["wood"], 0.006)
+    for (lx, lz) in ((DX_0 + 0.06, DZ_0 + 0.06), (DX_1 - 0.06, DZ_0 + 0.06), (DX_0 + 0.06, DZ_1 - 0.06), (DX_1 - 0.06, DZ_1 - 0.06)):
+        ellipse_prism("Дастархан ножка", lx, lz, 0.045, 0.045, 0.0, 0.33, M["wood"], seg=24, bevel=0.01)
+        ellipse_prism("Дастархан ножка кольцо", lx, lz, 0.055, 0.055, 0.12, 0.16, M["wood"], seg=24, bevel=0.01)
+    # курпачи — стёганые матрасики крем, подушки — зелёный бархат (как диван)
+    M["kurpacha"] = mat("Курпача крем стёганая", "#E2D3B8", rough=0.75, sheen=0.8, bump=0.25, bscale=40)
+    M["kseam"] = mat("Курпача стёжка", "#B9A584", rough=0.8)
+    for (a0, b0, a1, b1) in ((DX_0 - 0.62, DZ_0, DX_0 - 0.02, DZ_1), (DX_1 + 0.02, DZ_0, DX_1 + 0.62, DZ_1), (DX_0, DZ_0 - 0.62, DX_1, DZ_0 - 0.02)):
+        box("Курпача", a0, b0, a1, b1, 0.0, 0.10, M["kurpacha"], 0.04, 4)
+        lng = (b1 - b0) > (a1 - a0); n = max(1, int(((b1 - b0) if lng else (a1 - a0)) / 0.2))
+        for k in range(1, n):
+            if lng:
+                zz = b0 + k * (b1 - b0) / n; box("Курпача стёжка", a0 + 0.04, zz - 0.004, a1 - 0.04, zz + 0.004, 0.097, 0.101, M["kseam"])
+            else:
+                xx = a0 + k * (a1 - a0) / n; box("Курпача стёжка", xx - 0.004, b0 + 0.04, xx + 0.004, b1 - 0.04, 0.097, 0.101, M["kseam"])
+    for (px, pz) in ((DX_0 - 0.50, DZ_0 + 0.45), (DX_0 - 0.50, DZ_1 - 0.45), (DX_1 + 0.50, DZ_0 + 0.45), (DX_1 + 0.50, DZ_1 - 0.45), (DX_1 + 0.50, (DZ_0 + DZ_1) / 2)):
+        box("Валик курпачи", px - 0.08, pz - 0.24, px + 0.08, pz + 0.24, 0.10, 0.52, M["sofa"], 0.07, 5)
+    # сервировка: тарелки + ваза с тюльпанами
+    M["plate"] = mat("Фарфор", "#F6F4EF", rough=0.15)
+    for k in range(4):
+        zz = DZ_0 + 0.30 + k * (DZ_1 - DZ_0 - 0.60) / 3
+        for xx in (DX_0 + 0.16, DX_1 - 0.16):
+            ellipse_prism("Тарелка", xx, zz, 0.13, 0.13, 0.40, 0.412, M["plate"], seg=40, bevel=0.004)
+            ellipse_prism("Тарелка малая", xx, zz, 0.09, 0.09, 0.412, 0.42, M["plate"], seg=40, bevel=0.003)
+    import_bk("tyulpany", tcx, tcz, 0.40, 0, 0.36, "h")
+    # люстра «кольца» над дастарханом (как в примере SM)
+    _ch = import_bk("lyustra_3kolca", tcx, tcz, H - 1.20, 0, 1.20, "h")
+    lt = bpy.data.lights.new("Люстра", "POINT"); lt.energy = 60 if not NIGHT else 90; lt.color = (1.0, 0.85, 0.65); lt.shadow_soft_size = 0.3
+    lo = bpy.data.objects.new("Люстра", lt); lo.location = W(tcx, tcz, 2.05); sc.collection.objects.link(lo)
 if _tbl:
     recolor_metal(_tbl, M["brass"])
     import_bk("knigi", tcx - 0.05, tcz + 0.25, 0.47, 25)
     import_bk("tyulpany", tcx + 0.05, tcz - 0.2, 0.47, 0, 0.32, "h")
-elif not import_ph("gothic_coffee_table", tcx, tcz, 1.10, 90):     # стол в стиле мебели — резное тёмное дерево (готовая модель)
+elif not DAST and not import_ph("gothic_coffee_table", tcx, tcz, 1.10, 90):     # стол в стиле мебели — резное тёмное дерево (готовая модель)
     ellipse_prism("Стол основание", tcx, tcz, TB["w"] / 2 - 0.16, TB["d"] / 2 - 0.22, 0.0, 0.31, M["dark"], bevel=0.01)
     ellipse_prism("Стол мрамор", tcx, tcz, TB["w"] / 2, TB["d"] / 2, 0.31, 0.35, M["marble"], bevel=0.008)
 
@@ -720,14 +1081,20 @@ for wd in F("Шкаф"):
     a0, a1, b0, b1 = wd["x"], wd["x"] + wd["w"], wd["z"], wd["z"] + wd["d"]
     if KREM: a0, a1 = DX1 + 0.085, X1          # встроенный: от наличника двери до стены
     WH = (H - BD) if CEIL == 8 else wd["h"]          # шкаф до потолка (до короба), без щели сверху
-    box("Шкаф", a0, b0, a1, b1, 0, WH, M["tumba"], 0.004)
+    box("Шкаф", a0, b0, a1, b1, 0, WH, M["walnut"] if SMC else M["tumba"], 0.004)
     n = 4; w = (a1 - a0) / n
+    if SMC:   # 13.11 (заказчик: «везде заменим на эти»): фасады — рифлёный шпон ореха, как тумба под ТВ
+        x_ = a0 + 0.01
+        while x_ < a1 - 0.02:
+            if not any(abs(x_ + 0.01 - (a0 + kk * w)) < 0.012 for kk in range(1, n)):
+                box("Шкаф рифление", x_, b0 - 0.02, x_ + 0.02, b0, 0.02, WH - 0.02, M["walnut"], 0.006)
+            x_ += 0.03
     for k in range(n):
         u0, u1 = a0 + k * w + 0.07, a0 + (k + 1) * w - 0.07
-        for (p0, p1, q0, q1) in ((u0, u1, WH - 0.2, WH - 0.17), (u0, u1, 0.15, 0.18), (u0, u0 + 0.03, 0.15, WH - 0.17), (u1 - 0.03, u1, 0.15, WH - 0.17)):
+        for (p0, p1, q0, q1) in (() if SMC else  ((u0, u1, WH - 0.2, WH - 0.17), (u0, u1, 0.15, 0.18), (u0, u0 + 0.03, 0.15, WH - 0.17), (u1 - 0.03, u1, 0.15, WH - 0.17))):
             box("Рамка фасада", p0, b0 - 0.012, p1, b0, q0, q1, M["tumba_frame"], 0.003)
         hx = a0 + (k + 1) * w - 0.05 if k % 2 == 0 else a0 + k * w + 0.05        # латунные ручки-скобы у стыка створок
-        box("Ручка латунь", hx - 0.008, b0 - 0.035, hx + 0.008, b0 - 0.012, (0.70 if KREM else 0.95), (1.55 if KREM else 1.25), M["brass"], 0.004)
+        box("Ручка латунь", hx - 0.008, b0 - (0.045 if SMC else 0.035), hx + 0.008, b0 - (0.022 if SMC else 0.012), (0.70 if KREM else 0.95), (1.55 if KREM else 1.25), M["brass"], 0.004)
         if k: box("Шов", a0 + k * w - 0.0015, b0 - 0.002, a0 + k * w + 0.0015, b0, 0.02, WH - 0.02, M["tumba_frame"])   # шов между створками, не по краю
 
 # дверь (неоклассика): полотно + филёнки + ручка
@@ -763,8 +1130,8 @@ for zz in ():   # бра убраны по решению заказчика
     lo = bpy.data.objects.new("Бра", lt); lo.location = W(X1 - 0.21, zz, 1.60); sc.collection.objects.link(lo)
 
 if KREM:
-    import_bk("rastenie_bolshoe", X1 - 0.45, Z0 + 0.50, 0.0, 0, 1.65, "h")
-    import_bk("tyulpany", X0 + 0.25, tm + 1.25, 0.645, 0, 0.38, "h")
+    import_bk("rastenie_bolshoe", (X0 + 0.40) if DAST else (X1 - 0.45), Z0 + 0.50, 0.0, 0, 1.65, "h")
+    if not DAST: import_bk("tyulpany", X0 + 0.25, tm + 1.25, 0.32 if SMC else 0.645, 0, 0.38, "h")
 else:
     import_ph("potted_plant_01", X0 + 0.40, Z0 + 0.55, 0.55)
 _sofa = import_ph("Sofa_01", (sx0 + sx1) / 2, (sz0 + sz1) / 2, 2.30, -90)   # готовая модель дивана в стиле кресел
@@ -794,7 +1161,7 @@ def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
     d = tgt - (mn + mx) / 2
     for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
-if KREM: ac_unit(("R", X1), 0.85, 2.50)   # К1 по плану кондиционеров
+if KREM: ac_unit(("R", X1), (Z0 + 0.30 + 0.55) if SMC else 0.85, 2.25 if SMC else 2.50)   # 13.11: отступ 300 от угла со шторой   # 13.11: при коробе SM — ниже карниза (зазор ~100 под карнизом), не врезается   # К1 по плану кондиционеров
 # шторы: тюль на всю ширину + плотные по бокам, волной, из ниши до пола
 def drape(name, a0, a1, zc, amp, waves, material):
     bm = bmesh.new(); nu, nv = max(24, int((a1 - a0) * 60)), 12; grid = []
@@ -827,11 +1194,11 @@ area("Окно", W((WX0 + WX1) / 2, Z0 - 0.3, (WS + WT) / 2), WX1 - WX0, 6 if NI
 for (sd, cxl, czl, sx_, sz_) in COVE:            # LED-лента на полке короба (за бортиком) — светит вверх и к центру
     rot = {"L": (math.radians(180), math.radians(35), 0), "R": (math.radians(180), math.radians(-35), 0),
            "B": (math.radians(180 - 35), 0, 0), "T": (math.radians(180 + 35), 0, 0)}[sd]
-    area("Лента в коробе", W(cxl, czl, H - 0.062), sx_, 3.0 * max(sx_, sz_), rot=rot, sy=sz_, color=(1.0, 0.82, 0.6))
+    area("Лента в коробе", W(cxl, czl, H - (FD + 0.02 if SMC else 0.062)), sx_, (6.0 if SMC else 3.0) * max(sx_, sz_), rot=rot, sy=sz_, color=(1.0, 0.86, 0.68))
 # световая рамка — дублируем тонкими area-лампами вниз (ровный расчётный свет)
 for (cx, cz, sx, sz) in (((fa0 + fa1) / 2, fb0, fa1 - fa0, 0.04), ((fa0 + fa1) / 2, fb1, fa1 - fa0, 0.04),
                          (fa0, (fb0 + fb1) / 2, 0.04, fb1 - fb0), (fa1, (fb0 + fb1) / 2, 0.04, fb1 - fb0)):
-    area("Рамка свет", W(cx, cz, H - 0.01), sx, 9 * max(sx, sz), sy=sz, color=(1.0, 0.95, 0.88))
+    area("Рамка свет", W(cx, cz, H - (0.08 if SMC else 0.01)), sx, 9 * max(sx, sz), sy=sz, color=(1.0, 0.95, 0.88))
 sun = bpy.data.lights.new("Солнце", "SUN"); sun.energy = 0.0 if NIGHT else 2.2; sun.angle = math.radians(1.5); sun.color = (1.0, 0.97, 0.92)
 so = bpy.data.objects.new("Солнце", sun); so.rotation_euler = (math.radians(58), 0, math.radians(200)); sc.collection.objects.link(so)
 w = sc.world or bpy.data.worlds.new("World"); sc.world = w; w.use_nodes = True
@@ -840,7 +1207,7 @@ bg = w.node_tree.nodes.get("Background"); bg.inputs[0].default_value = hexlin("#
 # ---------------------------------------------------------------- камеры (ракурсы)
 cx = (X0 + X1) / 2
 CAMS = [
-    ("1_ot_dveri_k_oknu", W(X0 + 0.35, Z1 - 0.35, 1.45), W(X1 - 0.9, Z0 + 1.3, 1.0), 16),
+    ("1_ot_dveri_k_oknu", W(X0 + (0.80 if SMC else 0.35), Z1 - (0.75 if SMC else 0.35), 1.45), W(X1 - 0.9, Z0 + 1.3, 1.0), 16),
     ("2_ot_okna_k_dveri", W(cx + 0.35, Z0 + 0.45, 1.45), W(cx - 0.5, Z1 - 0.4, 0.95), 16),
     ("3_divan_i_kresla", W(X0 + 0.35, tcz, 1.25), W(X1, tcz, 1.05), 18),
     ("4_tv_zona", W(sx0 - 0.15, tcz + 0.6, 1.20), W(X0, tm, 1.15), 18),
@@ -850,11 +1217,21 @@ CAMS = [
     ("8_potolok", W(X0 + 0.5, Z1 - 1.3, 1.1), W(X1 - 0.6, Z0 + 1.8, 2.75), 14),
     ("9_ugol_potolka", W(X0 + 1.2, Z1 - 1.6, 1.4), W(X0 + 0.2, Z1 - 0.4, 2.7), 22),
 ]
+if DAST:
+    CAMS = [("1_ot_dveri_k_oknu", W(X0 + 0.55, Z1 - 0.35, 1.50), W(X1 - 0.9, Z0 + 1.3, 0.8), 16),
+            ("2_ot_okna_k_dveri", W(3.45, Z0 + 0.30, 1.55), W(3.6, Z1 - 0.3, 0.6), 16),
+            ("3_dastarhan", W(X0 + 0.55, 2.2, 1.60), W(4.3, 4.6, 0.40), 17),
+            ("4_tv_zona", W(5.25, 3.0, 1.40), W(X0, 3.44, 1.25), 16),
+            ("5_obshchiy_sverhu", W(X1 - 0.3, Z1 - 0.6, 2.35), W(cx - 0.3, Z0 + 1.6, 0.2), 15)]
 cams = []
 for (n, loc, tgt, lens) in CAMS:
     cd = bpy.data.cameras.new(n); cd.lens = lens; cd.sensor_width = 36; cd.clip_start = 0.02
     co = bpy.data.objects.new(n, cd); co.location = loc
     co.rotation_euler = (tgt - loc).to_track_quat("-Z", "Y").to_euler(); sc.collection.objects.link(co)
+    if SMC:     # 13.11: камера ровно (без наклона), как у SM; вверх/вниз — сдвиг объектива
+        dv_ = tgt - loc; hd_ = math.hypot(dv_.x, dv_.y)
+        co.rotation_euler = (math.radians(90), 0, math.atan2(dv_.y, dv_.x) - math.radians(90))
+        cd.lens = max(lens, 17); cd.shift_y = max(-0.35, min(0.35, (dv_.z / max(hd_, 0.3)) * cd.lens / 36 * 0.85))
     cams.append((n, co))
 
 # ---------------------------------------------------------------- рендер
@@ -878,7 +1255,7 @@ sc.render.resolution_x, sc.render.resolution_y = (960, 540) if QUICK else (1920,
 sc.render.image_settings.file_format = "JPEG"; sc.render.image_settings.quality = 92
 try: sc.view_settings.view_transform = "AgX"
 except Exception: sc.view_settings.view_transform = "Filmic"
-sc.view_settings.exposure = -0.9 if NIGHT else -0.35
+sc.view_settings.exposure = -0.9 if NIGHT else (-0.10 if SMC else -0.35)
 try: sc.view_settings.look = "AgX - Medium High Contrast"
 except Exception: pass
 def set_col(m, hx):

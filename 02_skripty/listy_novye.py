@@ -94,7 +94,7 @@ def cover():
     o = []; A = o.append
     BG, IK, AC = "#F1F1F2", "#24242B", "#8C9A7C"
     A(f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" font-family="Bahnschrift, {FONT}">')
-    hero = os.path.join(PROJ, "08_vizualizacii", "gostinaya", "_kremA_3_divan_i_kresla.jpg")
+    hero = os.path.join(PROJ, "08_vizualizacii", "gostinaya", "_smA_3_divan_i_kresla.jpg")
     if not os.path.exists(hero): hero = os.path.join(PROJ, "08_vizualizacii", "gostinaya", "_kremA_1_ot_dveri_k_oknu.jpg")
     href = ""
     if os.path.exists(hero):
@@ -335,6 +335,30 @@ def light_frame(s, a0, a1, b0, b1, sw=1.0):
     for st, c in ((14 * sw, INK), (8 * sw, "#FFE9A8")):
         s.A(f'<rect x="{X(a0):.1f}" y="{Y(b0):.1f}" width="{(a1-a0)*S:.1f}" height="{(b1-b0)*S:.1f}" fill="none" stroke="{c}" stroke-width="{st}"/>')
 
+
+def sm_ceiling(s, r, ceil=True):
+    """13.11.2026: потолок гостиной по системе SM (Узел-1): короб 280 | 2-й уровень с треком 35 | карниз + LED у поля."""
+    x0, x1, z0, z1 = r["rects"][0]; L = r["lights"]; c = L["sm"]; zb = z0 + 0.15
+    d1, d2, tr = c["d1"], c["d2"], c["track"]
+    def rect(o, st, sw, dash=""):
+        s.A(f'<rect x="{X(x0+o):.1f}" y="{Y(zb+o):.1f}" width="{(x1-x0-2*o)*S:.1f}" height="{(z1-zb-2*o)*S:.1f}" fill="none" stroke="{st}" stroke-width="{sw}"' + (f' stroke-dasharray="{dash}"' if dash else '') + '/>')
+    s.A(f'<rect x="{X(x0):.1f}" y="{Y(z0):.1f}" width="{(x1-x0)*S:.1f}" height="{0.15*S:.1f}" fill="#E8E2D6" stroke="{INK}" stroke-width="2" stroke-dasharray="10 6"/>')
+    if ceil:
+        for (o0, o1, fc) in ((0, d1, "#E9E3D8"), (d1, d2, "#F2EEE6")):
+            for (a0, b0, a1, b1) in ((x0+o0, zb+o0, x0+o1, z1-o0), (x1-o1, zb+o0, x1-o0, z1-o0), (x0+o1, zb+o0, x1-o1, zb+o1), (x0+o1, z1-o1, x1-o1, z1-o0)):
+                s.A(f'<rect x="{X(a0):.1f}" y="{Y(b0):.1f}" width="{(a1-a0)*S:.1f}" height="{(b1-b0)*S:.1f}" fill="{fc}"/>')
+    rect(d1, INK, 3); rect(d1 + 0.065, "#A08C68", 2)                       # край короба + карниз 60×65
+    rect(d2, INK, 3); rect(d2 + 0.03, ORANGE, 4, "18 10")                  # край поля + LED на карнизе 100×105
+    rect(tr, "#111111", 9)                                                 # магнитный трек 35
+    if ceil:
+        y_ = (zb + z1) / 2
+        for (o, h_, t_) in ((d1 / 2, c["h_box"], "короб"), ((d1 + d2) / 2, c["h_lvl2"], "2-й ур."), (d2 + 0.55, c["h_field"], "поле")):
+            s.A(f'<text x="{X(x0+o):.0f}" y="{Y(y_ - 0.9):.0f}" text-anchor="middle" font-size="18" fill="{INK}" transform="rotate(-90 {X(x0+o):.0f} {Y(y_ - 0.9):.0f})">{t_} +{int(h_*1000)}</text>')
+        tw = 0.0175
+        chain(s, [x0, x0 + d1, x0 + tr - tw, x0 + tr + tw, x0 + d2, x1 - d2, x1 - tr - tw, x1 - tr + tw, x1 - d1, x1], y_ + 0.55, True, RED, side=+1, fs=17)
+        s.A(f'<text x="{X((x0+x1)/2):.0f}" y="{Y(zb+d2)+40:.0f}" text-anchor="middle" font-size="19" fill="{INK}">карниз 100×105 + LED на поле</text>')
+        s.A(f'<text x="{X((x0+x1)/2):.0f}" y="{Y(z1-d1)-14:.0f}" text-anchor="middle" font-size="18" fill="{INK}">магнитный трек 35 по кругу</text>')
+
 s = Sheet("План потолка", 0)
 CFILL = {"neo": "#FBF8F1", "modern": "#F4F6F7", "wet": "#EAF2F6", "hall": "#F4F6F7"}
 for r in ROOMS:
@@ -350,7 +374,9 @@ for r in ROOMS:
         # скрытая ниша под карниз штор (2 ряда: тюль + шторы) вдоль окна
         s.A(f'<rect x="{X(x0):.1f}" y="{Y(z0):.1f}" width="{(x1-x0)*S:.1f}" height="{0.15*S:.1f}" fill="#E8E2D6" stroke="{INK}" stroke-width="2" stroke-dasharray="10 6"/>')
         s.A(f'<text x="{X((x0+x1)/2):.0f}" y="{Y(z0+0.15)+28:.0f}" text-anchor="middle" font-size="20" fill="{INK}">ниша 150 под карниз штор</text>')
-    if r["style"] == "neo":     # СОГЛАСОВАНО (образцы 1+5): лепные рамки с узорами, розетка, подсветка карниза, круглые споты
+    if r["lights"].get("main") == "sm":
+        sm_ceiling(s, r)
+    elif r["style"] == "neo":     # СОГЛАСОВАНО (образцы 1+5): лепные рамки с узорами, розетка, подсветка карниза, круглые споты
         GC = "#A08C68"         # по эскизу заказчика: одна лепная рамка (двойная линия) у стен + узоры в 4 углах
         bz0 = z0 + 0.15        # короб ГКЛ 340×100 по 3 стенам (у окна — ниша штор), внутри — LED за бортиком
         s.A(f'<rect x="{X(x0+0.34):.1f}" y="{Y(bz0+0.34):.1f}" width="{(x1-x0-0.68)*S:.1f}" height="{(z1-bz0-0.68)*S:.1f}" fill="none" stroke="{INK}" stroke-width="3"/>')
@@ -368,7 +394,7 @@ for r in ROOMS:
                 s.A(f'<circle cx="{X(xx):.1f}" cy="{Y(zz):.1f}" r="14" fill="#FFFFFF" stroke="{INK}" stroke-width="3"/><circle cx="{X(xx):.1f}" cy="{Y(zz):.1f}" r="5" fill="{INK}"/>')
 s.walls()
 for r in ROOMS:
-    cx, cz = r["label"]; h = int(ceil_h(r) * 1000)
+    cx, cz = r["label"]; h = int((r["lights"]["sm"]["h_field"] if r["lights"].get("main") == "sm" else ceil_h(r)) * 1000)
     room_num(s, r, area=False)
     s.A(f'<rect x="{X(cx)-70:.0f}" y="{Y(cz)+46:.0f}" width="140" height="46" rx="23" fill="#FFFFFF" stroke="{INK}" stroke-width="2"/><text x="{X(cx):.0f}" y="{Y(cz)+79:.0f}" text-anchor="middle" font-size="27" font-weight="bold" fill="{INK}">+{h}</text>')
 s.explication("Типы потолка", [("Гостиная: ГКЛ, окраска, карниз", lambda cx, cy: s.A(f'<rect x="{cx-28}" y="{cy-16}" width="56" height="32" fill="{CFILL["neo"]}" stroke="#A08C68" stroke-width="3"/>'), "1"),
@@ -378,7 +404,7 @@ s.explication("Типы потолка", [("Гостиная: ГКЛ, окрас
     ("LED-лента в нише / карнизе", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{ORANGE}" stroke-width="4" stroke-dasharray="12 6"/>'), ""),
     ("Отметка потолка от чистого пола", lambda cx, cy: s.A(f'<rect x="{cx-30}" y="{cy-14}" width="60" height="28" rx="14" fill="#FFF" stroke="{INK}" stroke-width="2"/>'), "")], colname="шт")
 s.notes([f"1. Плита перекрытия {int(HCEIL*1000)} (проверить).", "2. Коридор, прихожая 2500 — короб", "    под вентиляцию и трассы.", "3. Мокрые зоны 2500 — над", "    бойлерами доступ (люк).",
-         "4. Гостиная: короб ГКЛ 340×100 по", "    кругу (у окна — до ниши штор), LED", "    на потолок +2700 (как фото 1);", "    лепная рамка с узорами в углах,", "    LED-рамка, по 3 спота с боков;", "    у окна ниша 150 под 2-рядный", "    скрытый карниз (тюль + шторы).", "5. Комнаты: теневой профиль", "    + LED-ниша по периметру."])
+         "4. Гостиная (13.11, система SM,", "    Узел-1 ×0,6): короб 280 у стен", "    +2490 (карниз 130 к стене),", "    ступень с карнизом 60×65;", "    2-й уровень +2550 с магнитным", "    треком 35 по кругу; подъём к", "    полю с карнизом 100×105, LED", "    на поле; поле +2670. У окна —", "    ниша 150 под карниз штор.", "    Узел — отдельный лист.", "5. Комнаты: теневой профиль", "    + LED-ниша по периметру."])
 s.save("s13_potolok")
 
 # ================================================================== План привязки светильников
@@ -422,6 +448,21 @@ for r in ROOMS:
         elif r["name"] == "Спальня 2":
             for xx in (11.45, 14.0): l_sconce(X(xx), Y(z0) + 18); count["sconce"] += 1
             s.A(f'<text x="{X(12.75):.0f}" y="{Y(z0)+44:.0f}" text-anchor="middle" font-size="22" fill="{ORANGE}">бра h=1400</text>')
+    if L["main"] == "sm":
+        sm_ceiling(s, r, ceil=False); c_ = L["sm"]; zb_ = z0 + 0.15; tr_ = c_["track"]; mid_ = (zb_ + z1) / 2
+        SPT = [(x0 + tr_, z) for z in (zb_ + 0.95, zb_ + 1.08, mid_ - 0.08, mid_ + 0.08, z1 - 1.08, z1 - 0.95)] + [(x1 - tr_, z) for z in (zb_ + 0.95, zb_ + 1.08, mid_ - 0.08, mid_ + 0.08, z1 - 1.08, z1 - 0.95)]
+        for (px, pz) in SPT:
+            s.A(f'<circle cx="{X(px):.1f}" cy="{Y(pz):.1f}" r="9" fill="#FFF8E6" stroke="{INK}" stroke-width="3"/>'); count["track"] = count.get("track", 0) + 1
+        LIN = [(x0 + tr_, mid_ - 0.9, 0), (x0 + tr_, mid_ + 0.9, 0), (x1 - tr_, mid_ - 0.9, 0), (x1 - tr_, mid_ + 0.9, 0), (cx, zb_ + tr_, 1), (cx, z1 - tr_, 1)]
+        for (px, pz, hz_) in LIN:
+            if hz_: s.A(f'<rect x="{X(px-0.25):.1f}" y="{Y(pz)-6:.1f}" width="{0.5*S:.1f}" height="12" fill="#FFE9A8" stroke="{INK}" stroke-width="2"/>')
+            else: s.A(f'<rect x="{X(px)-6:.1f}" y="{Y(pz-0.25):.1f}" width="12" height="{0.5*S:.1f}" fill="#FFE9A8" stroke="{INK}" stroke-width="2"/>')
+            count["lin"] = count.get("lin", 0) + 1
+        DL = [(x0 + 0.14, zb_ + 0.9 + k * (z1 - zb_ - 1.8) / 3) for k in range(4)] + [(x1 - 0.14, zb_ + 0.9 + k * (z1 - zb_ - 1.8) / 3) for k in range(4)] + [(cx - 0.8, z1 - 0.14), (cx + 0.8, z1 - 0.14)]
+        for (px, pz) in DL: l_spot(X(px), Y(pz)); count["spot"] += 1
+        pts += DL[:4] + SPT[:6]
+        s.A(f'<text x="{X(cx):.0f}" y="{Y(cz)-40:.0f}" text-anchor="middle" font-size="21" fill="{ORANGE}">трек: 12 спотов 400 лм + 6 линейных 500 лм</text>')
+        s.A(f'<text x="{X(cx):.0f}" y="{Y(cz)-12:.0f}" text-anchor="middle" font-size="21" fill="{ORANGE}">LED на поле 13,9 м · расчёт ≈320 лк</text>')
     if L["main"] == "frame":
         fo = L.get("frame_off", 0.6); fa0, fa1, fb0, fb1 = x0 + fo, x1 - fo, z0 + fo, z1 - fo
         light_frame(s, fa0, fa1, fb0, fb1, 0.8)
@@ -452,10 +493,12 @@ s.A(f'<rect x="{X(13.75):.1f}" y="{Y(7.491)-16:.1f}" width="{0.8*S:.1f}" height=
 for r in ROOMS: room_num(s, r, area=False)
 s.explication("Светильники", [("Люстра (крюк, розетка Ø600)", lambda cx, cy: l_chand(cx, cy), count["chand"]), ("Подвесной светильник", lambda cx, cy: l_pend(cx, cy), count["pend"]),
     ("Точечный встраиваемый Ø80", lambda cx, cy: l_spot(cx, cy), count["spot"]), ("Круглый светильник Ø240", lambda cx, cy: l_disc(cx, cy), count.get("spot_disc", 0)), ("Бра настенное", lambda cx, cy: l_sconce(cx, cy + 8), count["sconce"]),
+    ("Трековый спот (магнитный трек)", lambda cx, cy: s.A(f'<circle cx="{cx}" cy="{cy}" r="9" fill="#FFF8E6" stroke="{INK}" stroke-width="3"/>'), count.get("track", 0)),
+    ("Линейный модуль трека 500", lambda cx, cy: s.A(f'<rect x="{cx-25}" y="{cy-6}" width="50" height="12" fill="#FFE9A8" stroke="{INK}" stroke-width="2"/>'), count.get("lin", 0)),
     ("Световая линия заподлицо, м", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{INK}" stroke-width="12"/><line x1="{cx-27}" y1="{cy}" x2="{cx+27}" y2="{cy}" stroke="#FFE9A8" stroke-width="7"/>'), f'{count["frame"]:.1f}'.replace(".", ",") if count.get("frame") else ""),
     ("LED-лента 24 В", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{ORANGE}" stroke-width="4" stroke-dasharray="12 6"/>'), "")], colname="шт")
 s.notes(["1. Привязка — от стены в чистоте", "    до оси светильника, мм.", "2. Мокрые зоны — споты IP44,", "    LED у зеркала IP44.", "3. LED-лента: блок питания в", "    доступном месте (люк/ниша).",
-         "4. Кухня: 2 подвеса над столом,", "    подсветка рабочей зоны.", "5. Группы: C10, кабель 3×1,5;", "    выключатели — лист 12.", "6. Гостиная — 2 канала диммера", "    (рамка / периметр), без бра;", "    РЕЗЕРВ: 2 вывода под бра h=1600", "    и вывод в центр потолка (под", "    люстру) — в коробке, заглушены.", "    В каждой комнате — резервный", "    вывод в центр потолка 3×1,5.", "    4 сценария: ночь ~35 лк,", "    вечер ~170, обычный ~270,", "    максимум ~370 (норма 150)."])
+         "4. Кухня: 2 подвеса над столом,", "    подсветка рабочей зоны.", "5. Группы: C10, кабель 3×1,5;", "    выключатели — лист 12.", "6. Гостиная (13.11, система SM):", "    4 группы-диммера — встроенные", "    Ø80, трек (споты+линейные), LED", "    на поле, LED полок; резерв —", "    вывод в центр под люстру.", "    4 сценария (расчёт): ночь ~30 лк,", "    вечер ~130, обычный ~320,", "    максимум ~560 (норма 150).", "    Мощность ≈ 295 Вт."])
 s.save("s14_svet")
 
 # ================================================================== План для развертки стен
@@ -608,11 +651,11 @@ s.save("s21_otdelka")
 
 # ================================================================== Материалы: что согласовано
 s = Sheet("Материалы и палитра", 0)
-DEC = [("Пол — вся квартира, кроме кухни и мокрых зон", "Доска палубная, беленый дуб 2 тона через раз («почти как стены»)", "согласовано, образцы — подобрать в магазине"), ("Гостиная — стиль", "Неоклассика, вариант 2 «бакинская»", "согласовано"), ("Гостиная — цвет стен", "NCS S 1500-N (светло-серый, ПЕРЕСОГЛАСОВАНО 11.2026 под зелёную мебель; было NCS S 1002-Y), моющаяся краска; молдинги в тон", "согласовано; перед покупкой — выкрас"),
+DEC = [("Пол — вся квартира, кроме кухни и мокрых зон", "Доска палубная, беленый дуб 2 тона через раз («почти как стены»)", "согласовано, образцы — подобрать в магазине"), ("Гостиная — стиль", "Неоклассика по системе SM (эталон 00_ishodnye/primery): потолок с коробом, треком и подсветкой поля; рамки на стенах — профиль 90 + вторая рамка 30, без лепных уголков; стена с диваном — три равные рамки (кондиционер внутри первой)", "согласовано 13.11.2026"), ("Гостиная — цвет стен", "NCS S 1500-N (светло-серый, ПЕРЕСОГЛАСОВАНО 11.2026 под зелёную мебель; было NCS S 1002-Y), моющаяся краска; молдинги в тон", "согласовано; перед покупкой — выкрас"),
        ("Кухня, ванная, санузел", "Только итальянский керамогранит 60×120 под мрамор", "согласовано, коллекция не выбрана"),
        ("Травертин", "Исключён везде", "исключён"),
        ("Комната, спальня 2, коридор, прихожая — стены", "Бамбуковые панели (Dekorchi)", "декор НЕ выбран"),
-       ("Гостиная — мебель", "Диван — существующий заказчика (зелёный бархат, стёжка «каналы»), 2 «ушастых» кресла в том же бархате (каталог №8), «буквой П»; стол овал 1200×700, мрамор; ТВ-тумба подвесная 1800, в цвет стен, ТВ в рамке молдинга; шторы: тюль + плотные тёмно-зелёные, потолок–пол; ковёр молочный однотонный; без бра", "согласовано, модели — подобрать"),
+       ("Гостиная — мебель", "Диван и 2 кресла — существующие заказчика (зелёный бархат); столик круглый, мрамор; ТВ 85″ на стене в рамке-молдинге; ПОД ТВ — низкая тумба 4200×400, h300, рифлёный шпон ореха, 6 дверец, латунные ручки (строитель: «под телевизором — шпон»); по бокам — открытые стеллажи 550 с подсветкой полок (орех, рамка крем); шкаф у входа — рифлёный шпон ореха, латунные ручки; шторы тёмно-зелёные + тюль", "согласовано 13.11.2026"),
        ("Потолки", "—", "НЕ согласовано"), ("Цвета стен, фасадов, тканей", "—", "НЕ согласовано"), ("Сантехника, смесители, фурнитура", "—", "НЕ согласовано")]
 y = 300; cols = [200, 1150, 2250]
 for c, h in zip(cols, ["Позиция", "Решение", "Статус"]): s.A(f'<text x="{c}" y="{y}" font-size="32" font-weight="bold" fill="{INK}">{h}</text>')
@@ -628,11 +671,11 @@ s.save("s22_materialy")
 # ================================================================== Визуализации
 import base64 as _b64, io as _io
 VZ = os.path.join(PROJ, "08_vizualizacii")
-SH = [("gostinaya/_kremA_1_ot_dveri_k_oknu", "Гостиная", "от двери к окну"), ("gostinaya/_kremA_2_ot_okna_k_dveri", "Гостиная", "от окна к двери"),
-      ("gostinaya/_kremA_3_divan_i_kresla", "Гостиная", "диван и кресла"), ("gostinaya/_kremA_4_tv_zona", "Гостиная", "ТВ-зона"),
-      ("gostinaya/_kremA_5_obshchiy_sverhu", "Гостиная", "общий вид"),
-      ("gostinaya/_kremA_7_kreslo", "Гостиная", "кресло и столик"), ("gostinaya/_kremA_6_detal_steny", "Гостиная", "деталь стены"),
-      ("gostinaya/_kremA_8_potolok", "Гостиная", "потолок"), ("gostinaya/_kremA_9_ugol_potolka", "Гостиная", "угол потолка"),
+SH = [("gostinaya/_smA_1_ot_dveri_k_oknu", "Гостиная", "от двери к окну"), ("gostinaya/_smA_2_ot_okna_k_dveri", "Гостиная", "от окна к двери"),
+      ("gostinaya/_smA_3_divan_i_kresla", "Гостиная", "диван и кресла"), ("gostinaya/_smA_4_tv_zona", "Гостиная", "ТВ-зона"),
+      ("gostinaya/_smA_5_obshchiy_sverhu", "Гостиная", "общий вид"),
+      ("gostinaya/_smA_7_kreslo", "Гостиная", "кресло и столик"), ("gostinaya/_smA_6_detal_steny", "Гостиная", "деталь стены"),
+      ("gostinaya/_smA_8_potolok", "Гостиная", "потолок"), ("gostinaya/_smA_9_ugol_potolka", "Гостиная", "угол потолка"),
       ("komnata/1_ot_dveri_k_oknu", "Вторая гостиная", "от двери к окну"), ("komnata/2_ot_okna_k_shkafu", "Вторая гостиная", "от окна к шкафу"),
       ("komnata/3_tv_zona", "Вторая гостиная", "ТВ-зона"),
       ("spalnya2/1_ot_dveri_k_krovati", "Спальня 2", "от двери к кровати"), ("spalnya2/3_krovat_pryamo", "Спальня 2", "кровать и изголовье"),
@@ -663,6 +706,19 @@ for k, (fn, room, cap) in enumerate(SH, 1):        # как в образце: �
     s.A(f'<text x="{(SX+W-40)/2:.0f}" y="260" text-anchor="middle" font-size="32" fill="#6B665C">{cap}</text>')
     s.title = f"Визуализация — {room.lower()}, {cap}"
     s.save(f"s23_vizual_{k}")
+
+# ================================================================== 13.11.2026: гостиная по системе SM — узел потолка, ТВ-стена, стена с диваном
+GS = [("s25_gost_uzel", "shema_gostinaya_potolok_sm", "Гостиная — потолок по системе SM: план и Узел-1"),
+      ("s25_gost_tv", "shema_gostinaya_tv_sm", "Гостиная — ТВ-стена: тумба 300 орех, стеллажи 550"),
+      ("s25_gost_divan", "shema_gostinaya_ramki_sm", "Гостиная — стена с диваном: три рамки")]
+for (sid, png, ttl) in GS:
+    s = Sheet(ttl, 0)
+    f = os.path.join(PROJ, "01_chertezhi", png + ".png")
+    if os.path.exists(f):
+        from PIL import Image as _I
+        im = _I.open(f).convert("RGB"); im.thumbnail((3000, 3000)); bf = _io.BytesIO(); im.save(bf, "JPEG", quality=90)
+        s.A(f'<image x="125" y="45" width="{SX-130}" height="{H-90}" preserveAspectRatio="xMidYMid meet" href="data:image/jpeg;base64,{_b64.b64encode(bf.getvalue()).decode()}"/>')
+    s.save(sid)
 
 # ================================================================== Прихожая: варианты планировки (на выбор заказчика)
 s = Sheet("Прихожая — варианты планировки", 0)

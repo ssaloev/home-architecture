@@ -67,3 +67,35 @@ if __name__ == "__main__":
     for k, v in res.items():
         print(k, v["name"], f"спотов {v['n']}×{v['lm']} лм ({v['W_tot']} Вт): Eср={v['avg']:.0f} лк, Emin={v['mn']:.0f}, U={v['U']:.2f}")
     for s in SC: print("сцена", s[0], f"рамка {s[1]*100:.0f}% LED {s[2]*100:.0f}% бра {s[3]*100:.0f}% → ≈{s[4]:.0f} лк")
+
+# ======================================================================================================
+# 13.11.2026 — ПОТОЛОК ПО СИСТЕМЕ SM (Узел-1, ×0,6 по высоте): короб 280 (низ 2490) | 2-й уровень (2550) с магнитным
+# треком 35 по кругу | карниз у поля + LED на поле (2670). Источники (как в 3D-сцене gostinaya_blender.py smceil):
+NI = 0.15; D1, D2 = 0.28, 0.68; TR = D1 + 0.215 + 0.0175           # отступы от стен: короб, край поля, ось трека
+zb = z0 + NI                                                       # у окна — ниша штор
+mid = (zb + z1) / 2
+SM_TRACK = [(x0 + TR, z) for z in (zb + 0.95, zb + 1.08, mid - 0.08, mid + 0.08, z1 - 1.08, z1 - 0.95)] + \
+           [(x1 - TR, z) for z in (zb + 0.95, zb + 1.08, mid - 0.08, mid + 0.08, z1 - 1.08, z1 - 0.95)]
+SM_LIN = [(x0 + TR, mid - 0.9), (x0 + TR, mid + 0.9), (x1 - TR, mid - 0.9), (x1 - TR, mid + 0.9), ((x0 + x1) / 2, zb + TR), ((x0 + x1) / 2, z1 - TR)]
+SM_DOWN = [(x0 + 0.14, zb + 0.9 + k * (z1 - zb - 1.8) / 3) for k in range(4)] + [(x1 - 0.14, zb + 0.9 + k * (z1 - zb - 1.8) / 3) for k in range(4)] + \
+          [((x0 + x1) / 2 - 0.8, z1 - 0.14), ((x0 + x1) / 2 + 0.8, z1 - 0.14)]
+FIELD_PER = 2 * ((A_ - 2 * D2) + (z1 - zb - 2 * D2))               # периметр поля = длина LED на карнизе
+SHELF_LED = 8 * 0.49                                               # подсветка 8 полок стеллажей у ТВ
+P = dict(track=(400, 5, 36), lin=(500, 7, 90), down=(300, 4, 60), cove=500, shelf=300)   # лм, Вт, угол / лм на м
+
+def sm_calc(k_track, k_lin, k_down, k_cove, k_shelf):
+    E = calc(SM_DOWN, P["down"][0], beam=P["down"][2], dim=k_down)[0] if k_down else 0
+    if k_track: E = E + calc(SM_TRACK, P["track"][0], beam=P["track"][2], dim=k_track)[0]
+    if k_lin:   E = E + calc(SM_LIN, P["lin"][0], beam=P["lin"][2], dim=k_lin)[0]
+    led = P["cove"] * FIELD_PER * k_cove + P["shelf"] * SHELF_LED * k_shelf
+    E = E + calc([], 0, led_lm=led)[0]
+    return E
+SM_SC = []
+for nm, kt, kl, kd, kc, ks in (("Ночь / кино", 0, 0, 0, 0.3, 0.5), ("Вечер, уют", 0, 0, 0.3, 1.0, 1.0),
+                               ("Обычный", 0, 1.0, 1.0, 1.0, 1.0), ("Максимум (уборка, гости)", 1.0, 1.0, 1.0, 1.0, 1.0)):
+    E = sm_calc(kt, kl, kd, kc, ks); SM_SC.append((nm, float(np.mean(E)), float(np.min(E))))
+SM_W = len(SM_TRACK) * P["track"][1] + len(SM_LIN) * P["lin"][1] + len(SM_DOWN) * P["down"][1] + FIELD_PER * 9.6 + SHELF_LED * 4.8
+if __name__ == "__main__":
+    print(f"\n=== ПОТОЛОК SM (13.11.2026): трек-споты {len(SM_TRACK)}×{P['track'][0]} лм, линейные модули {len(SM_LIN)}×{P['lin'][0]} лм,"
+          f" встроенные Ø80 {len(SM_DOWN)}×{P['down'][0]} лм, LED на поле {FIELD_PER:.1f} м×{P['cove']} лм/м, полки {SHELF_LED:.1f} м; всего ≈{SM_W:.0f} Вт")
+    for nm, avg, mn in SM_SC: print(f"сцена {nm}: Eср≈{avg:.0f} лк, Emin≈{mn:.0f} лк (норма {NORM})")
