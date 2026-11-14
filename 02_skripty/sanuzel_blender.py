@@ -572,6 +572,8 @@ if "real" in ARGS:
     sc.cycles.max_bounces = 12; sc.cycles.diffuse_bounces = 6; sc.cycles.glossy_bounces = 6; sc.cycles.sample_clamp_indirect = 8
     try: sc.view_settings.look = "AgX - Medium High Contrast"
     except Exception: pass
+    if OPT.get("plus", "1") == "1":   # 14.11: IES, порталы окон, шторы со складками, потёртости (real_plus.py)
+        exec(open(os.path.join(PROJ, "02_skripty", "real_plus.py"), encoding="utf-8").read())
     sc.render.resolution_x, sc.render.resolution_y = 1920, 1080; QUICK = False; tag = tag if "tag" in OPT else "_real"
 for s_ in SHOTS:
     if s_ not in CAMS: continue
