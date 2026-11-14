@@ -32,7 +32,7 @@ if _O.get("noies") != "1":
     _f = _ies_file(); _n = 0
     for _o in [o for o in sc.objects if o.type == "LIGHT" and o.data.type == "SPOT"]:
         _l = _o.data; _e = _l.energy; _col = tuple(_l.color)
-        _l.type = "POINT"; _l = _o.data; _l.energy = _e * 1.15; _l.color = _col; _l.shadow_soft_size = 0.025
+        _l.type = "POINT"; _l = _o.data; _l.energy = _e * float(_O.get("iesk", "1.15")); _l.color = _col; _l.shadow_soft_size = 0.025
         try: _l.use_nodes = True
         except Exception: pass
         _nt = _l.node_tree
@@ -99,7 +99,7 @@ if _O.get("nocurt") != "1":
         if len(cols) < 3: continue
         tulle = _o.name.startswith("Тюль"); NV = 40
         bm = bmesh.new(); grid = []
-        ph = [random.uniform(0, 6.283) for _ in range(len(cols))]
+        ph = [2.3 * a + 1.4 * math.sin(4.1 * a + 0.7) for a, _ in cols]   # плавно вдоль шторы (без «дождя» из полос)
         for j in range(NV + 1):
             t = j / NV; h = z0 + (z1 - z0) * t; down = 1 - t; row = []
             for i, (a, d) in enumerate(cols):

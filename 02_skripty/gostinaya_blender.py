@@ -1283,6 +1283,8 @@ if VARIANTS:
         sc.render.filepath = os.path.join(vd, f"{k:02d}.jpg"); bpy.ops.render.render(write_still=True)
         print("VARIANT", k)
     raise SystemExit
+if "real" in ARGS and "fast" not in ARGS:   # 14.11: супер-реализм (real_common.py → real_plus.py)
+    exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "real_common.py"), encoding="utf-8").read())
 # ---- 14.11: БЫСТРЫЙ ПРОСМОТР (аргумент fast): EEVEE, 1280×720, файлы q_*.jpg — финал (Cycles) не перезаписывается
 if "fast" in ARGS:
     for _e in ("BLENDER_EEVEE", "BLENDER_EEVEE_NEXT"):
