@@ -700,6 +700,7 @@ SH = [("gostinaya/_smA_1_ot_dveri_k_oknu", "Гостиная", "от двери 
 for k, (fn, room, cap) in enumerate(SH, 1):        # как в образце: один ракурс — один лист, картинка на весь лист
     s = Sheet("", 0)
     f = os.path.join(VZ, fn + ".jpg")
+    if os.path.exists(os.path.join(VZ, fn + "_plus.jpg")): f = os.path.join(VZ, fn + "_plus.jpg")   # 14.11: кадры супер-реализма
     if os.path.exists(f):
         from PIL import Image as _I
         im = _I.open(f).convert("RGB"); im.thumbnail((2600, 2600)); bf = _io.BytesIO(); im.save(bf, "JPEG", quality=88)
