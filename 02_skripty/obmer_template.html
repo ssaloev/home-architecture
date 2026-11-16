@@ -1,0 +1,230 @@
+<title>Обмер квартиры</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Лист рулеточного замера: графитовая бумага, жёлтая лента рулетки как акцент, цифры моноширинным */
+:root{
+  --bg:#F3F2EE; --paper:#FFFFFF; --ink:#22231F; --muted:#6B6C66; --line:#D9D8D1;
+  --tape:#E8B400; --tape-ink:#3A2E00; --tape-soft:#FBF1C9; --ok:#2E7D4F; --wall:#3A3B36; --room:#FBFAF6;
+  --door:#C98A2B; --win:#3C86B5; --focus:#1D5FA0;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#171815; --paper:#22231F; --ink:#ECEBE5; --muted:#A3A39B; --line:#3A3B35;
+  --tape:#F2C21A; --tape-ink:#231B00; --tape-soft:#3A3212; --ok:#6CC28F; --wall:#8C8D86; --room:#2A2B26;
+  --door:#E0A34A; --win:#6DB3E0; --focus:#7FB4EA; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#171815; --paper:#22231F; --ink:#ECEBE5; --muted:#A3A39B; --line:#3A3B35;
+  --tape:#F2C21A; --tape-ink:#231B00; --tape-soft:#3A3212; --ok:#6CC28F; --wall:#8C8D86; --room:#2A2B26;
+  --door:#E0A34A; --win:#6DB3E0; --focus:#7FB4EA; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.45}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+header.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+header.bar .wrap{padding-block:12px;display:flex;flex-direction:column;gap:8px}
+.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-size:1.3rem;margin:0;font-weight:700;letter-spacing:-.01em}
+.status{font-size:.82rem;color:var(--muted)}
+.status.ok{color:var(--ok)}
+.prog{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.track{flex:1;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.track i{display:block;height:100%;width:0;background:var(--tape);background-image:repeating-linear-gradient(90deg,transparent 0 9px,rgba(0,0,0,.25) 9px 10px);transition:width .3s}
+.intro{margin:18px 0 6px;color:var(--muted);font-size:.95rem;max-width:62ch}
+.note-local{background:var(--tape-soft);color:var(--ink);border-radius:var(--r);padding:10px 12px;font-size:.9rem;margin:10px 0}
+.plan{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:10px;margin:14px 0 6px;overflow-x:auto}
+.plan svg{display:block;width:100%;min-width:520px;height:auto}
+.plan .rm{fill:var(--room)} .plan .wl{fill:var(--wall)} .plan .wn{fill:var(--win);opacity:.55} .plan .dr{fill:var(--door);opacity:.6}
+.plan .rn{font:500 13px var(--f-body);fill:var(--muted);text-anchor:middle}
+.plan .tg rect{fill:var(--paper);stroke-width:1.6}
+.plan .tg text{font:600 12px var(--f-num);text-anchor:middle}
+.plan .t-p rect{stroke:var(--ink)} .plan .t-p text{fill:var(--ink)}
+.plan .t-d rect{stroke:var(--door)} .plan .t-d text{fill:var(--door)}
+.plan .t-o rect{stroke:var(--win)} .plan .t-o text{fill:var(--win)}
+.plan .tg.done rect{fill:var(--tape);stroke:var(--tape)} .plan .tg.done text{fill:var(--tape-ink)}
+.cap{font-size:.8rem;color:var(--muted);margin:0 0 6px}
+nav.jump{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
+nav.jump a{font-size:.85rem;color:var(--ink);text-decoration:none;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px}
+nav.jump a:focus-visible,a:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+section{margin-top:26px;scroll-margin-top:110px}
+h2{font-size:1.1rem;margin:0 0 4px;text-wrap:balance}
+.hint{color:var(--muted);font-size:.88rem;margin:0 0 12px;max-width:62ch}
+.items{display:flex;flex-direction:column;gap:10px}
+.it{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px;scroll-margin-top:110px}
+.it.done{border-color:var(--tape)}
+.it.flash{box-shadow:0 0 0 3px var(--tape)}
+.ih{display:flex;align-items:center;gap:10px;margin-bottom:10px;min-width:0}
+.key{font:600 .85rem var(--f-num);min-width:2.6em;text-align:center;padding:3px 6px;border-radius:6px;border:1.5px solid var(--ink);flex:none}
+.it.done .key{background:var(--tape);border-color:var(--tape);color:var(--tape-ink)}
+.nm{font-weight:600;min-width:0;overflow-wrap:anywhere}
+.saved{margin-left:auto;font-size:.75rem;color:var(--muted);flex:none}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:.8rem;color:var(--muted);min-width:0}
+.in{position:relative}
+.in input{width:100%;font:500 1.05rem var(--f-num);font-variant-numeric:tabular-nums;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 38px 9px 10px}
+.in span{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:.78rem;color:var(--muted);pointer-events:none}
+input,select,textarea{font-family:var(--f-body)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+@media (max-width:440px){.row2{grid-template-columns:1fr}}
+select,input.tx,textarea{width:100%;font-size:.95rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px}
+textarea{margin-top:10px;min-height:42px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--focus);outline-offset:1px;border-color:transparent}
+.foot{margin-top:30px;color:var(--muted);font-size:.85rem}
+.gen textarea{min-height:110px}
+@media (prefers-reduced-motion:reduce){.track i{transition:none}}
+</style>
+
+<header class="bar"><div class="wrap">
+  <div class="top"><h1>Обмер квартиры</h1><span class="status" id="status">Подключаюсь к сохранению…</span></div>
+  <div class="prog"><div class="track"><i id="bar"></i></div><span id="cnt">0 из 0</span></div>
+</div></header>
+
+<main class="wrap">
+  <p class="intro">Меряйте рулеткой и вписывайте в миллиметрах. Всё сохраняется само, можно заполнять частями. Нажмите номер на плане — откроется его строка.</p>
+  <div id="local" class="note-local" hidden>Сохранение на сервер сейчас недоступно: размеры запоминаются только на этом телефоне. Не очищайте браузер, пока не пришлёте их.</div>
+  <div class="plan">
+    <p class="cap">П — комнаты · Д — двери · О — окна. Жёлтым — уже заполнено.</p>
+/*SVG*/
+  </div>
+  <nav class="jump" id="jump"></nav>
+  <div id="groups"></div>
+  <section id="sec-gen" class="gen">
+    <h2>Что ещё заметили</h2>
+    <p class="hint">Неровные стены, перепады пола, розетки и выключатели, которые надо сохранить, — любым текстом.</p>
+    <div class="it" id="it-GEN"><textarea id="GEN_note" aria-label="Общие заметки" placeholder="Например: стена в спальне завалена на 15 мм к окну"></textarea></div>
+  </section>
+  <p class="foot">Когда закончите, напишите в чат «обмер готов» — я заберу размеры отсюда и поправлю чертежи.</p>
+</main>
+
+<script>
+const GROUPS = /*GROUPS*/;
+const ROOMS = /*ROOMS*/;
+const ASCII = {"П":"P","Д":"D","О":"O","Т":"T","В":"V","ПТ":"PT","Б":"B"};
+const idOf = k => { const m = k.match(/^([^\d]+)(\d+)$/); return (ASCII[m[1]] || "X") + m[2]; };
+const state = {};            // id -> {field: value}
+const all = [];              // {id, key, fields}
+let store = null, local = false;
+
+function el(tag, attrs = {}, kids = []) {
+  const e = document.createElement(tag);
+  for (const [a, v] of Object.entries(attrs)) { if (a === "text") e.textContent = v; else e.setAttribute(a, v); }
+  for (const k of [].concat(kids)) if (k) e.append(k);
+  return e;
+}
+function build() {
+  const host = document.getElementById("groups"), jump = document.getElementById("jump");
+  for (const g of GROUPS) {
+    jump.append(el("a", {href: "#sec-" + g.id, text: g.title}));
+    const items = el("div", {class: "items"});
+    for (const it of g.items) {
+      const id = idOf(it.k); const fields = g.fields.map(f => f[0]);
+      if (g.room) fields.push("room", "what");
+      fields.push("note"); all.push({id, key: it.k, fields, nums: g.fields.map(f => f[0])});
+      const box = el("div", {class: "it", id: "it-" + id});
+      box.append(el("div", {class: "ih"}, [el("span", {class: "key", text: it.k}), el("span", {class: "nm", text: it.name || "—"}), el("span", {class: "saved", id: "sv-" + id})]));
+      if (g.room) {
+        const sel = el("select", {id: id + "_room", "aria-label": it.k + " комната"});
+        sel.append(el("option", {value: "", text: "Комната…"}));
+        for (const r of ROOMS) sel.append(el("option", {value: r, text: r}));
+        const what = el("input", {class: "tx", id: id + "_what", type: "text", placeholder: g.what || "Что это", "aria-label": it.k + " что это"});
+        box.append(el("div", {class: "row2"}, [sel, what]));
+      }
+      const grid = el("div", {class: "grid"});
+      for (const [f, lab] of g.fields) {
+        const inp = el("input", {id: id + "_" + f, type: "text", inputmode: f === "size" ? "text" : "numeric", autocomplete: "off", placeholder: "—"});
+        grid.append(el("label", {class: "f", for: id + "_" + f}, [document.createTextNode(lab), el("div", {class: "in"}, [inp, el("span", {text: "мм"})])]));
+      }
+      box.append(grid);
+      box.append(el("textarea", {id: id + "_note", rows: "1", placeholder: "Заметка (необязательно)", "aria-label": it.k + " заметка"}));
+      items.append(box);
+    }
+    host.append(el("section", {id: "sec-" + g.id}, [el("h2", {text: g.title}), el("p", {class: "hint", text: g.hint}), items]));
+  }
+  all.push({id: "GEN", key: "GEN", fields: ["note"], nums: []});
+  jump.append(el("a", {href: "#sec-gen", text: "Заметки"}));
+}
+function filled(a) { const s = state[a.id] || {}; return a.nums.length ? a.nums.some(f => (s[f] || "").trim()) : !!(s.note || "").trim(); }
+function refresh() {
+  let total = 0, done = 0;
+  for (const a of all) {
+    if (a.id === "GEN") continue;
+    const s = state[a.id] || {};
+    total += a.nums.length; done += a.nums.filter(f => (s[f] || "").trim()).length;
+    const box = document.getElementById("it-" + a.id); if (box) box.classList.toggle("done", filled(a));
+    document.querySelectorAll('.tg[data-k="' + a.key + '"]').forEach(t => t.classList.toggle("done", filled(a)));
+  }
+  document.getElementById("cnt").textContent = done + " из " + total;
+  document.getElementById("bar").style.width = (total ? 100 * done / total : 0) + "%";
+}
+function fill(id) {
+  const s = state[id] || {}; const a = all.find(x => x.id === id); if (!a) return;
+  for (const f of a.fields) {
+    const inp = document.getElementById(id + "_" + f);
+    if (inp && document.activeElement !== inp && (s[f] ?? "") !== inp.value) inp.value = s[f] ?? "";
+  }
+}
+function setStatus(t, ok) { const s = document.getElementById("status"); s.textContent = t; s.classList.toggle("ok", !!ok); }
+
+const timers = {}, busy = {}, again = {};
+function readItem(id) {
+  const a = all.find(x => x.id === id), o = {};
+  for (const f of a.fields) { const inp = document.getElementById(id + "_" + f); if (inp) o[f] = inp.value.trim(); }
+  return o;
+}
+async function save(id) {
+  if (busy[id]) { again[id] = true; return; }
+  busy[id] = true;
+  const o = readItem(id); state[id] = o;
+  const body = Object.assign({}, o, {key: (all.find(x => x.id === id) || {}).key, at: new Date().toISOString()});
+  try {
+    if (store) await store.doc("obmer/" + id).set(body);
+    else { try { localStorage.setItem("obmer_" + id, JSON.stringify(body)); } catch (e) {} }
+    const sv = document.getElementById("sv-" + id); if (sv) sv.textContent = "сохранено";
+    setStatus(store ? "Сохранено" : "Сохранено на телефоне", true);
+  } catch (e) {
+    setStatus(e && e.code === "quota_exceeded" ? "Место для сохранения кончилось — напишите в чат" : "Не сохранилось — проверьте интернет, попробую снова при следующем вводе");
+  }
+  busy[id] = false;
+  if (again[id]) { again[id] = false; save(id); }
+  refresh();
+}
+document.addEventListener("input", e => {
+  const m = (e.target.id || "").match(/^([A-Z]+\d*|GEN)_/); if (!m) return;
+  const id = m[1]; state[id] = readItem(id); refresh();
+  const sv = document.getElementById("sv-" + id); if (sv) sv.textContent = "…";
+  clearTimeout(timers[id]); timers[id] = setTimeout(() => save(id), 700);
+});
+document.addEventListener("change", e => {
+  const m = (e.target.id || "").match(/^([A-Z]+\d*|GEN)_/); if (!m) return;
+  clearTimeout(timers[m[1]]); save(m[1]);
+});
+document.addEventListener("click", e => {
+  const a = e.target.closest(".tg"); if (!a) return;
+  e.preventDefault(); const box = document.getElementById("it-" + idOf(a.dataset.k)); if (!box) return;
+  box.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start"});
+  box.classList.add("flash"); setTimeout(() => box.classList.remove("flash"), 1400);
+  const first = box.querySelector("input,select"); if (first) setTimeout(() => first.focus({preventScroll: true}), 350);
+});
+
+function useLocal() {
+  local = true; document.getElementById("local").hidden = false; setStatus("Сохраняется на телефоне");
+  for (const a of all) { try { const v = JSON.parse(localStorage.getItem("obmer_" + a.id) || "null"); if (v) { state[a.id] = v; fill(a.id); } } catch (e) {} }
+  refresh();
+}
+build(); refresh();
+(async () => {
+  let db = null;
+  try { db = window.claude && window.claude.use ? await window.claude.use("db") : null; } catch (e) { db = null; }
+  if (!db) { useLocal(); return; }
+  store = db;
+  const t = setTimeout(() => setStatus("Сервер пока не отвечает — вводите, сохраню, когда появится связь"), 10000);
+  db.collection("obmer").onSnapshot(snap => {
+    for (const d of snap.docs) { const v = d.data(); if (v) { state[d.id] = Object.assign({}, v); fill(d.id); } }
+    refresh();
+    if (!snap.metadata.fromCache) { clearTimeout(t); if (!document.getElementById("status").classList.contains("ok")) setStatus("Сохранение включено", true); }
+  }, err => { clearTimeout(t); store = null; useLocal(); });
+})();
+</script>
