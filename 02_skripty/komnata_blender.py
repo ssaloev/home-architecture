@@ -360,9 +360,11 @@ for o in _ch:
         if bb is not None and not bb.inputs["Metallic"].is_linked and bb.inputs["Metallic"].default_value > 0.5: continue
         sl.material = M["knit"]
 
-import_bk("stol_mramor", 7.15, tm, 0.0, 90, 1.10)
-import_bk("tyulpany", 7.10, tm - 0.15, 0.47, 0, 0.32, "h")
-import_bk("knigi", 7.20, tm + 0.25, 0.47, 20)
+_st = import_bk("stol_mramor", 7.15, tm, 0.0, 90, 1.10)
+bpy.context.view_layer.update()
+_ttop = max(((o.matrix_world @ Vector(c)).z for o in (_st or []) if o.type == "MESH" for c in o.bound_box), default=0.45)   # 17.11 (проверка): декор ровно на столешнице
+import_bk("tyulpany", 7.10, tm - 0.15, _ttop, 0, 0.32, "h")
+import_bk("knigi", 7.20, tm + 0.25, _ttop, 20)
 if "real" in ARGS:   # 14.11: наполнение для реализма — ковёр, торшер, книги, подушки (бесплатные модели BlenderKit)
     import_bk("kover_bezh", 7.20, tm, 0.0, 90, 2.40)
     import_bk("torsher", X1 - 0.32, tm + 1.40, 0.0, 0, 1.45, "h")

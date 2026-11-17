@@ -27,9 +27,12 @@ cabinet("Шкаф над стиралкой (химия, полотенца)", "
 
 # ---- ванна 1700×700 вдоль левой стены, к нижней стене; шторка на Г-карнизе; смеситель и лейка на левой стене
 BZ0, BX1 = Z1 - 1.70, X0 + 0.70
-tub = box("Ванна", X0, BZ0, BX1, Z1 - 0.003, 0, 0.58, M["acryl"], 0.015)
-cav = box("Чаша", X0 + 0.07, BZ0 + 0.07, BX1 - 0.07, Z1 - 0.07, 0.16, 0.9, M["acryl"])
-md = tub.modifiers.new("cav", "BOOLEAN"); md.operation = "DIFFERENCE"; md.object = cav; cav.hide_render = True; cav.display_type = "WIRE"
+if OPT.get("tub2", "1") == "1" and os.path.exists(os.path.join(BK, "vanna_pryam.blend")):   # 17.11 (проверка: ванна была коробкой) — модель 1720×726
+    bk_fit("vanna_pryam", (X0 + BX1) / 2, (BZ0 + Z1) / 2, 0.0, 90, 1.70)
+else:
+    tub = box("Ванна", X0, BZ0, BX1, Z1 - 0.003, 0, 0.58, M["acryl"], 0.015)
+    cav = box("Чаша", X0 + 0.07, BZ0 + 0.07, BX1 - 0.07, Z1 - 0.07, 0.16, 0.9, M["acryl"])
+    md = tub.modifiers.new("cav", "BOOLEAN"); md.operation = "DIFFERENCE"; md.object = cav; cav.hide_render = True; cav.display_type = "WIRE"
 curtain_rail([(X0, BZ0), (BX1, BZ0), (BX1, Z1)], 2.00)
 box("Держатель карниза", BX1 - 0.006, BZ0 - 0.006, BX1 + 0.006, BZ0 + 0.006, 2.01, HC, M["black"])
 curtain_strip("Шторка собрана", (BX1 - 0.02, Z1 - 0.32), (BX1 - 0.02, Z1 - 0.03), 0.62, 1.97, amp=0.04, waves=4)

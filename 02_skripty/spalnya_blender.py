@@ -205,7 +205,7 @@ HW0, HW1, HH = BC - 1.45, BC + 1.45, 1.30
 
 # ---------------- кровать 1600 + тумбочки + подвесы
 # кровать под заказ (12.11): подиум графит «парящий» с подсветкой, мягкое изголовье со стёжкой, подвесные тумбочки
-CUSTOM = OPT.get("bed", "custom") == "custom"
+CUSTOM = OPT.get("bed", "model") == "custom"   # 17.11 (проверка: кровать из коробок пересекалась) — по умолчанию настоящая модель
 M["hbf"] = mat("Изголовье ткань графит-серая", "#" + OPT.get("hb", "5E5E62"), 0.95)
 M["linen"] = mat("Бельё белое", "#F2F0EC", 0.9); M["duvet"] = mat("Покрывало серое", "#" + OPT.get("duv", "B4B5B3"), 0.95); M["plaid"] = mat("Плед графит", "#3C3C3F", 0.95)
 zh = Z0 + 0.005
@@ -272,9 +272,9 @@ if CUSTOM:
         box("Ручка", xx - 0.07, Z0 + 0.40, xx + 0.07, Z0 + 0.415, 0.555, 0.565, M["black"], 0.003)
         box("LED под тумбочкой", xx - 0.15, Z0 + 0.03, xx + 0.15, Z0 + 0.37, 0.394, 0.398, M["led"])
 else:
-  _bed = import_bk("krovat_myagkaya", BC, Z0 + 0.08 + 1.05, 0.0, 0, 1.80)
-  for (xx, rot) in ((BC - 1.20, 180), (BC + 1.20, 180)):
-    for _o in import_bk("tumbochka_noir", xx, Z0 + 0.26, 0.0, 0, 0.55):
+  _bed = import_bk("krovat_myagkaya", BC, Z0 + 0.04 + 1.07, 0.0, 0, 1.62)
+  for (xx, rot) in ((BC - 1.03, 180), (BC + 1.03, 180)):
+    for _o in import_bk("tumbochka_noir", xx, Z0 + 0.24, 0.0, 0, 0.45):
         if _o.type != "MESH": continue
         for _sl in _o.material_slots:
             _m = _sl.material; _b = next((n for n in _m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if (_m and _m.use_nodes) else None

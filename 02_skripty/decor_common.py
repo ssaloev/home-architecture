@@ -31,7 +31,20 @@ def _bbox(objs):
     return mn, mx
 
 
+def top_at(cx, cz, skip=()):
+    """высота верхней поверхности под точкой (луч сверху вниз) — чтобы предмет стоял, а не висел"""
+    dg = bpy.context.evaluated_depsgraph_get(); o = W(cx, cz, 2.9); d = Vector((0, 0, -1)); h = 0.0
+    for _ in range(6):
+        ok, loc, nrm, idx, ob, mt = bpy.context.scene.ray_cast(dg, o, d)
+        if not ok: break
+        if ob in skip or ob.name.lower().startswith(("потолок", "перекрыт", "спот", "led", "балка", "шнур", "подвес", "torus", "cube")):
+            o = loc + d * 0.002; continue
+        h = loc.z; break
+    return h
+
+
 def dk(name, cx, cz, h0=0.0, rot=0.0, size=None, axis="w", wall=None):
+    if h0 == "auto": h0 = top_at(cx, cz)
     objs = _load(name)
     if not objs: return []
     roots = [o for o in objs if o.parent is None or o.parent not in objs]
@@ -59,31 +72,31 @@ if OPT.get("decor", "1") == "1":
     R_ = globals().get("OUTDIR") or os.path.basename(globals().get("OUT", ""))
     if R_ == "komnata":
         _sw = globals().get("SWAP", True)                # SWAP: ТВ у правой стены (X1), диван у левой (X0)
+        _tx = (2 * (X0 + X1) / 2 - 7.15) if _sw else 7.15   # центр столика (после поворота группы)
         dk("kartina_2", (X0 + 0.03) if _sw else (X1 - 0.03), tm, 1.05, size=0.80, wall=("L" if _sw else "R"))
         dk("vazy_3", (X1 - 0.22) if _sw else (X0 + 0.22), tm - 1.05, 0.32, 90, 0.55)
-        dk("svechi", 7.05, tm + 0.20, 0.47, 0, 0.18)
-        dk("vaza_frukty", 7.25, tm - 0.25, 0.47, 0, 0.30)
+        dk("svechi", _tx - 0.10, tm + 0.20, "auto", 0, 0.18)
+        dk("vaza_frukty", _tx + 0.10, tm - 0.25, "auto", 0, 0.30)
         dk("sansevieriya", (X1 - 0.30) if _sw else (X0 + 0.30), Z0 + 0.45, 0.0, 0, 0.75, "h")
     elif R_ == "spalnya2":
-        for xx in (BC - 1.025, BC + 1.025): dk("lampa_nastol", xx, Z0 + 0.22, 0.45, 0, 0.42, "h")
-        dk("podushki_dekor", BC, Z0 + 0.55, 0.56, 0, 0.90)
+        for xx in (BC - 1.03, BC + 1.03): dk("lampa_nastol", xx, Z0 + 0.22, "auto", 0, 0.42, "h")
         dk("kartina_2", 14.15, Z1 - 0.03, 1.35, size=0.55, wall="B")
         dk("sansevieriya", X1 - 0.30, Z1 - 0.30, 0.0, 0, 0.80, "h")
-        dk("svechi", 14.35, Z1 - 0.22, 0.75, 0, 0.15)
+        dk("svechi", 14.35, Z1 - 0.22, "auto", 0, 0.15)
     elif R_ == "kuhnya":
-        dk("posuda_4", 11.45, Z0 + 0.36, 0.75, 0, 0.42)
-        dk("vaza_frukty", 11.75, Z0 + 0.30, 0.75, 0, 0.28)
-        dk("doska_razdel", X1 - 0.30, 3.75, 0.90, 90, 0.36)
+        dk("posuda_4", 11.45, Z0 + 0.36, "auto", 0, 0.42)
+        dk("vaza_frukty", 11.75, Z0 + 0.30, "auto", 0, 0.28)
+        dk("doska_razdel", X1 - 0.30, 3.75, "auto", 90, 0.36)
         dk("vazy_3", X1 - 0.18, 3.25, 1.52, 90, 0.30) if False else None
         dk("sansevieriya", X0 + 0.30, 4.40, 0.0, 0, 0.70, "h")
     elif R_ == "vannaya":
-        dk("vanna_aksessuary", X1 - 0.16, SZ0 + 0.10, CT, -90, 0.22)
-        dk("polotenca_stopka", X1 - 0.30, 8.55, 0.86, -90, 0.30)
+        dk("vanna_aksessuary", X1 - 0.16, SZ0 + 0.10, "auto", -90, 0.22)
+        dk("polotenca_stopka", X1 - 0.30, 8.55, "auto", -90, 0.30)
         dk("kovrik_seryi", X0 + 1.15, 9.05, 0.0, 90, 0.95)
         dk("svechi", X0 + 0.12, BZ0 + 0.12, 0.58, 0, 0.14)
         dk("sansevieriya", X0 + 0.95, Z0 + 0.25, 0.0, 0, 0.65, "h")
     elif R_ == "sanuzel":
-        dk("vanna_aksessuary", X1 - 0.12, Z0 + 0.10, CT, 0, 0.22)
+        dk("vanna_aksessuary", X1 - 0.12, Z0 + 0.10, "auto", 0, 0.22)
         dk("polotence_visit", X1 - 0.03, 7.90, 0.85, size=0.45, wall="R")
         dk("kovrik_seryi", (X0 + X1) / 2, 7.45, 0.0, 90, 0.60)
-        dk("svechi", X1 - 0.33, Z0 + 0.10, CT, 0, 0.12)
+        dk("svechi", X1 - 0.33, Z0 + 0.10, "auto", 0, 0.12)

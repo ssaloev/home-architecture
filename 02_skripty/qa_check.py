@@ -123,6 +123,7 @@ def check_room(room):
     for i, a in enumerate(big_f):
         for b in big_f[i + 1:]:
             ov = overlap2(fp(a), fp(b)); hz = min(a["h1"], b["h1"]) - max(a["h0"], b["h0"])
+            if a["lib"] and b["lib"]: continue          # детали одной готовой модели (простыня на матрасе, рама и картина) — это норма
             if ov > 0.25 * min(area(fp(a)), area(fp(b))) and hz > 0.10:
                 an, bn = a["name"].split(".")[0], b["name"].split(".")[0]
                 if an != bn and not (an.lower()[:5] == bn.lower()[:5]): cross.append((an, bn))
