@@ -141,3 +141,6 @@ if _O.get("noimp") != "1":
             nt.links.new(mr.outputs["Result"], ad.inputs[1]); nt.links.new(ad.outputs["Value"], ri)
             m["_imp"] = 1; _k += 1
         print("REAL+ потёртости:", _k, flush=True)
+
+# 17.11: фото-фактуры ambientCG (pbr=0 — без них)
+exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else ".", "pbr_plus.py") if False else os.path.join(globals().get("PROJ") or os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "02_skripty", "pbr_plus.py"), encoding="utf-8").read())
