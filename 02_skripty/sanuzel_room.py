@@ -56,6 +56,7 @@ box("Трап-лоток", X0 + 0.06, Z1 - 0.10, X1 - 0.06, Z1 - 0.06, 0.0, 0.00
 bk_load("dush_komplekt_cherny", Matrix.Translation(W(X0, Z1 - 0.40, 0.95)) @ Matrix.Rotation(math.radians(90), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X"))
 spots([((X0 + X1) / 2, 7.30), ((X0 + X1) / 2, Z1 - 0.40)])
 
+exec(open(os.path.join(PROJ, "02_skripty", "decor_common.py"), encoding="utf-8").read())   # 17.11: декор (decor=0 — без него)
 CAMS = {"1": ("1_ot_dveri", W(X1 - 0.10, 7.55, 1.60), W(X0 - 0.25, 7.32, 0.85), 13),
         "2": ("2_k_dushu", W(X1 - 0.15, 7.30, 1.65), W(X0 + 0.30, Z1 - 0.10, 0.95), 13),
         "3": ("3_iz_dusha", W(X0 + 0.55, Z1 - 0.08, 1.60), W(X1 - 0.20, 6.90, 1.20), 13)}

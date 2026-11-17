@@ -211,6 +211,7 @@ def orn_corner(A, x, y, dx, dy, size, col, sw=1.6):
     A(f'<g transform="translate({x:.1f},{y:.1f}) scale({dx*size:.2f},{dy*size:.2f})"><path d="{ORN}" fill="none" stroke="{col}" stroke-width="{sw}" vector-effect="non-scaling-stroke"/>'
       f'<circle cx="0.13" cy="0.13" r="0.06" fill="none" stroke="{col}" stroke-width="{sw}" vector-effect="non-scaling-stroke"/></g>')
 
+ELEV_DIR = {"Санузел": "sanuzel", "Ванная": "vannaya", "Кухня": "kuhnya", "Спальня 2": "spalnya2", "Комната": "komnata"}
 def elevation(s, room, wall, px0, py0, sc, title, wet):
     x0, x1, z0, z1 = rooms[room][:4]
     Lw = (x1 - x0) if wall in "TB" else (z1 - z0)
@@ -218,12 +219,21 @@ def elevation(s, room, wall, px0, py0, sc, title, wet):
     PX = lambda u: px0 + u * sc; PY = lambda h: py0 + (2.7 - h) * sc
     A = s.A
     A(f'<rect x="{PX(0):.1f}" y="{PY(2.7):.1f}" width="{Lw*sc:.1f}" height="{2.7*sc:.1f}" fill="{"url(#tile)" if wet is True else (wet or "#FFFFFF")}" stroke="{INK}" stroke-width="4"/>')
+    # 17.11 (как у SM): если есть ортогональный рендер стены из 3D — он вместо условной заливки, поверх — размеры и точки
+    _ef = os.path.join(os.path.dirname(ROOT), "08_vizualizacii", ELEV_DIR.get(room, "-"), "elev_" + wall + ".jpg")
+    _img = os.path.exists(_ef)
+    if _img:
+        from PIL import Image as _EI
+        import base64 as _eb, io as _eio
+        _im = _EI.open(_ef).convert("RGB"); _im.thumbnail((1400, 1400)); _bf = _eio.BytesIO(); _im.save(_bf, "JPEG", quality=88)
+        A(f'<image x="{PX(0):.1f}" y="{PY(2.65):.1f}" width="{Lw*sc:.1f}" height="{2.65*sc:.1f}" preserveAspectRatio="none" href="data:image/jpeg;base64,{_eb.b64encode(_bf.getvalue()).decode()}"/>')
+        A(f'<rect x="{PX(0):.1f}" y="{PY(2.7):.1f}" width="{Lw*sc:.1f}" height="{2.7*sc:.1f}" fill="none" stroke="{INK}" stroke-width="4"/>')
     A(f'<line x1="{PX(0)-20:.1f}" y1="{PY(0):.1f}" x2="{PX(Lw)+20:.1f}" y2="{PY(0):.1f}" stroke="{INK}" stroke-width="7"/>')
     st = {"inst": ("none", "#8A8478", "10 6"), "wc": ("#FFFFFF", INK, ""), "boiler": ("#FBE3DF", "#B03A2E", "14 8"), "glass": ("#E7F1F6", "#5C8AA8", ""),
           "fix": ("#F3EFE7", "#6B665C", ""), "mirror": ("#EEF3F5", "#8AA0AA", ""), "tank": ("#E3EEF8", BLUE, ""), "door": ("#FFFFFF", INK, ""),
           "window": ("#FFFFFF", INK, ""), "splash": ("#E8DDD0", "#B8AA9C", ""),
           "molding": ("none", "#A08C68", ""), "wood": ("#9C7B5C", "#6E5440", ""), "low": ("#F3EFE7", "#6B665C", ""), "cornice": ("#F7F4EE", "#A08C68", ""), "tv": ("#2B2A27", INK, "")}
-    for (a0, a1, h0, h1, lab, kind) in FIX.get((room, wall), []):
+    for (a0, a1, h0, h1, lab, kind) in ([] if _img else FIX.get((room, wall), [])):
         u0, u1 = sorted((U(a0), U(a1)))
         f, c, d = st[kind]
         A(f'<rect x="{PX(u0):.1f}" y="{PY(h1):.1f}" width="{(u1-u0)*sc:.1f}" height="{(h1-h0)*sc:.1f}" fill="{f}" stroke="{c}" stroke-width="3"{f" stroke-dasharray={chr(34)}{d}{chr(34)}" if d else ""}/>')

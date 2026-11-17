@@ -290,6 +290,7 @@ w = sc.world or bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True; w.no
 box("Балка", 12.752, Z0, 13.102, Z1, float(OPT.get("beam", "2.52")), HC + 0.01, M["ceil"])
 
 # ---------------- камеры
+exec(open(os.path.join(PROJ, "02_skripty", "decor_common.py"), encoding="utf-8").read())   # 17.11: декор (decor=0 — без него)
 CAMS = {"1": ("1_ot_dveri_k_krovati", W(10.95, 7.25, 1.50), W(13.4, 4.4, 1.0), 15),
         "2": ("2_ot_okna_k_shkafu", W(14.35, 4.75, 1.50), W(10.5, 7.1, 1.05), 15),
         "3": ("3_krovat_pryamo", W(BC, 7.35, 1.45), W(BC, Z0, 1.0), 16),

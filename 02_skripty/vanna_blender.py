@@ -491,6 +491,7 @@ cabinet("Шкаф бойлера Б1 (плоский), один объём 320",
 towel_rail_bk("T", (DX1 + X1) / 2 - 0.25)
 spots([(4.25, 7.95), (5.30, 7.95), (4.00, 9.20), (5.20, 9.20)])
 
+exec(open(os.path.join(PROJ, "02_skripty", "decor_common.py"), encoding="utf-8").read())   # 17.11: декор (decor=0 — без него)
 CAMS = {"1": ("1_ot_dveri", W(4.20, 7.52, 1.60), W(5.40, 9.60, 0.80), 13),
         "2": ("2_rakovina_stiralka", W(4.30, 8.90, 1.60), W(X1, 8.20, 1.05), 14),
         "3": ("3_vanna", W(5.30, 8.10, 1.60), W(X0 + 0.35, 9.30, 0.70), 13),
@@ -555,3 +556,20 @@ for s_ in SHOTS:
         cd.lens = lens if lens < 15 else max(lens, 20); cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n_ + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)
+# ---- 17.11: РАЗВЕРТКИ как у SM (аргумент elev): ортогональный вид на каждую стену из 3D — для листов разверток;
+#      elev ewalls=T,R,B,L edepth=1.2 (сколько метров перед стеной видно) esamples=96 shots=0 → OUT/elev_<стена>.jpg
+if "elev" in ARGS:
+    _hc = globals().get("HC", 2.65); sc.render.engine = "CYCLES"; sc.cycles.samples = int(OPT.get("esamples", "96")); sc.cycles.use_denoising = True
+    for _w in OPT.get("ewalls", "T,R,B,L").split(","):
+        _L = (X1 - X0) if _w in "TB" else (Z1 - Z0); _dep = (Z1 - Z0) if _w in "TB" else (X1 - X0)
+        _cx, _cz = (X0 + X1) / 2, (Z0 + Z1) / 2
+        _pos = {"T": (_cx, Z1 - 0.03), "B": (_cx, Z0 + 0.03), "L": (X1 - 0.03, _cz), "R": (X0 + 0.03, _cz)}[_w]
+        _rz = {"T": 0, "B": 180, "L": 90, "R": -90}[_w]
+        cd = bpy.data.cameras.new("elev_" + _w); cd.type = "ORTHO"; cd.ortho_scale = max(_L, _hc)
+        cd.clip_start = max(0.01, _dep - 0.03 - float(OPT.get("edepth", "1.2"))); cd.clip_end = _dep + 0.2
+        co = bpy.data.objects.new("elev_" + _w, cd); co.location = W(_pos[0], _pos[1], _hc / 2)
+        co.rotation_euler = (math.radians(90), 0, math.radians(_rz)); sc.collection.objects.link(co)
+        _rx = 1800; sc.render.resolution_x = _rx; sc.render.resolution_y = int(_rx * _hc / _L) if _L >= _hc else _rx
+        if _L < _hc: sc.render.resolution_x = int(_rx * _L / _hc)
+        sc.camera = co; sc.render.filepath = os.path.join(OUT, "elev_" + _w + ".jpg"); bpy.ops.render.render(write_still=True)
+        print("RENDERED", sc.render.filepath)
