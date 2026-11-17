@@ -234,7 +234,6 @@ chain(s, [top[0], top[-1]], -0.48, True, INK, side=-1, fs=26)
 # стояки (если внесены)
 for rs in D.get("risers", []):
     s.A(f'<circle cx="{X(rs["x"]):.0f}" cy="{Y(rs["z"]):.0f}" r="18" fill="#FFFFFF" stroke="{RED}" stroke-width="5"/><text x="{X(rs["x"])+26:.0f}" y="{Y(rs["z"])+9:.0f}" font-size="26" font-weight="bold" fill="{RED}">{rs["name"]}</text>')
-s.A(f'<text x="{X(9.8):.0f}" y="{Y(1.0):.0f}" text-anchor="middle" font-size="26" fill="{INK}">ниша конд.</text>')
 s.explication("Экспликация помещений", expl_rows(), colname="м²")
 legend(s, s.ty + 80, [
     (lambda cx, cy: s.A(f'<rect x="{cx-30}" y="{cy-14}" width="60" height="28" fill="url(#hatch)" stroke="{INK}"/>'), "Существующие стены"),
