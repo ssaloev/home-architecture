@@ -99,7 +99,7 @@ s = Sheet("План кондиционеров", 6)
 s.furniture(); s.walls(); s.numbers()
 units = [  # (x,z,w,d) indoor unit rect in metres, label, label pos, socket ref
  ((5.545 - 0.22, 0.45, 0.22, 0.80), "К1 гостиная", (4.4, 1.7)),
- ((5.786, 0.50, 0.22, 0.80), "К2 комната", (7.1, 1.7)),
+ ((5.895, 6.545 - 0.22, 0.80, 0.22), "К2 комната (над дверью)", (7.2, 5.9)),
  ((13.75, 7.516 - 0.22, 0.80, 0.22), "К3 спальня 2", (13.3, 6.75)),
  ((9.586, 3.65, 0.22, 0.80), "К4 кухня", (10.75, 4.10)),
 ]
@@ -112,16 +112,22 @@ for (x, z, w, d), t in (((515/P, 40/P, 45/P, 28/P), "Н1, Н2"), ((785/P, 160/P,
     s.A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="#FFFFFF" stroke="{GREEN}" stroke-width="5"/>')
     s.A(f'<text x="{X(x+w/2):.0f}" y="{Y(z+d)+40:.0f}" text-anchor="middle" font-size="28" font-weight="bold" fill="{GREEN}">{t}</text>')
 # routes (dashed, under the ceiling)
-routes = [[(5.43, 0.55), (5.43, 0.40), (9.6, 0.40), (9.6, 0.97)],
-          [(5.86, 0.60), (5.86, 0.45), (9.7, 0.45), (9.7, 0.97)],
-          [(14.64, 4.65), (14.64, 3.40), (14.58, 3.40)],
-          [(9.30, 2.00), (9.30, 1.40)]]
-for pts in routes:
+routes = [  # 17.11 заказчик: К1 (гостиная 1) — трасса ПОД ПОЛОМ (в стяжке) вдоль окна до лоджии второй гостиной; К2 — над дверью, трасса под потолком
+          ([(5.43, 0.85), (5.43, 0.55), (9.45, 0.55), (9.6, 0.97)], "floor"),
+          ([(6.30, 6.32), (9.20, 6.32), (9.20, 0.75), (9.7, 0.97)], "ceil"),
+          ([(14.15, 7.30), (14.64, 7.30), (14.64, 3.40), (14.58, 3.40)], "ceil"),
+          ([(9.80, 4.05), (9.80, 1.40)], "ceil")]
+for pts, kind in routes:
     d = " ".join(f"{'M' if i == 0 else 'L'}{X(x):.1f},{Y(z):.1f}" for i, (x, z) in enumerate(pts))
-    s.A(f'<path d="{d}" fill="none" stroke="{GREEN}" stroke-width="4" stroke-dasharray="16 10" marker-end="url(#arr)"/>')
+    if kind == "floor":
+        s.A(f'<path d="{d}" fill="none" stroke="#8A5A00" stroke-width="7" stroke-dasharray="4 8" marker-end="url(#arr)"/>')
+        s.A(f'<text x="{X(7.4):.0f}" y="{Y(0.55)-14:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="#8A5A00">К1: трасса под полом (в стяжке) до лоджии</text>')
+    else:
+        s.A(f'<path d="{d}" fill="none" stroke="{GREEN}" stroke-width="4" stroke-dasharray="16 10" marker-end="url(#arr)"/>')
 s.explication("Экспликация", [("Внутренний блок 2,5–3,5 кВт", lambda cx, cy: s.A(f'<rect x="{cx-26}" y="{cy-10}" width="52" height="20" fill="#DFF0E6" stroke="{GREEN}" stroke-width="4"/>'), 4),
                               ("Наружный блок в нише", lambda cx, cy: s.A(f'<rect x="{cx-20}" y="{cy-14}" width="40" height="28" fill="#FFFFFF" stroke="{GREEN}" stroke-width="4"/>'), 4),
-                              ("Трасса фреон + дренаж", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{GREEN}" stroke-width="4" stroke-dasharray="12 8"/>'), "4"),
+                              ("Трасса фреон + дренаж под потолком", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{GREEN}" stroke-width="4" stroke-dasharray="12 8"/>'), "3"),
+                              ("Трасса под полом, в стяжке (К1)", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="#8A5A00" stroke-width="7" stroke-dasharray="4 8"/>'), "1"),
                               ("Розетка h=2200 (лист 3)", bound(sock_sym("ac"), s), 4)])
 s.notes(["1. Блок на стене, верх h=2500,", "    150–200 мм до потолка.", "2. Трассы скрыто, в штробе / за", "    потолком; уклон дренажа ≥1%", "    к наружному блоку.",
          "3. Не вешать над кроватью и", "    рабочим местом — поток вдоль", "    комнаты.", "4. Ниши Н1/Н2 у комнаты, Н3 —", "    у спальни 2 (по плану застр.).",

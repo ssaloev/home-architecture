@@ -397,7 +397,7 @@ def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
     d = tgt - (mn + mx) / 2
     for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
-ac_unit(("L", X0), 0.90, 2.54)   # К2 по плану кондиционеров
+ac_unit(("B", Z1), (DX0 + DX1) / 2, 2.58)   # 17.11 заказчик: К2 — над входной дверью, на стене напротив окна
 
 # ---------------- шторы (волна) + тюль из ниши
 def drape(name, a0, a1, zc, amp, waves, m):
