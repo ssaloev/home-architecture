@@ -108,7 +108,7 @@ M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.3
          top=mat("Столешница камень", "#E9E6E0", 0.15), brass=mat("Латунь", "#B8925A", 0.25, 1.0),
          ceil=mat("Потолок", "#EEECE7", 0.9), door=mat("Двери", "#E2E0DB", 0.45), black=mat("Чёрный", "#1C1B1A", 0.35, 0.3),
          tv=mat("ТВ", "#0A0A0B", 0.2), wframe=mat("Рама окна", "#F2F1EE", 0.4), glass=mat("Стекло", "#FFFFFF", 0.0, transm=1.0),
-         curt=mat("Шторы", "#" + OPT.get("curt", "8A8B8F"), 0.95), tulle=mat("Тюль", "#F6F3EE", 0.9, transm=0.5, alpha=0.7),
+         curt=mat("Шторы", "#" + OPT.get("curt", "1E2A44"), 0.95), tulle=mat("Тюль", "#F6F3EE", 0.9, transm=0.5, alpha=0.7),
          led=emis("LED", "#FFE6C8", 6), spot=emis("Спот", "#FFF4E2", 12))
 # 13.11.2026 (заказчик): ВСЯ мебель — орех, как в первой гостиной (american walnut, тон #5E4434); вернуть графит: oreh=0
 _MB = OPT.get("mebel", "sb")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
@@ -125,7 +125,7 @@ elif _MB in ("white", "mushroom", "ivory"):
 # 17.11.2026 (заказчик): СЕРО-БЕЛАЯ — встроенные шкафы белые, отдельная мебель/тумбы/полки серые, ручки чёрные (своя мебель уже серая)
 if _MB == "sb":
     M["ward"] = mat("Фасады белые", "#E8E8E5", 0.5)
-    M["oreh_tv"] = mat("Мебель серая", "#8C8B88", 0.55)
+    M["oreh_tv"] = tex(mat("Шпон чёрный орех (ТВ-тумбы)", "#3A2B22", 0.42), "black_walnut_veneer_02", 1.6, "#3B2C23", 2.0)   # 17.11 заказчик: ТВ-тумбы — тёмный орех, как раньше
     if "frame" in M: M["frame"] = mat("Рамки серые", "#7E7D7A", 0.45)
 elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
     M["oreh_tv"] = M["ward"]
@@ -488,7 +488,7 @@ for s_ in SHOTS:
     co = bpy.data.objects.new(n_, cd); co.location = loc; co.rotation_euler = (tgt - loc).to_track_quat("-Z", "Y").to_euler(); sc.collection.objects.link(co)
     if "real" in ARGS:     # ровная камера (вертикали вертикальны), объектив ~22–24 мм, вверх/вниз — сдвигом
         _dv = tgt - loc; _hd2 = math.hypot(_dv.x, _dv.y); co.rotation_euler = (math.radians(90), 0, math.atan2(_dv.y, _dv.x) - math.radians(90))
-        cd.lens = lens if lens < 15 else max(lens, 20); cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
+        cd.lens = max(lens, float(OPT.get("lensmin", "17")));   # 17.11: без сверхширокого искажения (13 мм растягивал предметы) cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n_ + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)
 # ---- 17.11: РАЗВЕРТКИ как у SM (аргумент elev): ортогональный вид на каждую стену из 3D — для листов разверток;

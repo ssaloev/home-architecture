@@ -59,7 +59,7 @@ if OPT.get("decor", "1") == "1":
     R_ = globals().get("OUTDIR") or os.path.basename(globals().get("OUT", ""))
     if R_ == "komnata":
         _sw = globals().get("SWAP", True)                # SWAP: ТВ у правой стены (X1), диван у левой (X0)
-        dk("kartina_abstr", (X0 + 0.03) if _sw else (X1 - 0.03), tm, 1.05, size=1.20, wall=("L" if _sw else "R"))
+        dk("kartina_2", (X0 + 0.03) if _sw else (X1 - 0.03), tm, 1.05, size=0.80, wall=("L" if _sw else "R"))
         dk("vazy_3", (X1 - 0.22) if _sw else (X0 + 0.22), tm - 1.05, 0.32, 90, 0.55)
         dk("svechi", 7.05, tm + 0.20, 0.47, 0, 0.18)
         dk("vaza_frukty", 7.25, tm - 0.25, 0.47, 0, 0.30)
@@ -77,7 +77,7 @@ if OPT.get("decor", "1") == "1":
         dk("vazy_3", X1 - 0.18, 3.25, 1.52, 90, 0.30) if False else None
         dk("sansevieriya", X0 + 0.30, 4.40, 0.0, 0, 0.70, "h")
     elif R_ == "vannaya":
-        dk("vanna_aksessuary", X1 - 0.20, (SZ0 + SZ1) / 2 + 0.18, CT, -90, 0.30)
+        dk("vanna_aksessuary", X1 - 0.16, SZ0 + 0.10, CT, -90, 0.22)
         dk("polotenca_stopka", X1 - 0.30, 8.55, 0.86, -90, 0.30)
         dk("kovrik_seryi", X0 + 1.15, 9.05, 0.0, 90, 0.95)
         dk("svechi", X0 + 0.12, BZ0 + 0.12, 0.58, 0, 0.14)

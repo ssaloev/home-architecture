@@ -68,7 +68,7 @@ if OPT.get("pbr", "1") == "1":
         n = m.name.lower()
         try:
             if n.startswith("керамогранит"):
-                _setup(m, "Marble012", 1.2, tint=(0.92, 0.92, 0.92, 1), grout=(0.6, 1.2), nstr=0.3)
+                _setup(m, "Tiles043", 0.9, gray=True, tint=(0.30, 0.30, 0.30, 1), nstr=0.3)   # 17.11 заказчик: вариант 2 — терраццо, тёмно-серый
             elif n.startswith("пол") and "керамогранит" not in n:
                 _setup(m, "WoodFloor051", 1.6, gray=True, tint=(0.62, 0.62, 0.61, 1), nstr=0.5)
             elif any(k in n for k in ("обои", "стены", "бамбуков", "штукатурка", "панели")):

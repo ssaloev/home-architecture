@@ -82,7 +82,7 @@ elif _MB in ("white", "mushroom", "ivory"):
 # 17.11.2026 (заказчик): СЕРО-БЕЛАЯ — встроенные шкафы белые, отдельная мебель/тумбы/полки серые, ручки чёрные (своя мебель уже серая)
 if _MB == "sb":
     M["ward"] = mat("Фасады белые", "#E8E8E5", 0.5)
-    M["oreh_tv"] = mat("Мебель серая", "#8C8B88", 0.55)
+    M["oreh_tv"] = tex(mat("Шпон чёрный орех (ТВ-тумбы)", "#3A2B22", 0.42), "black_walnut_veneer_02", 1.6, "#3B2C23", 2.0)   # 17.11 заказчик: ТВ-тумбы — тёмный орех, как раньше
     if "frame" in M: M["frame"] = mat("Рамки серые", "#7E7D7A", 0.45)
 elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
     M["oreh_tv"] = M["ward"]
@@ -112,8 +112,38 @@ def room_box(doorwall, da0, da1):
     wb("Наличник верх", doorwall, da0, da1, -0.03, 0.003, DH - 0.012, DH, M["black"])
     wb("Ручка", doorwall, da1 - 0.20, da1 - 0.07, 0.025, 0.04, 1.0, 1.02, M["black"]); wb("Ручка ножка", doorwall, da1 - 0.09, da1 - 0.07, -0.03, 0.04, 1.0, 1.02, M["black"])
     box("Потолок", X0 - T, Z0 - T, X1 + T, Z1 + T, HC, HC + 0.05, M["ceil"])
+def _rz_wall(w): return {"T": 0, "B": 180, "L": 90, "R": -90}[w]   # модели: лицом к -Y (стандарт BlenderKit)
+def _place_wall(objs, w, a, d0, zfix, R):
+    """повернуть объекты (R), прижать к стене w в точке a с отступом d0; zfix(mn, mx) -> сдвиг по высоте"""
+    roots = [o for o in objs if o.parent is None or o.parent not in objs]
+    for r in roots: r.matrix_world = R @ r.matrix_world
+    bpy.context.view_layer.update()
+    pts = [o.matrix_world @ Vector(c) for o in objs if o.type == "MESH" for c in o.bound_box]
+    mn = Vector([min(p[i] for p in pts) for i in range(3)]); mx = Vector([max(p[i] for p in pts) for i in range(3)])
+    x, z = pt(w, a, d0); tgt = W(x, z, 0)
+    dx = {"L": tgt.x - mn.x, "R": tgt.x - mx.x}.get(w, tgt.x - (mn.x + mx.x) / 2)
+    dy = {"T": tgt.y - mx.y, "B": tgt.y - mn.y}.get(w, tgt.y - (mn.y + mx.y) / 2)
+    for r in roots: r.matrix_world = Matrix.Translation((dx, dy, zfix(mn, mx))) @ r.matrix_world
+def hung_v2(n, w, a, d0=0.20):
+    """17.11: реалистичный подвесной унитаз (BlenderKit «Wall hung toilet», rimless), верх сиденья h≈420"""
+    f = os.path.join(BK, "unitaz_rimless.blend")
+    with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [o for o in src.objects]
+    objs = [o for o in dst.objects if o is not None and o.type == "MESH"]
+    for o in objs: sc.collection.objects.link(o)
+    body = [o for o in objs if "flush" not in o.name.lower()]
+    R = Matrix.Rotation(math.radians(_rz_wall(w)), 4, "Z") @ Matrix.Rotation(math.radians(float(OPT.get("wcrx", "-90"))), 4, "X")
+    def zf(mn, mx):
+        bpy.context.view_layer.update()
+        top = max((o.matrix_world @ Vector(c)).z for o in body for c in o.bound_box)
+        return 0.42 - top
+    _place_wall(objs, w, a, d0, zf, R)
+    for o in objs:
+        if "flush" in o.name.lower():   # клавиша смыва — на высоту ≈1000 по стене
+            o.matrix_world = Matrix.Translation((0, 0, 0.55)) @ o.matrix_world
+    return objs
 def hung(n, w, a, kind="wc", d0=0.20, depth=None):
     """подвесной унитаз / биде — реальные модели BlenderKit (13.11), на коробе инсталляции, верх чаши h=400"""
+    if kind == "wc" and OPT.get("wc2", "0") == "1" and os.path.exists(os.path.join(BK, "unitaz_rimless.blend")): return hung_v2(n, w, a, d0)
     f = os.path.join(BK, ("unitaz_podv" if kind == "wc" else "bide_podv") + ".blend")
     with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [o for o in src.objects]
     objs = [o for o in dst.objects if o is not None and o.type == "MESH"]
@@ -138,6 +168,12 @@ def hung(n, w, a, kind="wc", d0=0.20, depth=None):
     return objs
 def vessel(w, a, d, top, r=0.20, k=0.78):
     x, z = pt(w, a, d)
+    if OPT.get("sink2", "1") == "1" and os.path.exists(os.path.join(BK, "rakovina_kruglaya.blend")):   # 17.11: реальная накладная раковина + высокий смеситель
+        bk_fit("rakovina_kruglaya", x, z, top, 0, 2 * r * min(1.0, k + 0.1))
+        fx, fz = pt(w, a, max(0.035, d - r - 0.02))
+        for o_ in bk_fit("smesitel_vysokij", fx, fz, top, _rz_wall(w), 0.30, "h"):
+            if o_.type == "MESH": o_.data.materials.clear(); o_.data.materials.append(M["black"])
+        return
     bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=r, depth=0.13, location=W(x, z, top + 0.065))
     s_ = bpy.context.active_object; s_.scale = ((k, 1, 1) if w in ("L", "R") else (1, k, 1)); s_.data.materials.append(M["white"])
     bpy.ops.mesh.primitive_cylinder_add(vertices=64, radius=r - 0.02, depth=0.2, location=W(x, z, top + 0.16))

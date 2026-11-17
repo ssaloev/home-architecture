@@ -144,3 +144,6 @@ if _O.get("noimp") != "1":
 
 # 17.11: фото-фактуры ambientCG (pbr=0 — без них)
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)) if "__file__" in globals() else ".", "pbr_plus.py") if False else os.path.join(globals().get("PROJ") or os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "02_skripty", "pbr_plus.py"), encoding="utf-8").read())
+
+# 17.11: фотографическая подача — солнце, тон, постобработка (photo=0 — без неё)
+exec(open(os.path.join(globals().get("PROJ") or os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "02_skripty", "photo_post.py"), encoding="utf-8").read())
