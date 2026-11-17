@@ -18,7 +18,7 @@ if _wl and _cut:
     bpy.context.view_layer.objects.active = _wl; bpy.ops.object.modifier_apply(modifier="vyemka")
     bpy.data.objects.remove(_cut, do_unlink=True)
 box("Выемка задник", X0 - RD - 0.05, RZ0 - 0.05, X0 - RD, RZ1 + 0.05, 0, H, M["tile"])
-box("Выемка бок", X0 - RD, RZ0 - 0.05, X0, RZ0, 0, H, M["tile"]); box("Выемка бок", X0 - RD, RZ1, X0, RZ1 + 0.05, 0, H, M["tile"])
+box("Выемка бок", X0 - RD, RZ0 - 0.05, X0 - 0.002, RZ0, 0, H, M["tile"]); box("Выемка бок", X0 - RD, RZ1, X0 - 0.002, RZ1 + 0.05, 0, H, M["tile"])   # 17.11: не доходят до лица стены — иначе наложение с плиткой (тёмные полосы у шкафа)
 box("Выемка пол", X0 - RD, RZ0, X0, RZ1, -0.05, 0, M["tilef"]); box("Выемка потолок", X0 - RD, RZ0, X0, RZ1, HC, HC + 0.05, M["ceil"])
 
 # ---- инсталляция (короб в выемке до 1120) + унитаз лицом к двери
