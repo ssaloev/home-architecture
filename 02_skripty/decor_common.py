@@ -159,6 +159,8 @@ def curtains_model(cx, cz, width, wall, h_top):
         if all(min(cmx[i], hmx[i]) - max(cmn[i], hmn[i]) > 0 for i in range(3) if i != ax) or True:
             ov_other = all(min(cmx[i], hmx[i]) - max(cmn[i], hmn[i]) > 0.01 for i in range(3) if i != ax)
             if not ov_other: continue
+            cc = (cmn[ax] + cmx[ax]) / 2; hc = (hmn[ax] + hmx[ax]) / 2
+            if (hc - cc) * sgn > 0: continue                # препятствие со стороны комнаты (противоположная стена) — не наше
             face = hmx[ax] if sgn > 0 else hmn[ax]          # грань препятствия, обращённая в комнату
             back = cmn[ax] if sgn > 0 else cmx[ax]          # задняя (к стене) грань штор
             need = (face + 0.02 - back) if sgn > 0 else (back - (face - 0.02))
@@ -175,6 +177,19 @@ def curtains_model(cx, cz, width, wall, h_top):
 if OPT.get("decor", "1") == "1":
     R_ = globals().get("OUTDIR") or os.path.basename(globals().get("OUT", ""))
     if R_ == "komnata":
+        _gf = mat("Мебель мягкая серая", "#5C5C5A", 0.9)        # 17.11 заказчик: «мебель серая» — диван и кресла серые
+        _roots = set(list(globals().get("_sofa") or []) + list(globals().get("_ch") or []))
+        def _anc(o):
+            while o is not None:
+                if o in _roots: return True
+                o = o.parent
+            return False
+        for _o in [o for o in bpy.context.scene.objects if _anc(o)]:
+            if _o.type != "MESH": continue
+            for _sl in _o.material_slots:
+                _m = _sl.material; _b = next((n for n in _m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if (_m and _m.use_nodes) else None
+                if _b is not None and (_b.inputs["Metallic"].is_linked or _b.inputs["Metallic"].default_value > 0.5): continue
+                _sl.material = _gf
         if OPT.get("curt2", "1") == "1" and "WX0" in globals(): curtains_model((WX0 + WX1) / 2, Z0 + 0.10, (WX1 - WX0) + 0.70, "T", globals().get("HC", 2.62) - 0.04)
         _sw = globals().get("SWAP", True)                # SWAP: ТВ у правой стены (X1), диван у левой (X0)
         _tx = (2 * (X0 + X1) / 2 - 7.15) if _sw else 7.15   # центр столика (после поворота группы)

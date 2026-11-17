@@ -1181,9 +1181,9 @@ def drape(name, a0, a1, zc, amp, waves, material):
     o = obj(name, bm, material)
     md = o.modifiers.new("solid", "SOLIDIFY"); md.thickness = 0.004
     for p in o.data.polygons: p.use_smooth = True
-drape("Тюль", X0 + 0.03, X1 - 0.03, Z0 + 0.05, 0.025, (X1 - X0) / 0.12, M["tulle"])
-drape("Штора лев", X0 + 0.02, WX0 + 0.18, Z0 + 0.11, 0.04, 6, M["drape"])
-drape("Штора прав", WX1 - 0.18, X1 - 0.02, Z0 + 0.11, 0.04, 6, M["drape"])
+drape("Тюль", X0 + 0.03, X1 - 0.03, Z0 + 0.085, 0.025, (X1 - X0) / 0.12, M["tulle"])
+drape("Штора лев", X0 + 0.02, WX0 + 0.18, Z0 + 0.14, 0.04, 6, M["drape"])
+drape("Штора прав", WX1 - 0.18, X1 - 0.02, Z0 + 0.14, 0.04, 6, M["drape"])
 
 # ---------------------------------------------------------------- свет
 def area(name, loc, size, energy, rot=(0, 0, 0), color=(1.0, 0.9, 0.78), shape="RECTANGLE", sy=None):

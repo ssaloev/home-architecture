@@ -75,8 +75,10 @@ if OPT.get("pbr", "1") == "1":
                       "D": ("Marble012", 1.2, False, (0.92, 0.92, 0.92, 1), (0.6, 1.2))}[OPT.get("tile", "A")]
                 _setup(m, _T[0], _T[1], gray=_T[2], tint=_T[3], grout=_T[4], nstr=0.3)
             elif n.startswith("пол") and "керамогранит" not in n:
-                _setup(m, "WoodFloor051", 1.6, gray=True, tint=(0.62, 0.62, 0.61, 1), nstr=0.5)
-            elif any(k in n for k in ("обои", "стены", "бамбуков", "штукатурка", "панели")):
+                _setup(m, "WoodFloor051", 1.6, gray=True, tint=(0.36, 0.36, 0.355, 1), nstr=0.5)   # 17.11: пол ТЁМНО-серый (было светлее нужного)
+            elif n.startswith("обои"):
+                continue                                     # 17.11 заказчик: стены — ОБОИ (текстура льна), не штукатурка
+            elif any(k in n for k in ("стены", "бамбуков", "штукатурка", "панели")):
                 _setup(m, "PaintedPlaster017", 3.0, color=False, nstr=0.10)
             elif any(k in n for k in ("фасад", "шкаф", "мебель серая", "рамки", "графит матовый", "двери")):
                 _setup(m, "Concrete034", 1.5, color=False, nstr=0.12)

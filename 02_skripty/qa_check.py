@@ -117,7 +117,7 @@ def check_room(room):
             under = any(p is not o and touch(o, p) and p["h0"] <= o["h0"] + 0.005 for p in objs) or o["h1"] >= (S["room"].get("H") or 2.65) - 0.08   # держится за соседний предмет / подвешен к потолку   # держится за соседний предмет (фасад на корпусе, деталь модели, предмет на столе)
             if not touch_wall and not under: floaters.append(o)
         if X0 is not None and (o["x0"] < X0 - 0.06 or o["x1"] > X1 + 0.06 or o["z0"] < Z0 - 0.06 or o["z1"] > Z1 + 0.06):
-            if not in_room((o["x0"] + o["x1"]) / 2, (o["z0"] + o["z1"]) / 2, rects, 0.0) or area(fp(o)) > 0.05:
+            if not in_room((o["x0"] + o["x1"]) / 2, (o["z0"] + o["z1"]) / 2, rects, 0.0):   # центр вне помещения плана (выемки и ниши плана — допустимы)
                 inwall.append(o)
     big_f = [o for o in furn_objs if vol(o) > 0.02]
     for i, a in enumerate(big_f):
