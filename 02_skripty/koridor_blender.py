@@ -79,6 +79,34 @@ def import_ph(name, cx, cz, target_w, rot_deg=0.0, h0=0.0):
     T_ = Matrix.Translation(W(cx, cz, h0)) @ Matrix.Rotation(math.radians(rot_deg), 4, "Z") @ Matrix.Scale(k, 4) @ Matrix.Translation(Vector((-ctr.x, -ctr.y, -mn.z)))
     for r in roots: r.matrix_world = T_ @ r.matrix_world
     return objs
+BKD = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "03_materialy", "blenderkit")
+def bkm(fname, R=None, S=(1, 1, 1), place=None, recolor=None):
+    """17.11: модель BlenderKit — поворот R (матрица), масштаб S по осям мира ПОСЛЕ поворота, place(mn, mx) -> сдвиг Vector.
+    Крутим только верхних предков (без двойных поворотов). recolor: {подстрока имени материала: материал} или материал для всех."""
+    f = os.path.join(BKD, fname + ".blend")
+    if not os.path.exists(f): print("NO MODEL", fname); return []
+    with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [o for o in src.objects]
+    allo = [o for o in dst.objects if o is not None and o.type not in ("LIGHT", "CAMERA")]
+    for o in allo: sc.collection.objects.link(o)
+    meshes = [o for o in allo if o.type == "MESH"]
+    roots = {o for o in allo if o.parent is None or o.parent not in allo}
+    bpy.context.view_layer.update()
+    A = Matrix.Diagonal((S[0], S[1], S[2], 1)) @ (R or Matrix.Identity(4))
+    for r in roots: r.matrix_world = A @ r.matrix_world
+    bpy.context.view_layer.update()
+    P = [o.matrix_world @ Vector(c) for o in meshes for c in o.bound_box]
+    mn = Vector([min(p_[i] for p_ in P) for i in range(3)]); mx = Vector([max(p_[i] for p_ in P) for i in range(3)])
+    if place:
+        d = place(mn, mx)
+        for r in roots: r.location += d
+    if recolor is not None:
+        for o in meshes:
+            for i, ms in enumerate(o.data.materials):
+                if isinstance(recolor, dict):
+                    for k_, m_ in recolor.items():
+                        if ms and k_ in ms.name: o.data.materials[i] = m_
+                else: o.data.materials[i] = recolor
+    return meshes
 
 def grain(m, c1, c2, sc_len=2.0, sc_fine=260.0, bump=0.08, vertical=True):
     """бамбуковый шпон: тонкие волокна (вертикальные) + лёгкая неравномерность тона"""
@@ -145,7 +173,7 @@ elif _MB in ("white", "mushroom", "ivory"):
     M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
 # 17.11.2026 (заказчик): СЕРО-БЕЛАЯ — встроенные шкафы белые, отдельная мебель/тумбы/полки серые, ручки чёрные (своя мебель уже серая)
 if _MB == "sb":
-    M["ward"] = mat("Фасады белые", "#E8E8E5", 0.5)
+    M["ward"] = mat("Фасады серо-белые", "#C9C9C5", 0.5)   # 17.11 (заказчик: «мебель точно серая, как у нас»): единый цвет фасадов всей квартиры
     M["oreh_tv"] = tex(mat("Шпон чёрный орех (ТВ-тумбы)", "#3A2B22", 0.42), "black_walnut_veneer_02", 1.6, "#3B2C23", 2.0)   # 17.11 заказчик: ТВ-тумбы — тёмный орех, как раньше
     if "frame" in M: M["frame"] = mat("Рамки серые", "#7E7D7A", 0.45)
 elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
@@ -301,13 +329,10 @@ for k in range(ng):
     a = GZ0 + k * (GZ1 - GZ0) / ng
     box("Рейка", PX0 + 0.012, a + 0.006, PX0 + 0.035, a + (GZ1 - GZ0) / ng - 0.006, 0, WT, M["slat"], 0.006)
 box("Боковина гост", PX0, GZ0 - 0.02, HX1, GZ0, 0, WT, M["ward"])
-box("Полка шапки", PX0 + 0.035, GZ0, HX1 - 0.03, GZ1, 1.92, 1.95, M["ward"], 0.003)
-box("LED полка", HX1 - 0.06, GZ0, HX1 - 0.045, GZ1, 1.915, 1.92, M["led"])
-bpy.ops.mesh.primitive_cylinder_add(vertices=24, radius=0.012, depth=GZ1 - GZ0 - 0.02, location=W(PX0 + 0.22, (GZ0 + GZ1) / 2, 1.82))
-o = bpy.context.active_object; o.rotation_euler = (math.radians(90), 0, 0); o.data.materials.append(M["black"])
-for z in (8.86, 9.00, 9.14):        # плечики для гостей (дуб)
-    box("Плечики", PX0 + 0.04, z - 0.008, PX0 + 0.40, z + 0.008, 1.70, 1.73, M["slat"], 0.006)
-    box("Крюк плечиков", PX0 + 0.215, z - 0.004, PX0 + 0.225, z + 0.004, 1.73, 1.82, M["black"])
+# 17.11 (выбор заказчика К2): вешалка-полка с крючками и перекладиной (IKEA TJUSIG), чёрная, на левой стене над скамьёй, ширина 540
+_GZM = (GZ0 + GZ1) / 2
+bkm("veshalka_k2", R=Matrix.Rotation(math.radians(90), 4, "Z"), S=(1, 0.54 / 0.646, 1),
+    place=lambda mn, mx: Vector((PX0 - mn.x, -_GZM - (mn.y + mx.y) / 2, 1.80 - mn.z)), recolor=M["black"])   # 17.11 (заказчик: «слишком низко»): низ 1800
 box("Скамья гост", PX0 + 0.035, GZ0, HX1 - 0.03, GZ1, 0.42, 0.46, M["ward"], 0.004)
 box("Сиденье гост", PX0 + 0.04, GZ0 + 0.01, HX1 - 0.04, GZ1 - 0.01, 0.46, 0.51, M["pouf"], 0.012)
 box("LED под скамьёй", PX0 + 0.05, GZ0, HX1 - 0.05, GZ1, 0.415, 0.42, M["led"])
@@ -335,15 +360,21 @@ box("Поднос ключи", PX1 - 0.19, 8.85, PX1 - 0.05, 9.07, 1.23, 1.245, 
 # 12.11: было похоже на светильник (LED-пластина оказалась перед стеклом) → LED строго ЗА зеркалом, ореол по контуру
 MZ0, MZ1, MH0, MH1 = 8.20, 9.10, 1.36, 2.36          # зеркало 900×1000, прямые углы
 MLEDZ = emis("LED за зеркалом", "#FFE6C8", 40)
-box("Зеркало", PX1 - 0.045, MZ0, PX1 - 0.035, MZ1, MH0, MH1, M["mirror"], 0.002)
-box("Кант зеркала", PX1 - 0.035, MZ0, PX1 - 0.034, MZ1, MH0, MH1, M["black"])
-box("Подложка зеркала", PX1 - 0.035, MZ0 + 0.06, PX1 - 0.006, MZ1 - 0.06, MH0 + 0.06, MH1 - 0.06, M["black"])
-for (a0, a1, b0, b1) in ((MZ0 + 0.04, MZ1 - 0.04, MH0 + 0.04, MH0 + 0.05), (MZ0 + 0.04, MZ1 - 0.04, MH1 - 0.05, MH1 - 0.04),
-                         (MZ0 + 0.04, MZ0 + 0.05, MH0 + 0.04, MH1 - 0.04), (MZ1 - 0.05, MZ1 - 0.04, MH0 + 0.04, MH1 - 0.04)):
-    box("LED за зеркалом", PX1 - 0.034, a0, PX1 - 0.030, a1, b0, b1, MLEDZ)
+# 17.11 (выбор заказчика З2): зеркало с LED-контуром 900×1000 — модель; лежит «плашмя» (Z — от стены) → лицом к -x (стена справа)
+_zm = bkm("zerkalo_z2", R=Matrix.Rotation(math.radians(-90), 4, "Y"), S=(1, 0.90 / 0.892, 1.00 / 0.892),
+    place=lambda mn, mx: Vector((PX1 - 0.006 - mx.x, -(MZ0 + MZ1) / 2 - (mn.y + mx.y) / 2, MH0 - mn.z)))
+for _o in _zm:   # у модели в зеркале «часы» (MirrorIndicator) — убрать: на месте индикатора обычное зеркало
+    for _i, _ms in enumerate(_o.data.materials):
+        if _ms and "Indicator" in _ms.name:
+            _o.data.materials[_i] = next((m_ for m_ in _o.data.materials if m_ and m_.name.startswith("Mirror.") ), _ms)
 
 # ---------------------------------------------------------------- дорожка-ковёр
 # дорожка убрана 12.11 (заказчик: ковры не нужны)
+# 17.11 (выбор заказчика Ко1): коврик у входной двери 900×600, тёмная резина
+bkm("kovrik_ko1", place=lambda mn, mx: Vector(((2.254 + 3.145) / 2 - (mn.x + mx.x) / 2, -(PZ1 - 0.34) - (mn.y + mx.y) / 2, 0.001 - mn.z)))
+# 17.11: ввод ХВС + отопление (3 трубы, счётчики) — короб 300×200 в углу слева от входной двери, до потолка, с лючком
+box("Короб ввода", PX0, PZ1 - 0.20, PX0 + 0.30, PZ1, 0, HC, M["wall"])
+box("Лючок короба", PX0 + 0.30, PZ1 - 0.18, PX0 + 0.302, PZ1 - 0.02, 0.25, 0.85, M["wall"])
 
 # ---------------------------------------------------------------- потолок: подвесная плоскость, паз с LED по периметру, ряд крупных круглых светильников
 box("Потолок коридор", CX0 + SL, CZ0 + SL, CX1 - SL, CZ1 - SL, HC, H, M["ceil"])
@@ -372,9 +403,18 @@ for (x0, z0, x1, z1) in ((CX0, CZ0 + 0.04, CX1, CZ0 + 0.04), (PX1, CZ1 - 0.04, C
     area(W((x0 + x1) / 2, (z0 + z1) / 2, HC + 0.02), L if horiz else 0.03, K * L, sy=0.03 if horiz else L, spread=80)
 # крупные круглые светильники Ø240 по центру
 DL = [(x, (CZ0 + CZ1) / 2) for x in (2.75, 3.95, 5.15, 6.35, 7.55, 8.75)] + [((PX0 + PX1) / 2, 8.55), ((PX0 + PX1) / 2, 9.15)]
-for (x, z) in DL:
-    cyl("Светильник обод", x, z, HC - 0.004, 0.125, 0.008, M["black"])
-    cyl("Светильник", x, z, HC - 0.009, 0.112, 0.004, M["disc"])
+import bmesh as _bm
+for (x, z) in DL:   # 17.11 (выбор заказчика С1): чёрный плоский диск Ø300, НАКЛАДНОЙ — штанга модели срезана
+    _lm = bkm("svet_c1", S=(0.75, 0.75, 0.75))
+    for _o in _lm:
+        _b = _bm.new(); _b.from_mesh(_o.data)
+        _zcut = min(v.co.z for v in _b.verts) + 0.07 / 0.75
+        _bm.ops.delete(_b, geom=[v for v in _b.verts if v.co.z > _zcut], context="VERTS"); _b.to_mesh(_o.data); _b.free()
+    bpy.context.view_layer.update()
+    _P = [_o.matrix_world @ Vector(c) for _o in _lm for c in _o.bound_box]
+    if _P:
+        _d = Vector((x - (min(p_.x for p_ in _P) + max(p_.x for p_ in _P)) / 2, -z - (min(p_.y for p_ in _P) + max(p_.y for p_ in _P)) / 2, HC - max(p_.z for p_ in _P)))
+        for _o in _lm: _o.location += _d
     lt = bpy.data.lights.new("Даунлайт", "AREA"); lt.shape = "DISK"; lt.size = 0.22; lt.energy = float(OPT.get("dl", "5")); lt.color = (1, 0.93, 0.84)
     o = bpy.data.objects.new("Даунлайт", lt); o.location = W(x, z, HC - 0.015); sc.collection.objects.link(o)
 # мягкий отражённый свет лампы и зеркала
@@ -389,7 +429,17 @@ for (a0, a1, f, ax_, n_) in SK_LED:
 CAMS = {"1": ("1_koridor_k_prihozhey", W(9.75, 7.29, 1.45), W(2.6, 7.29, 1.38), 18),
         "2": ("2_vhodnaya_dver", W(2.85, 7.45, 1.50), W(2.6, 9.6, 1.0), 14),
         "4": ("4_prihozhaya_gosti", W(3.25, 9.35, 1.45), W(1.95, 8.4, 1.05), 15),
-        "3": ("3_prihozhaya_zerkalo", W(2.35, 9.3, 1.5), W(3.455, 8.35, 1.25), 16)}
+        "3": ("3_prihozhaya_zerkalo", W(2.35, 9.3, 1.5), W(3.455, 8.35, 1.25), 16),
+        # 17.11 (заказчик: «как с телефона — каждая сторона от пола до потолка, и углы»): вертикальные кадры входной зоны
+        "v1": ("v1_k_vhodnoy_dveri", W(2.70, 6.75, 1.3), W(2.70, PZ1, 1.3), 0),
+        "v2": ("v2_ot_dveri_v_koridor", W(2.70, PZ1 - 0.08, 1.3), W(2.70, 6.545, 1.3), 0),
+        "v3": ("v3_shkaf_gosti", W(3.20, 8.60, 1.3), W(PX0, 8.60, 1.3), 0),
+        "v4": ("v4_obuvnica_zerkalo", W(2.36, 8.70, 1.3), W(PX1, 8.70, 1.3), 0),
+        "v5": ("v5_ugol_k_dveri_sleva", W(3.40, 6.75, 1.3), W(PX0, PZ1, 1.3), 0),
+        "v6": ("v6_ugol_ot_dveri_vpravo", W(2.30, PZ1 - 0.06, 1.3), W(PX1, 6.70, 1.3), 0),
+        "v7": ("v7_ugol_ot_dveri_vlevo", W(3.10, PZ1 - 0.06, 1.3), W(PX0, 6.70, 1.3), 0),
+        "v8": ("v8_koridor_k_prihozhey", W(9.80, 7.29, 1.3), W(PX0, 7.29, 1.3), 0),
+        "0": ("0_obshiy_sverhu", W((PX0 + PX1) / 2, PZ1 - 0.25, HC + 3.2), W((PX0 + PX1) / 2, 7.60, 0.0), 24)}
 sc.render.engine = "CYCLES"
 # 17.11: ИНСТРУМЕНТ ПРОВЕРКИ (аргумент qa): выгрузить сцену для qa_check.py и выйти без рендера
 if "qa" in ARGS:
@@ -429,7 +479,18 @@ if "fast" in ARGS:
 for s in SHOTS:
     if s not in CAMS: continue
     n, loc, tgt, lens = CAMS[s]
-    cd = bpy.data.cameras.new(n); cd.lens = lens; cd.sensor_width = 36; cd.clip_start = 0.02
+    cd = bpy.data.cameras.new(n); cd.lens = lens or 20; cd.sensor_width = 36; cd.clip_start = 0.02
     co = bpy.data.objects.new(n, cd); co.location = loc; co.rotation_euler = (tgt - loc).to_track_quat("-Z", "Y").to_euler(); sc.collection.objects.link(co)
+    _top = (s == "0")
+    for _o in sc.objects:
+        if _o.type == "MESH" and ("потол" in _o.name.lower() or _o.name.startswith("Перекрытие")): _o.hide_render = _top
+    if s.startswith("v") or _top:   # 17.11: вертикальные кадры пол–потолок (как с телефона), print=1 — для печати альбома
+        sc.render.resolution_x, sc.render.resolution_y = (1620, 2880) if OPT.get("print", "0") == "1" else (1080, 1920)
+        if _top: sc.render.resolution_x, sc.render.resolution_y = (1500, 2000) if OPT.get("print", "0") == "1" else (1200, 1600)
+        cd.sensor_fit = "VERTICAL"; cd.sensor_height = 36
+    if s.startswith("v"):
+        _dv = tgt - loc; _hd = math.hypot(_dv.x, _dv.y)
+        co.location.z = HC / 2; co.rotation_euler = (math.radians(90), 0, math.atan2(_dv.y, _dv.x) - math.radians(90))
+        cd.lens = max(11.0, 18.0 * _hd / (HC / 2 + 0.30)) if s != "v8" else 24.0
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)

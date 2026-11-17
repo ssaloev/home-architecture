@@ -126,7 +126,7 @@ elif _MB in ("white", "mushroom", "ivory"):
     M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
 # 17.11.2026 (заказчик): СЕРО-БЕЛАЯ — встроенные шкафы белые, отдельная мебель/тумбы/полки серые, ручки чёрные (своя мебель уже серая)
 if _MB == "sb":
-    M["ward"] = mat("Фасады белые", "#E8E8E5", 0.5)
+    M["ward"] = mat("Фасады серо-белые", "#C9C9C5", 0.5)   # 17.11 (заказчик: «мебель точно серая, как у нас»): единый цвет фасадов всей квартиры
     M["oreh_tv"] = tex(mat("Шпон чёрный орех (ТВ-тумбы)", "#3A2B22", 0.42), "black_walnut_veneer_02", 1.6, "#3B2C23", 2.0)   # 17.11 заказчик: ТВ-тумбы — тёмный орех, как раньше
     if "frame" in M: M["frame"] = mat("Рамки серые", "#7E7D7A", 0.45)
 elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
@@ -526,7 +526,7 @@ for s_ in SHOTS:
         if s_.startswith("v"):   # 17.11 (заказчик: «как с телефона — вся стена сверху донизу, пол и потолок»): вертикальный кадр 9:16,
             _hc_ = globals().get("HC", 2.65)          # камера ровно на середине высоты, объектив — чтобы пол и потолок у дальней стены влезли
             co.location.z = _hc_ / 2; cd.shift_y = 0.0; cd.sensor_fit = "VERTICAL"; cd.sensor_height = 36
-            cd.lens = max(11.0, 18.0 * _hd2 / (_hc_ / 2 + 0.30))   # запас 30 см: видна полоса пола и потолка
+            cd.lens = max(11.0, 18.0 * _hd2 / (_hc_ / 2 + 0.60))   # 18.11 (заказчик: «всё от верха до низу»): запас 60 см — пол и потолок целиком в кадре
             sc.render.resolution_x, sc.render.resolution_y = (1620, 2880) if OPT.get("print", "0") == "1" else (1080, 1920)   # print=1 — для печати альбома (½ A4 при 300 dpi)
             if OPT.get("print", "0") == "1":
                 sc.cycles.use_adaptive_sampling = True; sc.cycles.adaptive_threshold = 0.01; sc.cycles.use_denoising = True

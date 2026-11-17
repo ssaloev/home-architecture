@@ -698,6 +698,7 @@ SH = [("gostinaya/_smA_1_ot_dveri_k_oknu", "Гостиная", "от двери 
       ]
 _cnt = {}
 for k, (fn, room, cap) in enumerate(SH, 1):        # 17.11: как у студии SM — белый лист, сверху «Комната - N», кадр крупно в тонкой рамке, без штампа
+    if fn.startswith("sanuzel/"): continue           # 17.11: санузел — новые вертикальные печатные кадры (ниже, по 2 на лист)
     s = Sheet("", 0)
     s.o = [t for t in s.o if not (t.startswith('<rect x="120"') or t.startswith(f'<line x1="{SX}"') or t.startswith("<text"))]
     s.stamp = lambda: None
@@ -713,6 +714,33 @@ for k, (fn, room, cap) in enumerate(SH, 1):        # 17.11: как у студи
         s.A(f'<image x="90" y="160" width="{W-180}" height="{H-230}" preserveAspectRatio="xMidYMid meet" href="data:image/jpeg;base64,{_b64.b64encode(bf.getvalue()).decode()}"/>')
     s.title = f"{room} - {_cnt[room]}: {cap}"
     s.save(f"s23_vizual_{k}")
+
+# ================================================================== 17.11.2026: санузел утверждён — печатные вертикальные кадры, по 2 на лист
+def _vpage(key, room, n0, items):
+    s = Sheet("", 0)
+    s.o = [t for t in s.o if not (t.startswith('<rect x="120"') or t.startswith(f'<line x1="{SX}"') or t.startswith("<text"))]
+    s.stamp = lambda: None
+    s.A(f'<rect x="60" y="40" width="{W-120}" height="{H-80}" fill="none" stroke="#C9C9C7" stroke-width="3"/>')
+    s.A(f'<line x1="60" y1="130" x2="{W-60}" y2="130" stroke="#C9C9C7" stroke-width="3"/>')
+    s.A(f'<text x="{W/2:.0f}" y="105" text-anchor="middle" font-size="48" fill="{INK}">{room} - {n0}' + (f'–{n0 + len(items) - 1}' if len(items) > 1 else '') + '</text>')
+    from PIL import Image as _I
+    slot = (W - 180 - 60 * (len(items) - 1)) / len(items)
+    for i, (fn, cap) in enumerate(items):
+        f = os.path.join(VZ, fn)
+        x = 90 + i * (slot + 60)
+        if os.path.exists(f):
+            im = _I.open(f).convert("RGB"); im.thumbnail((2200, 2200)); bf = _io.BytesIO(); im.save(bf, "JPEG", quality=92)
+            s.A(f'<image x="{x:.0f}" y="160" width="{slot:.0f}" height="{H-300}" preserveAspectRatio="xMidYMid meet" href="data:image/jpeg;base64,{_b64.b64encode(bf.getvalue()).decode()}"/>')
+        s.A(f'<text x="{x + slot/2:.0f}" y="{H-85}" text-anchor="middle" font-size="34" fill="{INK}">{room} - {n0 + i}: {cap}</text>')
+    s.title = f"{room} - {n0}"
+    s.save(key)
+SU = [("sanuzel/v3_unitaz_print.jpg", "унитаз, шкаф бойлера и бумаги"), ("sanuzel/v2_rakovina_sushitel_print.jpg", "раковина 450×200, сушитель, крючки"),
+      ("sanuzel/v1_dush_print.jpg", "душ: тропический + лейка, трап"), ("sanuzel/v4_nishi_print.jpg", "3 ниши с подсветкой напротив лейки"),
+      ("sanuzel/v5_ugol_dver_print.jpg", "угол у двери → душ"), ("sanuzel/v6_ugol_dush_dver_print.jpg", "из душа → дверь и раковина"),
+      ("sanuzel/v7_ugol_shahta_print.jpg", "угол душа у шахты"), ("sanuzel/v8_ugol_sushitel_print.jpg", "угол у сушителя → душ"),
+      ("sanuzel/0_obshiy_sverhu_print.jpg", "общий вид сверху"), ("sanuzel/open_v3_unitaz_print.jpg", "шкаф открыт: бойлер Б2, бумага")]
+for j in range(0, len(SU), 2):
+    _vpage(f"s23_su_{j // 2 + 1}", "Санузел", j + 1, SU[j:j + 2])
 
 # ================================================================== 13.11.2026: гостиная по системе SM — узел потолка, ТВ-стена, стена с диваном
 GS = [("s25_gost_uzel", "shema_gostinaya_potolok_sm", "Гостиная — потолок по системе SM: план и Узел-1"),
