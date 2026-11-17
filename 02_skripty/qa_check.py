@@ -127,6 +127,13 @@ def check_room(room):
             if ov > 0.25 * min(area(fp(a)), area(fp(b))) and hz > 0.10:
                 an, bn = a["name"].split(".")[0], b["name"].split(".")[0]
                 if an != bn and not (an.lower()[:5] == bn.lower()[:5]): cross.append((an, bn))
+    tex_ = [o for o in objs if any(k in o["name"].lower() for k in ("sheer", "curtain", "штора", "тюль")) ]
+    hard_ = [o for o in objs if o["name"].lower().startswith(("подоконник", "рама", "импост", "стекло", "откос", "стена", "под окном", "над окном"))]
+    for t_ in tex_:
+        for h_ in hard_:
+            ix = min(t_["x1"], h_["x1"]) - max(t_["x0"], h_["x0"]); iz = min(t_["z1"], h_["z1"]) - max(t_["z0"], h_["z0"]); ih = min(t_["h1"], h_["h1"]) - max(t_["h0"], h_["h0"])
+            if ix > 0.01 and iz > 0.005 and ih > 0.01:
+                res["issues"][4].append(f"штора «{t_['name'].split('.')[0]}» проходит сквозь «{h_['name'].split('.')[0]}»"); floaters.append(t_); break
     for o in floaters[:8]: res["issues"][4].append(f"«{o['name'].split('.')[0]}» висит в воздухе (низ {round(o['h0']*1000)} мм, не у стены и не на опоре)")
     for o in inwall[:8]: res["issues"][4].append(f"«{o['name'].split('.')[0]}» выходит за стены комнаты")
     seen = set()

@@ -103,6 +103,12 @@ def curtains_model(cx, cz, width, wall, h_top):
     # тюль (sheer) оставляем белым полупрозрачным на всю ширину; плотную штору сужаем до ~0,6 м у края окна и зеркально ставим вторую
     dr = [o for o in objs if o.type == "MESH" and "sheer" not in o.name.lower()]
     bpy.context.view_layer.update()
+    _tm = bpy.data.materials.new("Тюль плотный белый"); _tm.use_nodes = True                      # 17.11 («а это?»): тюль серыми «трубами» и
+    _tb = next(n for n in _tm.node_tree.nodes if n.type == "BSDF_PRINCIPLED")                   # сквозь него видна рама — делаем плотнее и белее
+    _tb.inputs["Base Color"].default_value = (0.93, 0.93, 0.92, 1); _tb.inputs["Roughness"].default_value = 0.85
+    for _k, _v in (("Transmission Weight", 0.15), ("Alpha", 0.92), ("Subsurface Weight", 0.25)):
+        if _k in _tb.inputs: _tb.inputs[_k].default_value = _v
+    for o in [o for o in objs if o.type == "MESH" and "sheer" in o.name.lower()]: o.data.materials.clear(); o.data.materials.append(_tm)
     for o in [o for o in objs if o.type == "MESH" and "sheer" in o.name.lower()]:      # тюль — на всю ширину окна
         pts = [o.matrix_world @ Vector(c) for c in o.bound_box]; ax = 0 if wall in "TB" else 1
         a0 = min(p[ax] for p in pts); a1 = max(p[ax] for p in pts); c_ = W(cx, cz, 0)[ax]
@@ -136,6 +142,32 @@ def curtains_model(cx, cz, width, wall, h_top):
     for o in list(bpy.context.scene.objects):          # убрать процедурные шторы и тюль (кроме рулонной)
         n = o.name.lower()
         if (n.startswith("штора") or n.startswith("тюль")) and "рулон" not in n: o.hide_render = True; o.hide_viewport = True
+    # 17.11 (заказчик: «настрой скрипт, чтобы такое просто не могло быть»): ЗАЩИТА — шторы не могут проходить сквозь
+    # подоконник, раму, стекло, стену: отодвигаем от стены, пока зазор до самого выступающего элемента окна < 2 см
+    bpy.context.view_layer.update()
+    ax = 1 if wall in "TB" else 0                          # ось «от стены» в координатах Blender
+    sgn = {"T": -1, "B": 1, "L": 1, "R": -1}[wall]         # куда «в комнату» по этой оси (W: z плана → -y)
+    hard = [o for o in bpy.context.scene.objects if o.type == "MESH" and not o.hide_render and o not in objs
+            and o.name.lower().startswith(("подоконник", "рама", "импост", "стекло", "откос", "стена", "под окном", "над окном", "простен"))]
+    def _ext(obs):
+        P = [o.matrix_world @ Vector(c) for o in obs for c in o.bound_box]
+        return Vector([min(p[i] for p in P) for i in range(3)]), Vector([max(p[i] for p in P) for i in range(3)])
+    cmn, cmx = _ext([o for o in objs if o.type == "MESH"])
+    shift = 0.0
+    for h in hard:
+        hmn, hmx = _ext([h])
+        if all(min(cmx[i], hmx[i]) - max(cmn[i], hmn[i]) > 0 for i in range(3) if i != ax) or True:
+            ov_other = all(min(cmx[i], hmx[i]) - max(cmn[i], hmn[i]) > 0.01 for i in range(3) if i != ax)
+            if not ov_other: continue
+            face = hmx[ax] if sgn > 0 else hmn[ax]          # грань препятствия, обращённая в комнату
+            back = cmn[ax] if sgn > 0 else cmx[ax]          # задняя (к стене) грань штор
+            need = (face + 0.02 - back) if sgn > 0 else (back - (face - 0.02))
+            shift = max(shift, need)
+    if shift > 0:
+        t = Vector((0, 0, 0)); t[ax] = sgn * shift
+        for o in objs:
+            if o.parent is None or o.parent not in objs: o.matrix_world = Matrix.Translation(t) @ o.matrix_world
+        print("DECOR шторы отодвинуты от окна на", round(shift * 1000), "мм")
     print("DECOR шторы-модель", round(width, 2))
     return objs
 
