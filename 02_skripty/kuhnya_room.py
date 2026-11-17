@@ -23,7 +23,7 @@ M["blind"] = mat("Рулонная штора", "#D9D7D2", 0.9, transm=0.25)
 M["shade"] = emis("Плафон", "#FFE2B8", 8)
 
 # ---------------- коробка: пол, стены (бамбук, листы 1220 со швами), окно, проём
-M["kfloor"] = tex(mat("Пол дуб дымчатый (влагостойкий SPC)", "#7E6A58", 0.45), "laminate_floor_02", 0.6, "#7E6A58", 1.3)   # 14.11: пол как во всей квартире
+M["kfloor"] = tex(mat("Пол тёмно-серый (влагостойкий SPC)", "#5B5B59", 0.45), "laminate_floor_02", 0.6, "#5B5B59", 1.3)   # 14.11: пол как во всей квартире
 box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["kfloor"])
 for _o in [o for o in sc.objects if o.name.startswith("Пол") and o.type == "MESH"]:   # общий короб комнаты кладёт плитку — заменить на пол квартиры
     _o.data.materials.clear(); _o.data.materials.append(M["kfloor"])

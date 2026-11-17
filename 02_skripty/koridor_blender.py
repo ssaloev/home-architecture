@@ -122,7 +122,7 @@ def plank_floor(A, B, PL=0.6, PW=0.09):
 M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.38), "washed_grey_oak_veneer", 1.6, WALLC, 1.55, 0.7),
          ward=mat("Шкафы крем матовые", "#" + OPT.get("ward", "2F2F31"), 0.55),
          slat=tex(mat("Рейки дуб", "#C9A57A", 0.5), "washed_grey_oak_veneer", 2.0, "#C79F72", 1.6),
-         floor=(plank_floor(*OPT.get("floor", "7E6A58-776350").split("-")) if FLOOR == "oak"   # 14.11: пол везде один — дымчатый дуб 7E6A58
+         floor=(plank_floor(*OPT.get("floor", "5B5B59-555553").split("-")) if FLOOR == "oak"   # 14.11: пол везде один — дымчатый дуб 7E6A58
                 else mat("Пол светло-серый", "#CFCDC8", 0.5)),
          rug=mat("Дорожка", "#" + OPT.get("rug", "9C9890"), 1.0),
          ceil=mat("Потолок", "#EEE8DF", 0.9), door=mat("Двери крем", "#" + OPT.get("door", "E2E0DB"), 0.45),
@@ -152,7 +152,7 @@ elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-т
     M["oreh_tv"] = M["ward"]
     if "frame" in M: M["frame"] = mat("Рамки фасадов", "#4A3628" if _MB == "oreh" else "#8C8478", 0.45)
 # 14.11 (заказчик): обои «тауп, рогожка» вместо панелей (кроме 1-й гостиной), без швов листов; панели: oboi=0
-OBOI = OPT.get("oboi", "rough_linen:B9B3AA")   # 14.11 вар.2: тёплый серый лён
+OBOI = OPT.get("oboi", "rough_linen:D4D4D1")   # 14.11 вар.2: тёплый серый лён
 if OBOI and OBOI != "0":
     _t, _c = OBOI.split(":")
     M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5 if _t == "hessian_230" else 3.0, "#" + _c, 1.9, 0.6)

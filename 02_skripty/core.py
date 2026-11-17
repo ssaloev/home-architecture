@@ -57,14 +57,12 @@ class Sheet:
     # ---------- base layers
     def furniture(s, fill="none", col=FURNC, sw=2.5):
         A = s.A
-        for (x, z, w, d) in furn:
-            A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')
-        # 17.11 (обмер): унитазы/раковины/бак/бойлеры — по утверждённым схемам (санузел вар. И, ванная по обмеру)
-        s.toilet_l(7.32, 0.509, col=col)                     # санузел: инсталляция в выемке шахты у Т1, лицом к двери
-        s.toilet_r(9.45, 5.594, col=col)                     # ванная: у стояка Т2, на коробе инсталляции 320
+        # 17.11 (заказчик): реалистичные условные знаки вида сверху вместо прямоугольников (furn_sym.py)
+        import furn_sym
+        _rr = [r["rects"] for r in ROOMS]
+        _tb = [t for t in FURN if t["kind"] == "table"]
+        for f in FURN: furn_sym.draw(A, X, Y, S, f, _rr, fill=(fill if fill != "none" else "#FFFFFF"), col=col, sw=sw, tables=_tb)
         s.highitems()
-        for (x, z, w, d) in ((1.144, 6.80, 0.45, 0.20), (5.434, 7.55, 0.48, 0.60)):
-            A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')
     def toilet(s, ax, wallz, col=FURNC, sw=2.5, w=0.36, d=0.55):
         x0 = ax - w / 2
         s.A(f'<rect x="{X(x0):.1f}" y="{Y(wallz-0.16):.1f}" width="{w*S:.1f}" height="{0.16*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')

@@ -170,7 +170,7 @@ def marble_mat(name, img, S, rough=0.12):
     tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = S
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs[0], t.inputs["Vector"]); nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     return m
-ALL = OPT.get("all", "greige")   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
+ALL = OPT.get("all", "grey")   # 17.11: серо-белая палитра — серая плитка   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
 IMG_W = marble_img("мрамор тёмный стены", 1024, 2048, 2, 2, 3, ALL or "dark")     # плитка 600×1200 вертикально
 IMG_L = marble_img("мрамор белый стены", 1024, 2048, 2, 2, 21, ALL or "white")
 IMG_F = marble_img("мрамор тёмный пол", 2048, 1024, 2, 2, 11, ALL or "dark")      # пол 1200×600
@@ -460,7 +460,7 @@ M["blind"] = mat("Рулонная штора", "#D9D7D2", 0.9, transm=0.25)
 M["shade"] = emis("Плафон", "#FFE2B8", 8)
 
 # ---------------- коробка: пол, стены (бамбук, листы 1220 со швами), окно, проём
-M["kfloor"] = tex(mat("Пол дуб дымчатый (влагостойкий SPC)", "#7E6A58", 0.45), "laminate_floor_02", 0.6, "#7E6A58", 1.3)   # 14.11: пол как во всей квартире
+M["kfloor"] = tex(mat("Пол тёмно-серый (влагостойкий SPC)", "#5B5B59", 0.45), "laminate_floor_02", 0.6, "#5B5B59", 1.3)   # 14.11: пол как во всей квартире
 box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["kfloor"])
 for _o in [o for o in sc.objects if o.name.startswith("Пол") and o.type == "MESH"]:   # общий короб комнаты кладёт плитку — заменить на пол квартиры
     _o.data.materials.clear(); _o.data.materials.append(M["kfloor"])

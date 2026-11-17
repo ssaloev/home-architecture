@@ -164,7 +164,7 @@ def marble_mat(name, img, S, rough=0.12):
     tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = S
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs[0], t.inputs["Vector"]); nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     return m
-ALL = OPT.get("all", "greige")   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
+ALL = OPT.get("all", "grey")   # 17.11: серо-белая палитра — серая плитка   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
 IMG_W = marble_img("мрамор тёмный стены", 1024, 2048, 2, 2, 3, ALL or "dark")     # плитка 600×1200 вертикально
 IMG_L = marble_img("мрамор белый стены", 1024, 2048, 2, 2, 21, ALL or "white")
 IMG_F = marble_img("мрамор тёмный пол", 2048, 1024, 2, 2, 11, ALL or "dark")      # пол 1200×600

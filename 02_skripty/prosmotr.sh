@@ -2,7 +2,7 @@
 # 14.11.2026: БЫСТРЫЙ ПРОСМОТР всей квартиры (EEVEE, ~1–2 мин): bash 02_skripty/prosmotr.sh [доп. аргументы, напр. oboi=hessian_230:C9BCA8]
 # результат: 08_vizualizacii/_prosmotr.jpg (все комнаты на одном листе). Финальные рендеры (Cycles) — без "fast".
 cd "$(dirname "$0")/.." ; B="D:/ProgramFiles/blender.exe"; S=02_skripty; X="$@"; t0=$(date +%s)
-"$B" -b --factory-startup -P $S/gostinaya_blender.py -- fast krem greywalls stroitel smceil floor=7E6A58-776350 plank=0.6x0.09 ceil=8 shots=3,4 tag=_sm $X >/dev/null 2>&1
+"$B" -b --factory-startup -P $S/gostinaya_blender.py -- fast krem greywalls stroitel smceil floor=5B5B59-555553 plank=0.6x0.09 ceil=8 shots=3,4 tag=_sm $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/komnata_blender.py -- fast shots=2,3 $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/spalnya_blender.py -- fast shots=1,2 $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/koridor_blender.py -- fast shots=1,4 $X >/dev/null 2>&1

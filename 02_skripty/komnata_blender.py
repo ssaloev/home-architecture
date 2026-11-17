@@ -105,7 +105,7 @@ def import_bk(name, cx, cz, h0=0.0, rot_deg=0.0, target=None, axis="w"):
 
 WALLC = "#" + OPT.get("walls", "BDBBB5"); GRAF = "#" + OPT.get("ward", "2F2F31")
 M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.38), "washed_grey_oak_veneer", 1.6, WALLC, 1.55, 0.7),
-         seam=mat("Шов панелей", "#2E2C2A", 0.6), floor=plank_floor(*OPT.get("floor", "7E6A58-776350").split("-")),   # 14.11: пол везде один — дымчатый дуб 7E6A58
+         seam=mat("Шов панелей", "#2E2C2A", 0.6), floor=plank_floor(*OPT.get("floor", "5B5B59-555553").split("-")),   # 14.11: пол везде один — дымчатый дуб 7E6A58
          ward=mat("Графит матовый", GRAF, 0.45), frame=mat("Рамки фасадов", "#3A3A3D", 0.45),
          top=mat("Столешница камень", "#E9E6E0", 0.15), brass=mat("Латунь", "#B8925A", 0.25, 1.0),
          ceil=mat("Потолок", "#EEECE7", 0.9), door=mat("Двери", "#E2E0DB", 0.45), black=mat("Чёрный", "#1C1B1A", 0.35, 0.3),
@@ -139,7 +139,7 @@ except Exception: pass
 T = 0.2
 box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["floor"])
 # 14.11 (заказчик): обои «тауп, рогожка» вместо панелей (кроме 1-й гостиной), без швов листов; панели: oboi=0
-OBOI = OPT.get("oboi", "rough_linen:B9B3AA")   # 14.11 вар.2: тёплый серый лён
+OBOI = OPT.get("oboi", "rough_linen:D4D4D1")   # 14.11 вар.2: тёплый серый лён
 if OBOI and OBOI != "0":
     _t, _c = OBOI.split(":")
     M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5 if _t == "hessian_230" else 3.0, "#" + _c, 1.9, 0.6)
