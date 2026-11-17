@@ -62,7 +62,7 @@ def touch(a, b, g=0.025):   # габариты касаются/перекрыв
 def check_room(room):
     scr, d, _ = ROOMS[room]
     R = next((r for r in D["rooms"] if r["name"] == room), None)
-    res = dict(room=room, issues={1: [], 2: [], 3: [], 4: []}, score={})
+    res = dict(room=room, issues={1: [], 2: [], 3: [], 4: [], 5: [], 6: []}, score={})
     # ---------- 1. план есть
     if not R: res["issues"][1].append("комнаты нет в плане"); res["score"][1] = 0
     rects = rect_of(R) if R else []
@@ -74,7 +74,7 @@ def check_room(room):
         res["score"][1] = 100 if furn and not noname else (60 if furn else 30)
     f_scene = os.path.join(PROJ, "08_vizualizacii", d, "qa_scene.json")
     if not os.path.exists(f_scene):
-        for k in (2, 3, 4): res["issues"][k].append("нет выгрузки 3D-сцены (запустить qa_check.py --dump)"); res["score"][k] = 0
+        for k in (2, 3, 4, 5, 6): res["issues"][k].append("нет выгрузки 3D-сцены (запустить qa_check.py --dump)"); res["score"][k] = 0
         return res
     S = json.load(open(f_scene, encoding="utf-8")); objs = S["objects"]
     def is_struct(o): n = o["name"].lower(); return any(k in n for k in STRUCT)
@@ -134,14 +134,45 @@ def check_room(room):
         if (a, b) in seen or len(seen) >= 8: continue
         seen.add((a, b)); res["issues"][4].append(f"«{a}» пересекается с «{b}»")
     res["score"][4] = max(0, 100 - 8 * (len(floaters) + len(inwall)) - 5 * len(seen))
+    # ---------- 5. палитра (серо-белая + тёмный орех + чёрный + латунь + тёмно-синие шторы): яркие «чужие» цвета
+    import colorsys
+    bad = {}
+    for o in vis:
+        for c in o.get("cols", []):
+            h, l, sat = colorsys.rgb_to_hls(*[min(1, max(0, v)) for v in c])
+            navy = 0.55 < h < 0.72 and l < 0.35          # тёмно-синие шторы — утверждены
+            wood = 0.02 < h < 0.12 and l < 0.30           # тёмный орех — утверждён
+            green = 0.17 < h < 0.48                        # растения — живой цвет, допускается
+            small = area(fp(o)) < 0.03                       # мелочь (свеча, вода в вазе) — не влияет на гамму
+            if sat > 0.40 and l > 0.15 and not navy and not wood and not green and not small:
+                k = o["name"].split(".")[0]; bad[k] = bad.get(k, 0) + 1
+    for k in list(bad)[:10]: res["issues"][5].append(f"«{k}» — яркий цвет вне серо-белой палитры")
+    res["score"][5] = max(0, 100 - 10 * len(bad))
+    # ---------- 6. кадры: слишком светло / пересвет (по готовым рендерам *_plus.jpg)
+    try:
+        from PIL import Image, ImageStat
+        fr = [os.path.join(PROJ, "08_vizualizacii", d, f) for f in os.listdir(os.path.join(PROJ, "08_vizualizacii", d)) if f.endswith("_plus.jpg") or (d == "gostinaya" and f.startswith("_smA_"))]
+        sc_ = []
+        for f in fr:
+            im = Image.open(f).convert("L").resize((480, 270)); st = ImageStat.Stat(im); m = st.mean[0] / 255
+            hist = im.histogram(); clip = sum(hist[248:]) / sum(hist)
+            sc_.append(m)
+            if m > 0.62 or clip > 0.08:
+                res["issues"][6].append(f"{os.path.basename(f)} — слишком светло (средняя яркость {round(m*100)} %, пересвет {round(clip*100)} %)")
+            elif m < 0.25:
+                res["issues"][6].append(f"{os.path.basename(f)} — слишком темно (средняя яркость {round(m*100)} %)")
+        res["score"][6] = 100 - 15 * len(res["issues"][6]) if fr else 0
+        if not fr: res["issues"][6].append("нет готовых кадров")
+    except Exception as e:
+        res["issues"][6].append(f"кадры не проверены: {e}"); res["score"][6] = 0
     return res
 
 
 def main():
     if "--dump" in sys.argv: dump_all()
     allr = [check_room(r) for r in ROOMS]
-    T = {1: "1. План есть", 2: "2. Точно по плану", 3: "3. Реалистичность (не коробки)", 4: "4. Расположение"}
-    L = ["# Проверка квартиры", "", "| Комната | " + " | ".join(T[k] for k in T) + " |", "|---|" + "---|" * 4]
+    T = {1: "1. План есть", 2: "2. Точно по плану", 3: "3. Реалистичность (не коробки)", 4: "4. Расположение", 5: "5. Палитра", 6: "6. Свет кадров"}
+    L = ["# Проверка квартиры", "", "| Комната | " + " | ".join(T[k] for k in T) + " |", "|---|" + "---|" * 6]
     for r in allr: L.append(f"| {r['room']} | " + " | ".join(f"{r['score'].get(k, 0)}" for k in T) + " |")
     for r in allr:
         L += ["", f"## {r['room']}"]

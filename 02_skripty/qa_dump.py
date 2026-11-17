@@ -19,7 +19,11 @@ if "qa" in ARGS:
         me = o.data
         nv = len(me.vertices) if hasattr(me, "vertices") else 0
         mods = [m.type for m in o.modifiers]
-        out.append(dict(name=o.name, mats=[(s.material.name if s.material else "") for s in o.material_slots][:4], verts=nv, mods=mods,
+        _cols = []
+        for s_ in o.material_slots:
+            m_ = s_.material; b_ = next((n for n in m_.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if (m_ and m_.use_nodes) else None
+            if b_ is not None and not b_.inputs["Base Color"].is_linked: _cols.append([round(v, 3) for v in b_.inputs["Base Color"].default_value[:3]])
+        out.append(dict(cols=_cols[:3], name=o.name, mats=[(s.material.name if s.material else "") for s in o.material_slots][:4], verts=nv, mods=mods,
                         lib=bool(o.get("_bk")) or (o.library is not None) or nv > 400,
                         x0=round(min(xs), 3), x1=round(max(xs), 3), z0=round(-max(ys), 3), z1=round(-min(ys), 3), h0=round(min(zs), 3), h1=round(max(zs), 3)))
     room = dict(X0=globals().get("X0"), X1=globals().get("X1"), Z0=globals().get("Z0"), Z1=globals().get("Z1"), H=globals().get("HC", globals().get("H", 2.65)))

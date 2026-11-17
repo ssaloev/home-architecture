@@ -23,7 +23,14 @@ if OPT.get("photo", "1") == "1":
             if _dir == "T": so.rotation_euler = Euler((math.pi / 2 - el, 0, math.pi + az), "XYZ")
             else: so.rotation_euler = Euler((math.pi / 2 - el, 0, math.pi / 2 + az), "XYZ")
             print("PHOTO солнце", _dir)
-    # ---- 2. тон
+    # ---- 2. тон (17.11 заказчик: «слишком светло, а цвет вроде серый» — экспозиция ниже, LED слабее)
+    _sc.view_settings.exposure += float(OPT.get("pexp", "-0.45"))
+    for _l in bpy.data.lights:
+        if _l.type == "AREA" and _l.energy < 60: _l.energy *= float(OPT.get("ledk", "0.6"))
+    for _m in bpy.data.materials:
+        if _m.name.lower().startswith(("led", "подсвет")) and _m.use_nodes:
+            for _n in _m.node_tree.nodes:
+                if _n.type == "EMISSION": _n.inputs["Strength"].default_value *= float(OPT.get("ledk", "0.6"))
     try:
         _sc.view_settings.view_transform = "AgX"
         for lk in ("AgX - Medium High Contrast", "Medium High Contrast", "AgX - Base Contrast"):

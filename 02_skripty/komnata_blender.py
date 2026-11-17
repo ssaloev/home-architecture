@@ -139,7 +139,7 @@ except Exception: pass
 T = 0.2
 box("Пол", X0 - T, Z0 - T, X1 + T, Z1 + T, -0.05, 0, M["floor"])
 # 14.11 (заказчик): обои «тауп, рогожка» вместо панелей (кроме 1-й гостиной), без швов листов; панели: oboi=0
-OBOI = OPT.get("oboi", "rough_linen:D4D4D1")   # 14.11 вар.2: тёплый серый лён
+OBOI = OPT.get("oboi", "rough_linen:A9A9A6")   # 14.11 вар.2: тёплый серый лён
 if OBOI and OBOI != "0":
     _t, _c = OBOI.split(":")
     M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5 if _t == "hessian_230" else 3.0, "#" + _c, 1.9, 0.6)
