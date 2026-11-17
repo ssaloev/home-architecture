@@ -177,7 +177,7 @@ M = dict(tile=marble_mat("Керамогранит тёмный", IMG_W, (1 / 1.
          dglass=mat("Стекло дверцы", "#202426", 0.05), towel=mat("Полотенце", "#8A8B8F", 1.0),
          led=emis("LED", "#FFE6C8", 6), ledm=emis("LED за зеркалом", "#FFE6C8", 40), spot=emis("Спот", "#FFF4E2", 12))
 # 13.11.2026 (заказчик): ВСЯ мебель — орех, как в первой гостиной (american walnut, тон #5E4434); вернуть графит: oreh=0
-_MB = OPT.get("mebel", "ivory")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
+_MB = OPT.get("mebel", "sb")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
 if _MB == "oreh":
     M["ward"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
 elif _MB == "dub":
@@ -188,7 +188,12 @@ elif _MB == "umber":    # умбра — тёплый графитово-кор�
     M["ward"] = mat("Фасады умбра", "#4A4038", 0.5)
 elif _MB in ("white", "mushroom", "ivory"):
     M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
-if _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
+# 17.11.2026 (заказчик): СЕРО-БЕЛАЯ — встроенные шкафы белые, отдельная мебель/тумбы/полки серые, ручки чёрные (своя мебель уже серая)
+if _MB == "sb":
+    M["ward"] = mat("Фасады белые", "#E8E8E5", 0.5)
+    M["oreh_tv"] = mat("Мебель серая", "#8C8B88", 0.55)
+    if "frame" in M: M["frame"] = mat("Рамки серые", "#7E7D7A", 0.45)
+elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
     M["oreh_tv"] = M["ward"]
     if "frame" in M: M["frame"] = mat("Рамки фасадов", "#4A3628" if _MB == "oreh" else "#8C8478", 0.45)
 T = 0.12

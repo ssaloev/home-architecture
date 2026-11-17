@@ -14,10 +14,10 @@ SHOTS = OPT.get("shots", "1,2,3").split(",")
 HERE = os.path.dirname(os.path.abspath(__file__)); PROJ = os.path.dirname(HERE)
 OUT = os.path.join(PROJ, "08_vizualizacii", "komnata"); os.makedirs(OUT, exist_ok=True)
 PH = os.path.join(PROJ, "03_materialy", "polyhaven"); BK = os.path.join(PROJ, "03_materialy", "blenderkit")
-X0, X1, Z0, Z1 = 5.745, 8.945, 0.309, 6.545
+X0, X1, Z0, Z1 = 5.786, 9.386, 0.309, 6.545   # 17.11 по обмеру (было 5.745–8.945)
 H, HC, SL = 2.70, 2.62, 0.08
 WX0, WX1, WS, WT = 6.273, 8.437, 0.80, 2.40
-DX0, DX1, DH = 8.145, 8.945, 2.10
+DX0, DX1, DH = 5.845, 6.745, 2.10   # 17.11 обмер: дверь 900 у левого угла (было справа)
 
 for c in (bpy.data.objects, bpy.data.meshes, bpy.data.materials, bpy.data.lights, bpy.data.cameras):
     for b in list(c):
@@ -113,7 +113,7 @@ M = dict(wall=tex(mat("Бамбуковые панели серые", WALLC, 0.3
          curt=mat("Шторы", "#" + OPT.get("curt", "8A8B8F"), 0.95), tulle=mat("Тюль", "#F6F3EE", 0.9, transm=0.5, alpha=0.7),
          led=emis("LED", "#FFE6C8", 6), spot=emis("Спот", "#FFF4E2", 12))
 # 13.11.2026 (заказчик): ВСЯ мебель — орех, как в первой гостиной (american walnut, тон #5E4434); вернуть графит: oreh=0
-_MB = OPT.get("mebel", "ivory")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
+_MB = OPT.get("mebel", "sb")   # 14.11 ВЫБРАН вар.2: фасады слоновая кость, ТВ-тумбы орех   # 14.11: варианты палитр: oreh | dub | white | mushroom | grafit
 if _MB == "oreh":
     M["ward"] = tex(mat("Шпон орех (как гостиная)", "#5C4636", 0.45), "american_walnut_veneer", 1.6, "#5E4434", 2.2)
 elif _MB == "dub":
@@ -124,7 +124,12 @@ elif _MB == "umber":    # умбра — тёплый графитово-кор�
     M["ward"] = mat("Фасады умбра", "#4A4038", 0.5)
 elif _MB in ("white", "mushroom", "ivory"):
     M["ward"] = mat("Фасады " + _MB, {"white": "#ECE8E1", "mushroom": "#A89A8A", "ivory": "#E4DCCD"}[_MB], 0.5)
-if _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
+# 17.11.2026 (заказчик): СЕРО-БЕЛАЯ — встроенные шкафы белые, отдельная мебель/тумбы/полки серые, ручки чёрные (своя мебель уже серая)
+if _MB == "sb":
+    M["ward"] = mat("Фасады белые", "#E8E8E5", 0.5)
+    M["oreh_tv"] = mat("Мебель серая", "#8C8B88", 0.55)
+    if "frame" in M: M["frame"] = mat("Рамки серые", "#7E7D7A", 0.45)
+elif _MB != "grafit" and OPT.get("tvoreh", "1") != "1":   # tvoreh=1 — ТВ-тумбы остаются орех
     M["oreh_tv"] = M["ward"]
     if "frame" in M: M["frame"] = mat("Рамки фасадов", "#4A3628" if _MB == "oreh" else "#8C8478", 0.45)
 try: M["tulle"].blend_method = "BLEND"
@@ -201,7 +206,7 @@ box("Ручка", DX0 + 0.08, zf - 0.07, DX0 + 0.09, zf - 0.02, 1.0, 1.02, M["bl
 
 # ---------------- встроенный шкаф графит у двери (до потолка), фасады с рамками, латунные ручки
 WH = HC
-a0, a1, b0 = X0, DX0 - 0.03, Z1 - 0.60
+a0, a1, b0 = (DX1 + 0.03, X1, Z1 - 0.60) if DX0 - X0 < 1.0 else (X0, DX0 - 0.03, Z1 - 0.60)   # 17.11: шкаф по другую сторону двери
 box("Шкаф", a0, b0, a1, Z1, 0, WH, M["ward"])
 n = 4; w = (a1 - a0) / n
 for k in range(n):
@@ -428,7 +433,7 @@ if TVZ in ("A", "B", "C"):
 w = sc.world or bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True; w.node_tree.nodes["Background"].inputs[1].default_value = 0.3
 
 # ---------------- камеры
-CAMS = {"1": ("1_ot_dveri_k_oknu", W(X1 - 0.45, Z1 - 0.95, 1.45), W(X0 + 0.9, Z0 + 1.0, 1.05), 16),
+CAMS = {"1": ("1_ot_dveri_k_oknu", W(DX1 - 0.25, Z1 - 0.75, 1.45) if DX0 - X0 < 1.0 else W(X1 - 0.45, Z1 - 0.95, 1.45), W((X0 + X1) / 2 + 0.3, Z0 + 1.0, 1.05), 16),
         "2": ("2_ot_okna_k_shkafu", W(X0 + 0.9, Z0 + 0.6, 1.45), W(X1 - 0.6, Z1 - 0.4, 1.0), 16),
         "3": ("3_tv_zona", W(X0 + 0.35, tm, 1.30), W(X1, tm, 1.30), 18) if OPT.get("swap", "1") == "1" else ("3_tv_zona", W(X1 - 0.35, tm, 1.30), W(X0, tm, 1.30), 18),
         "4": ("4_dver_v_nishu", W(7.0, 3.6, 1.45), W(X1, 0.95, 1.05), 17)}
