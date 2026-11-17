@@ -300,3 +300,39 @@ fig.text(0.03, 0.345, NL.join([
     "• Ось унитаза 250 от шахты — тесно (норма ≥ 350–400); если выемку 640 использовать под унитаз — станет ок.",
     "Итог: в 900 этот вариант работает только с душем ~520 — тесно. Лучше всего пока — №1 «в ряд» (Ж)."]), fontsize=10.5, va="top", linespacing=1.6)
 OUT_Z = OUT.replace(".png", "_z.png"); fig.savefig(OUT_Z, facecolor="white"); print(OUT_Z)
+
+
+# ======================= И (17.11, заказчик: «давай дверь перенесём»): унитаз у Т1 (в выемке), дверь сдвинута к унитазу,
+#   душ в дальнем торце за стеклом — вход сухой, вода к двери не идёт. Стена к прихожей 109 мм — перегородка, не бетон.
+fig = plt.figure(figsize=(10.8, 12.5), dpi=130)
+fig.text(0.03, 0.985, "САНУЗЕЛ — вариант И: дверь переносим", fontsize=17, fontweight="bold", va="top")
+fig.text(0.03, 0.962, "Унитаз остаётся у стояка Т1, дверь — напротив унитаза, душ — в дальнем конце за стеклом.", fontsize=10.5, va="top")
+q = fig.add_axes([0.10, 0.37, 0.80, 0.57]); room(q, "")
+for p in list(q.patches):
+    if isinstance(p, Arc) or (isinstance(p, Rectangle) and p.get_x() == W and abs(p.get_width() - T) < 1e-6): p.remove()
+for t in list(q.texts):
+    if t.get_text().startswith("дверь"): t.remove()
+ND0, ND1 = 0.24, 0.94                                       # новая дверь 700 (в коридор/прихожую), открывается наружу
+q.add_patch(Rectangle((W, DZ0 if False else L - 0.85), T, 0.80, fc="white", ec="#999", ls=":", lw=1.2, hatch=".."))
+q.text(W + T + 0.06, L - 0.45, "старый проём —" + NL + "заложить", fontsize=8, color="#888", va="center")
+q.add_patch(Rectangle((W, ND0), T, ND1 - ND0, fc="#F3D9A4", ec="#8A5A00"))
+q.add_patch(Arc((W + T, ND0), 1.4, 1.4, theta1=0, theta2=90, color="#B03A2E", lw=1, ls="--"))
+q.text(W + T + 0.42, ND0 + 0.42, "новая дверь" + NL + "700, наружу", fontsize=8.5, color="#B03A2E")
+q.add_patch(Rectangle((-SH, 0.20), SH, 0.64, fc="#F7E6C4", ec="#B07A1E", ls="--", lw=1.4))
+box(q, -SH, 0.27, -SH + 0.20, 0.77, "#BDBDBD", "", ls="--")
+box(q, -SH + 0.20, 0.34, -SH + 0.75, 0.70, "white", "", 8.5)
+q.text(-SH + 0.47, 0.52, "унитаз" + NL + "+ гиг. душ", ha="center", va="center", fontsize=8.5, zorder=6)
+legs(q, -SH + 0.76, 0.34, W, 0.70, "ноги" + NL + "%d" % round((W + SH - 0.76) * 1000))
+box(q, 0.45, 0.0, W, 0.20, TILE, "раковина 450×200", 7.5, col="white")
+q.add_patch(Rectangle((0, 1.00), W, L - 1.00, fc="#CFE3EC", ec="#2F7FA8", lw=1.4))
+q.text(W / 2, 1.38, "душ 900×820" + NL + "без поддона", ha="center", va="center", fontsize=10, color="#1F4E79", fontweight="bold")
+q.plot([0.06, 0.84], [1.74, 1.74], color="#2F7FA8", lw=3); q.text(W / 2, 1.80, "трап-лоток", ha="center", fontsize=7.5, color="#1F4E79")
+q.plot([0, W], [1.00, 1.00], color="#555", lw=2.6); q.text(W - 0.03, 0.96, "стекло 900 (распашное/неподвижное)", ha="right", fontsize=7.5, color="#555")
+fig.text(0.03, 0.345, NL.join([
+    "• Унитаз остаётся у стояка Т1 (в выемке 640) — канализация короткая, не трогаем.",
+    "• Дверь переносим на ~1 м к унитазу: проём 700 напротив унитаза, старый проём закладываем.",
+    "  Стена к прихожей тонкая (109 мм) — перегородка, не бетон → перенос простой (проверить на месте).",
+    "• Душ 900×820 в дальнем конце за стеклом, без поддона: вход сухой, вода к двери и в прихожую не идёт.",
+    "• Слив трапа (труба 50) к Т1 — вдоль шахты в стяжке, уклон 3% — это просто и не опасно.",
+    "• Раковина 450×200 для рук — в углу у двери. Бак 200 л + бойлер Б2 — над унитазом."]), fontsize=10.5, va="top", linespacing=1.6)
+OUT_I = OUT.replace(".png", "_i.png"); fig.savefig(OUT_I, facecolor="white"); print(OUT_I)
