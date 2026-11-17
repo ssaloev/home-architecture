@@ -537,6 +537,10 @@ CAMS["5"] = ("5_bojler_shkaf", W(4.40, 8.90, 1.60), W(X1, UZ, 1.75), 13)
 if OPENC: CAMS = {k: ("open_" + v[0],) + v[1:] for k, v in CAMS.items()}
 
 sc.render.engine = "CYCLES"
+# 17.11: ИНСТРУМЕНТ ПРОВЕРКИ (аргумент qa): выгрузить сцену для qa_check.py и выйти без рендера
+if "qa" in ARGS:
+    PROJ = globals().get("PROJ") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    exec(open(os.path.join(PROJ, "02_skripty", "qa_dump.py"), encoding="utf-8").read()); import sys as _s; _s.exit(0)
 try:
     pr = bpy.context.preferences.addons["cycles"].preferences
     for dv in ("OPTIX", "CUDA"):

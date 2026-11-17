@@ -439,6 +439,10 @@ CAMS = {"1": ("1_ot_dveri_k_oknu", W(DX1 - 0.25, Z1 - 0.75, 1.45) if DX0 - X0 < 
         "3": ("3_tv_zona", W(X0 + 0.35, tm, 1.30), W(X1, tm, 1.30), 18) if OPT.get("swap", "1") == "1" else ("3_tv_zona", W(X1 - 0.35, tm, 1.30), W(X0, tm, 1.30), 18),
         "4": ("4_dver_v_nishu", W(7.0, 3.6, 1.45), W(X1, 0.95, 1.05), 17)}
 sc.render.engine = "CYCLES"
+# 17.11: ИНСТРУМЕНТ ПРОВЕРКИ (аргумент qa): выгрузить сцену для qa_check.py и выйти без рендера
+if "qa" in ARGS:
+    PROJ = globals().get("PROJ") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    exec(open(os.path.join(PROJ, "02_skripty", "qa_dump.py"), encoding="utf-8").read()); import sys as _s; _s.exit(0)
 try:
     pr = bpy.context.preferences.addons["cycles"].preferences
     for dv in ("OPTIX", "CUDA"):
