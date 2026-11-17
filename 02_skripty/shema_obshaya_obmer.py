@@ -20,9 +20,9 @@ fig.text(0.03, 0.968, "Размеры в мм. Красная рамка — з�
 ax = fig.add_axes([0.02, 0.11, 0.96, 0.85])
 
 
-def RR(x0, z0, x1, z1, fc, t="", fs=7.5, col="#222", ec="#555", lw=1.0, ls="-", hatch=None):
+def RR(x0, z0, x1, z1, fc, t="", fs=7.5, col="#222", ec="#555", lw=1.0, ls="-", hatch=None, zo=1):
     u0, u1 = ZM - z1, ZM - z0
-    ax.add_patch(Rectangle((u0, x0), u1 - u0, x1 - x0, fc=fc, ec=ec, lw=lw, ls=ls, hatch=hatch))
+    ax.add_patch(Rectangle((u0, x0), u1 - u0, x1 - x0, fc=fc, ec=ec, lw=lw, ls=ls, hatch=hatch, zorder=zo))
     if t: ax.text((u0 + u1) / 2, (x0 + x1) / 2, t, ha="center", va="center", fontsize=fs, color=col)
 
 
@@ -41,8 +41,8 @@ for dr in D["doors"]:
     wmm = dr.get("real_mm") or round(max(dr["rect"][2], dr["rect"][3]) * 1000)
     if dr["type"] != "entry": T((x0 + x1) / 2, (z0 + z1) / 2, str(wmm), fontsize=6.5, color="#8A5A00", fontweight="bold")
 for c in D["concrete"]:
-    RR(*rect4(c["rect"]), "none", ec="#B03A2E", hatch="//", ls="--" if c["kind"] == "beam" else "-")
-for r in D["risers"]: ax.add_patch(Circle((ZM - r["z"], r["x"]), 0.06, fc="#B03A2E")); T(r["x"] + 0.15, r["z"], r["name"], fontsize=7, color="#B03A2E")
+    RR(*rect4(c["rect"]), "none", ec="#B03A2E", hatch="//", ls="--" if c["kind"] == "beam" else "-", zo=5)
+for r in D["risers"]: ax.add_patch(Circle((ZM - r["z"], r["x"]), 0.06, fc="#B03A2E", zorder=6)); T(r["x"] + 0.15, r["z"], r["name"], fontsize=7, color="#B03A2E", zorder=6)
 
 # ---- мебель: гостиная, коридор, прихожая, санузел — как в проекте; гостиная 2 — как в 3D после обмера; 3 комнаты — новые схемы
 def room_of(x, z):
@@ -51,6 +51,7 @@ def room_of(x, z):
             if q[0] <= x <= q[1] and q[2] <= z <= q[3]: return r["name"]
 for f in D["furniture"]:
     if room_of(f["x"] + f["w"] / 2, f["z"] + f["d"] / 2) in ("Гостиная", "Коридор", "Прихожая", "Санузел"):
+        if f["kind"] == "shower": f = dict(f, x=0.694 + 0.02, w=0.70)    # 17.11: шахта санузла по всей стене — душ от её грани
         RR(f["x"], f["z"], f["x"] + f["w"], f["z"] + f["d"], WH if f["kind"] == "wardrobe" else "#DCDBD8", ec="#666", lw=0.8)
 # гостиная 2 (Комната): 5.786–9.386 × 0.309–6.545, дверь слева — шкаф справа от двери, ТВ у левой стены, диван у правой
 RR(5.786, 1.75, 6.186, 4.85, GR, "ТВ 3100", 7, col="white"); RR(8.436, 2.17, 9.386, 4.43, "#DCDBD8", "диван 2260", 7)
