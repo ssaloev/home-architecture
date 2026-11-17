@@ -491,12 +491,11 @@ for xx in (X0 + 0.45, X1 - 0.01): box("Профиль", xx - 0.006, GZ - 0.012, 
 box("Профиль верх", X0, GZ - 0.012, X1, GZ + 0.012, 1.99, 2.01, M["black"])
 box("Трап-лоток", X0 + 0.06, Z1 - 0.10, X1 - 0.06, Z1 - 0.06, 0.0, 0.003, M["black"])
 bk_load("dush_komplekt_cherny", Matrix.Translation(W(X0, Z1 - 0.40, 0.95)) @ Matrix.Rotation(math.radians(90), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X"))
-towel_rail_bk("R", GZ - 0.35)
 spots([((X0 + X1) / 2, 7.30), ((X0 + X1) / 2, Z1 - 0.40)])
 
 CAMS = {"1": ("1_ot_dveri", W(X1 - 0.10, 7.55, 1.60), W(X0 - 0.25, 7.32, 0.85), 13),
-        "2": ("2_k_dushu", W(X1 - 0.10, 6.88, 1.65), W(X0 + 0.35, Z1 - 0.10, 0.95), 13),
-        "3": ("3_iz_dusha", W(X0 + 0.55, Z1 - 0.08, 1.60), W(X0 - 0.10, 6.90, 1.20), 13)}
+        "2": ("2_k_dushu", W(X1 - 0.15, 7.30, 1.65), W(X0 + 0.30, Z1 - 0.10, 0.95), 13),
+        "3": ("3_iz_dusha", W(X0 + 0.55, Z1 - 0.08, 1.60), W(X1 - 0.20, 6.90, 1.20), 13)}
 if OPENC: CAMS = {k: ("open_" + v[0],) + v[1:] for k, v in CAMS.items()}
 
 sc.render.engine = "CYCLES"

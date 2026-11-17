@@ -243,6 +243,10 @@ legend(s, s.ty + 80, [
     (lambda cx, cy: s.A(f'<circle cx="{cx}" cy="{cy}" r="14" fill="#FFF" stroke="{RED}" stroke-width="4"/>'), "Стояк (внести после замера)"),
 ])
 s.notes([f"1. Потолок {int(HCEIL*1000)} — проверить в 3 местах.", "2. Окна: подоконник ~800, верх", "    ~2400 — уточнить по замеру.", "3. Допуск ±20 мм; изменения —", "    по согласованию с заказчиком."])
+# 17.11: размеры заказчика, которые план ещё не повторяет — подписаны прямо на плане
+for (L_, x_, z_) in (("Л", 6.10, 7.05), ("М", 2.58, 8.30)):
+    z = next((q for q in D.get("zamer", []) if q["L"] == L_ and q.get("real_mm")), None)
+    if z: s.A(f'<text x="{X(x_):.0f}" y="{Y(z_):.0f}" text-anchor="middle" font-size="26" font-weight="bold" fill="{RED}">{L_} = {z["real_mm"]} (замер)</text>')
 s.save("s1_obmer")
 OY = 300
 
