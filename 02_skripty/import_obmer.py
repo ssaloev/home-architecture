@@ -51,7 +51,7 @@ if P.get("risers"):
 if P.get("ceiling", {}).get("real"):
     K["meta"]["ceiling_h"] = P["ceiling"]["real"] / 1000; K["meta"]["ceiling_status"] = "ok"
 if P.get("notes"): K["obmer_notes"] = P["notes"]
-K["meta"]["status_note"] = "ЧЕРНОВИК — геометрия по обмеру (частично), спальня 2 ещё уточняется"
+K["meta"]["status_note"] = "Геометрия по обмеру 16–17.11.2026 (Л и проход в кухню — уточнить)"
 
 json.dump(K, open(dst, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print(f"kvartira.json: стен {len(K['walls'])}, окон {len(K['windows'])}, дверей {len(K['doors'])}, помещений {len(rooms)}, бетон {len(K['concrete'])}")
