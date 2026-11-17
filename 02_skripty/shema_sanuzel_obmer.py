@@ -28,7 +28,7 @@ def room(ax, title):
     ax.annotate("", (-SH - 0.25, 0), (-SH - 0.25, L), arrowprops=dict(arrowstyle="<->", color="#B03A2E"))
     ax.text(-SH - 0.33, L / 2, "1820 (Ж)", rotation=90, va="center", ha="center", fontsize=10, color="#B03A2E", fontweight="bold")
     ax.set_title(title, fontsize=12.5, fontweight="bold", loc="left")
-    ax.set_xlim(-SH - 0.5, W + 1.05); ax.set_ylim(L + 0.45, -0.3); ax.set_aspect("equal"); ax.axis("off")
+    ax.set_xlim(-0.75 - 0.5, W + 1.05); ax.set_ylim(L + 0.45, -0.3); ax.set_aspect("equal"); ax.axis("off")
 
 
 def box(ax, x0, z0, x1, z1, fc, t, fs=9, col="#222", ec="#444", ls="-"):
@@ -152,24 +152,24 @@ d.add_patch(Rectangle((W, DZ0), T, DZ1 - DZ0, fc="#F3D9A4", ec="#8A5A00"))
 d.add_patch(Arc((W + T, DZ0), 1.6, 1.6, theta1=0, theta2=90, color="#B03A2E", lw=1, ls="--"))
 d.text(W + T + 0.5, DZ0 + 0.45, "дверь 800" + NL + "наружу", fontsize=8.5, color="#B03A2E")
 d.plot([-SH, 0], [0.38, 0.38], color="#B03A2E", lw=1.5)                              # линия на шахте — как на эскизе
-RC = 0.20                                                   # выемка в шахте у Т1 (глубина — уточнить), в ней инсталляция
-d.add_patch(Rectangle((-RC, 0.12), RC, 0.60, fc="#F7E6C4", ec="#B07A1E", ls="--", lw=1.4))
-d.text(-RC / 2, 0.80, "выемка" + NL + "%d?" % round(RC * 1000), ha="center", fontsize=7.5, color="#B07A1E")
-box(d, -RC, 0.17, 0.0, 0.67, "#BDBDBD", "", ls="--")
-box(d, 0.0, 0.24, 0.55, 0.60, "white", "унитаз → к двери", 8.5)
-d.annotate("", (0.55, 0.42), (0.80, 0.42), arrowprops=dict(arrowstyle="<-", color="#2E7D4F", lw=1.5))
-legs(d, 0.56, 0.20, W, 0.66, "ноги" + NL + "%d" % round((W - 0.56) * 1000))
+RC = 0.64                                                   # выемка в шахте у Т1 (глубина — уточнить), в ней инсталляция
+d.add_patch(Rectangle((-RC, 0.12), RC, 0.60, fc="#F7E6C4", ec="#B07A1E", ls="--", lw=1.4, zorder=3))
+d.text(-RC / 2, 0.84, "выемка %d" % round(RC * 1000), ha="center", fontsize=7.5, color="#B07A1E")
+box(d, -RC, 0.17, -RC + 0.20, 0.67, "#BDBDBD", "", ls="--"); d.patches[-1].set_zorder(4)
+box(d, -RC + 0.20, 0.24, -RC + 0.75, 0.60, "white", "", 8.5); d.patches[-1].set_zorder(4); d.text(-RC + 0.47, 0.42, "унитаз" + NL + "+ гиг. душ", ha="center", va="center", fontsize=8.5, zorder=6)
+d.annotate("", (-RC + 0.75, 0.42), (0.80, 0.42), arrowprops=dict(arrowstyle="<-", color="#2E7D4F", lw=1.5))
+legs(d, -RC + 0.76, 0.20, W, 0.66, "ноги" + NL + NL + "%d" % round((W + RC - 0.76) * 1000))
 box(d, 0.50, 0.0, W, 0.19, TILE, "раковина 400×190", 7.5, col="white")
-d.text(0.2, -0.12, "над унитазом: шкаф — бак 200 л + бойлер Б2", ha="center", fontsize=8, color="#B03A2E")
+d.text(0.1, -0.12, "над унитазом: шкаф — бак 200 л + бойлер Б2", ha="center", fontsize=8, color="#B03A2E")
 d.add_patch(Rectangle((0, 1.0), W, L - 1.0, fc="#CFE3EC", ec="#2F7FA8", lw=1.4))
 d.text(0.45, 1.35, "душ" + NL + "900×820", ha="center", va="center", fontsize=9.5, color="#1F4E79")
 d.add_patch(Circle((0.45, 1.70), 0.04, fc="#2F7FA8")); d.text(0.45, 1.78, "трап", ha="center", fontsize=7.5, color="#1F4E79")
 d.plot([0.0, W], [1.0, 1.0], color="#555", lw=2, ls=(0, (4, 2)))
 fig.text(0.03, 0.335, NL.join([
-    "• Унитаз повёрнут К ДВЕРИ: инсталляция в выемке шахты у Т1, ноги — в сторону двери (%d до стены с дверью)." % round((W - 0.56) * 1000),
+    "• Унитаз повёрнут К ДВЕРИ: инсталляция в выемке шахты у Т1, ноги — в сторону двери (%d до стены с дверью — норма)." % round((W + RC - 0.76) * 1000),
     "  Дверь 800 напротив унитаза, наружу — открыл дверь, места ещё больше.",
     "• Раковина 400×190 (узкая, для рук) — на торцевой стене в углу.",
     "• Душ 900×820 — во всю ширину внизу, трап, шторка.",
-    "• Глубину выемки в шахте пришлите: чем она глубже, тем больше места для ног (нарисовал 200).",
+    "• Выемка 640 (замер 17.11): унитаз почти целиком в ней. Ширину выемки нарисовал 600 — если другая, пришлите.",
     "• Бак 200 л + бойлер Б2 — в шкафу над унитазом."]), fontsize=10.5, va="top", linespacing=1.6)
 OUT_D = OUT.replace(".png", "_d.png"); fig.savefig(OUT_D, facecolor="white"); print(OUT_D)
