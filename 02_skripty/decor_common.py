@@ -229,7 +229,30 @@ if OPT.get("decor", "1") == "1":
         dk("svechi", X0 + 0.12, BZ0 + 0.12, 0.58, 0, 0.14)
         dk("sansevieriya", X0 + 0.95, Z0 + 0.25, 0.0, 0, 0.65, "h")
     elif R_ == "sanuzel":
-        dk("vanna_aksessuary", X1 - 0.12, Z0 + 0.10, "auto:1.3", 0, 0.22)
-        dk("polotence_visit", X1 - 0.03, 7.90, 0.85, size=0.45, wall="R")
+        _st = dk("polotenca_stopka", X1 - 0.225, Z0 + 0.10, "auto:0.33", 0, 0.30)   # 17.11: полка под шкафчиком — стопка полотенец «как в отеле»
+        _twc = [(0.86, 0.85, 0.82, 1), (0.55, 0.55, 0.54, 1)]   # в модели цветные — перекрасить: белые / серые по очереди
+        for _i, o in enumerate([o for o in (_st or []) if o.type == "MESH"]):
+            _m = bpy.data.materials.new("Полотенце стопка %d" % _i); _m.use_nodes = True
+            _b = next(n_ for n_ in _m.node_tree.nodes if n_.type == "BSDF_PRINCIPLED"); _b.inputs["Base Color"].default_value = _twc[_i % 2]; _b.inputs["Roughness"].default_value = 1.0
+            for i_ in range(len(o.data.materials)): o.data.materials[i_] = _m
+        def _one_towel(_tw, col):   # в модели несколько полотенец — оставить одно (самое большое), перекрасить
+            if not _tw: return
+            _big = max(_tw, key=lambda o: len(o.data.vertices) if o.type == "MESH" else 0)
+            _gm = bpy.data.materials.new("Полотенце крючок"); _gm.use_nodes = True
+            _gb = next(n_ for n_ in _gm.node_tree.nodes if n_.type == "BSDF_PRINCIPLED"); _gb.inputs["Base Color"].default_value = col; _gb.inputs["Roughness"].default_value = 1.0
+            for o in _tw:
+                if o.type != "MESH": continue
+                if o is not _big: o.hide_render = True; continue
+                for i_ in range(len(o.data.materials)): o.data.materials[i_] = _gm
+        for _xx, _c in ((1.24, (0.86, 0.85, 0.82, 1)), (1.33, (0.50, 0.50, 0.49, 1))):   # 17.11: полотенца на крючках рядом с сушителем
+            _one_towel(dk("polotence_visit", _xx, Z0 + 0.03, 1.22, size=0.30, wall="T"), _c)
+        _tw = None   # крючки у двери — для одежды (полотенца теперь у сушителя)
+        if False:
+            _big = max(_tw, key=lambda o: len(o.data.vertices) if o.type == "MESH" else 0)
+            _gm = bpy.data.materials.new("Полотенце серое"); _gm.use_nodes = True
+            _gb = next(n_ for n_ in _gm.node_tree.nodes if n_.type == "BSDF_PRINCIPLED"); _gb.inputs["Base Color"].default_value = (0.42, 0.42, 0.41, 1); _gb.inputs["Roughness"].default_value = 1.0
+            for o in _tw:
+                if o.type != "MESH": continue
+                if o is not _big: o.hide_render = True; continue
+                for i_ in range(len(o.data.materials)): o.data.materials[i_] = _gm
         dk("kovrik_seryi", (X0 + X1) / 2, 7.45, 0.0, 90, 0.60)
-        dk("svechi", X1 - 0.33, Z0 + 0.10, "auto:1.3", 0, 0.12)

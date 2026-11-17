@@ -72,11 +72,11 @@ class Sheet:
         # 13.11: бойлеры Ø450 над унитазами (пунктир — висят высоко), бак 200 л под заказ — пенал у левой стены санузла
         # 17.11: плоские бойлеры 470×285 (пунктир — висят высоко): Б1 — в шкафу над унитазом ванной, Б2 — над раковиной санузла;
         # бак 200 л — в выемке шахты санузла над инсталляцией (на раме до пола)
-        for (bx, bz, bw, bd, t) in ((5.914 - 0.30, 9.45 - 0.235, 0.285, 0.47, "Б1"), (1.836 - 0.47, 6.80, 0.47, 0.285, "Б2")):
+        for (bx, bz, bw, bd, t) in ((5.914 - 0.30, 9.45 - 0.235, 0.285, 0.47, "Б1"), (0.309 + 0.02, 7.32 - 0.235, 0.285, 0.47, "Б2")):
             A(f'<rect x="{X(bx):.1f}" y="{Y(bz):.1f}" width="{bw*S:.1f}" height="{bd*S:.1f}" fill="none" stroke="{C}" stroke-width="5" stroke-dasharray="14 8"/>')
             A(f'<text x="{X(bx + bw / 2):.0f}" y="{Y(bz + bd / 2)+8:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{C}">{t}</text>')
-        A(f'<rect x="{X(0.329):.1f}" y="{Y(7.03):.1f}" width="{0.30*S:.1f}" height="{0.58*S:.1f}" fill="none" stroke="{BLUE}" stroke-width="5" stroke-dasharray="14 8"/>')
-        if S < 300: A(f'<text x="{X(0.48):.0f}" y="{Y(7.70)+9:.0f}" text-anchor="middle" font-size="18" font-weight="bold" fill="{BLUE}">бак</text>')
+        A(f'<rect x="{X(5.914-0.30):.1f}" y="{Y(8.26):.1f}" width="{0.30*S:.1f}" height="{0.58*S:.1f}" fill="none" stroke="{BLUE}" stroke-width="5" stroke-dasharray="14 8"/>')   # 17.11: бак — в ванной над стиралкой
+        if S < 300: A(f'<text x="{X(5.76):.0f}" y="{Y(8.55)+9:.0f}" text-anchor="middle" font-size="18" font-weight="bold" fill="{BLUE}">бак</text>')
     def toilet_l(s, az, wallx, col=FURNC, sw=2.5, w=0.36, d=0.55):
         z0 = az - w / 2
         s.A(f'<rect x="{X(wallx-0.20):.1f}" y="{Y(z0-0.07):.1f}" width="{0.20*S:.1f}" height="{(w+0.14)*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')

@@ -144,16 +144,30 @@ def hung_v2(n, w, a, d0=0.20):
 def hung(n, w, a, kind="wc", d0=0.20, depth=None):
     """подвесной унитаз / биде — реальные модели BlenderKit (13.11), на коробе инсталляции, верх чаши h=400"""
     if kind == "wc" and OPT.get("wc2", "0") == "1" and os.path.exists(os.path.join(BK, "unitaz_rimless.blend")): return hung_v2(n, w, a, d0)
-    f = os.path.join(BK, ("unitaz_podv" if kind == "wc" else "bide_podv") + ".blend")
+    _wcf = OPT.get("wcmodel", "unitaz_4")                   # 17.11: заказчик выбрал модель №4 (белый, круглый, без ободка)
+    if kind == "wc" and not os.path.exists(os.path.join(BK, _wcf + ".blend")): _wcf = "unitaz_podv"
+    f = os.path.join(BK, (_wcf if kind == "wc" else "bide_podv") + ".blend")
     with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [o for o in src.objects]
     objs = [o for o in dst.objects if o is not None and o.type == "MESH"]
-    ytop = -0.126 if kind == "wc" else 0.071                # верх чаши в координатах модели
+    ytop = {"unitaz_4": -0.162, "unitaz_podv": -0.126}.get(_wcf, -0.126) if kind == "wc" else 0.071   # верх чаши в координатах модели
     x, z = pt(w, a, d0); rz = {"T": 0, "B": 180, "L": 90, "R": -90}[w]
     Tm = Matrix.Translation(W(x, z, 0.40 - ytop)) @ Matrix.Rotation(math.radians(rz), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X")
     for o in objs:
         sc.collection.objects.link(o); o.matrix_world = Tm @ o.matrix_world
         for i, ms in enumerate(o.data.materials):
             if ms and any(k in ms.name.lower() for k in ("chrome", "metal", "steel")): o.data.materials[i] = M["black"]
+            elif kind == "wc" and _wcf != "unitaz_podv": o.data.materials[i] = M["white"]   # 17.11: фарфор модели №4 полупрозрачный (HASHED) — «видно чашу насквозь»
+    if kind == "wc" and _wcf == "unitaz_4":   # 17.11: в модели №4 крышка после поворота «уезжает» в стену на ~18 см — посадить на чашу
+        bpy.context.view_layer.update()
+        nx_, nz_ = {"T": (0, 1), "B": (0, -1), "L": (1, 0), "R": (-1, 0)}[w]; nv = W(nx_, nz_, 0) - W(0, 0, 0)
+        _seat = [o for o in objs if o.name.startswith("seat")]; _body = [o for o in objs if o.name.startswith("body")]
+        if _seat and _body:
+            _fr = lambda ob: max((ob.matrix_world @ Vector(c)).dot(nv) for c in ob.bound_box)
+            _d = _fr(_body[0]) - 0.004 - _fr(_seat[0])
+            for o in _seat: o.matrix_world = Matrix.Translation(nv * _d) @ o.matrix_world
+            print("WC4 крышка сдвинута на", round(_d, 3))
+        for o in objs:
+            if o.name.startswith("flush"): o.hide_render = True; o.hide_viewport = True   # своя кнопка — на коробе (sanuzel_room)
     if depth:   # 13.11: компактная модель — глубина от короба depth (м), масштаб только вдоль нормали к стене
         bpy.context.view_layer.update()
         nx_, nz_ = {"T": (0, 1), "B": (0, -1), "L": (1, 0), "R": (-1, 0)}[w]; nv = W(nx_, nz_, 0) - W(0, 0, 0)

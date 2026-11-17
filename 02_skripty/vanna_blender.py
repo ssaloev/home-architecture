@@ -255,16 +255,30 @@ def hung_v2(n, w, a, d0=0.20):
 def hung(n, w, a, kind="wc", d0=0.20, depth=None):
     """подвесной унитаз / биде — реальные модели BlenderKit (13.11), на коробе инсталляции, верх чаши h=400"""
     if kind == "wc" and OPT.get("wc2", "0") == "1" and os.path.exists(os.path.join(BK, "unitaz_rimless.blend")): return hung_v2(n, w, a, d0)
-    f = os.path.join(BK, ("unitaz_podv" if kind == "wc" else "bide_podv") + ".blend")
+    _wcf = OPT.get("wcmodel", "unitaz_4")                   # 17.11: заказчик выбрал модель №4 (белый, круглый, без ободка)
+    if kind == "wc" and not os.path.exists(os.path.join(BK, _wcf + ".blend")): _wcf = "unitaz_podv"
+    f = os.path.join(BK, (_wcf if kind == "wc" else "bide_podv") + ".blend")
     with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [o for o in src.objects]
     objs = [o for o in dst.objects if o is not None and o.type == "MESH"]
-    ytop = -0.126 if kind == "wc" else 0.071                # верх чаши в координатах модели
+    ytop = {"unitaz_4": -0.162, "unitaz_podv": -0.126}.get(_wcf, -0.126) if kind == "wc" else 0.071   # верх чаши в координатах модели
     x, z = pt(w, a, d0); rz = {"T": 0, "B": 180, "L": 90, "R": -90}[w]
     Tm = Matrix.Translation(W(x, z, 0.40 - ytop)) @ Matrix.Rotation(math.radians(rz), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X")
     for o in objs:
         sc.collection.objects.link(o); o.matrix_world = Tm @ o.matrix_world
         for i, ms in enumerate(o.data.materials):
             if ms and any(k in ms.name.lower() for k in ("chrome", "metal", "steel")): o.data.materials[i] = M["black"]
+            elif kind == "wc" and _wcf != "unitaz_podv": o.data.materials[i] = M["white"]   # 17.11: фарфор модели №4 полупрозрачный (HASHED) — «видно чашу насквозь»
+    if kind == "wc" and _wcf == "unitaz_4":   # 17.11: в модели №4 крышка после поворота «уезжает» в стену на ~18 см — посадить на чашу
+        bpy.context.view_layer.update()
+        nx_, nz_ = {"T": (0, 1), "B": (0, -1), "L": (1, 0), "R": (-1, 0)}[w]; nv = W(nx_, nz_, 0) - W(0, 0, 0)
+        _seat = [o for o in objs if o.name.startswith("seat")]; _body = [o for o in objs if o.name.startswith("body")]
+        if _seat and _body:
+            _fr = lambda ob: max((ob.matrix_world @ Vector(c)).dot(nv) for c in ob.bound_box)
+            _d = _fr(_body[0]) - 0.004 - _fr(_seat[0])
+            for o in _seat: o.matrix_world = Matrix.Translation(nv * _d) @ o.matrix_world
+            print("WC4 крышка сдвинута на", round(_d, 3))
+        for o in objs:
+            if o.name.startswith("flush"): o.hide_render = True; o.hide_viewport = True   # своя кнопка — на коробе (sanuzel_room)
     if depth:   # 13.11: компактная модель — глубина от короба depth (м), масштаб только вдоль нормали к стене
         bpy.context.view_layer.update()
         nx_, nz_ = {"T": (0, 1), "B": (0, -1), "L": (1, 0), "R": (-1, 0)}[w]; nv = W(nx_, nz_, 0) - W(0, 0, 0)
@@ -497,7 +511,7 @@ mirror_led("R", SZ0 + 0.02, SZ1 - 0.02, 1.25, 2.10)
 
 # ---- стиралка 10 кг 600×600×850 рядом с раковиной, над ней шкаф до потолка (химия, полотенца)
 washer_bk("R", 8.25, 8.85)
-cabinet("Шкаф над стиралкой (химия, полотенца)", "R", 8.22, 8.88, 0.35, 1.25, HC, 2, "laundry")
+cabinet("Шкаф над стиралкой: бак 200 л + насос", "R", 8.22, 8.88, 0.35, 1.25, HC, 2, "tank_top")   # 17.11: бак перенесён из санузла
 
 # ---- ванна 1700×700 вдоль левой стены, к нижней стене; шторка на Г-карнизе; смеситель и лейка на левой стене
 BZ0, BX1 = Z1 - 1.70, X0 + 0.70
@@ -590,14 +604,46 @@ if "real" in ARGS:
     if OPT.get("plus", "1") == "1":   # 14.11: IES, порталы окон, шторы со складками, потёртости (real_plus.py)
         exec(open(os.path.join(PROJ, "02_skripty", "real_plus.py"), encoding="utf-8").read())
     sc.render.resolution_x, sc.render.resolution_y = 1920, 1080; QUICK = False; tag = tag if "tag" in OPT else "_real"
+# ---- 17.11 (заказчик: «ничего не видно — где что, какой пол»): кадр 0 — ОБЩИЙ ВИД СВЕРХУ без потолка, вертикальный (телефон)
+if "0" in SHOTS and "0" not in CAMS:
+    _cx = (X0 + X1) / 2; _L = Z1 - Z0
+    CAMS["0"] = (("open_" if globals().get("OPENC") else "") + "0_obshiy_sverhu", W(_cx, Z1 - 0.10 * _L, HC + 2.4), W(_cx, Z0 + 0.40 * _L, 0.0), 24)   # с нижнего торца: верх кадра = верх плана, как на чертеже
+_RES0 = (sc.render.resolution_x, sc.render.resolution_y)
 for s_ in SHOTS:
     if s_ not in CAMS: continue
+    _top = (s_ == "0")
+    for _o in sc.objects:
+        if _o.type == "MESH" and "потол" in _o.name.lower(): _o.hide_render = _top
+    if _top:
+        if not bpy.data.objects.get("Свет сверху"):
+            _ld = bpy.data.lights.new("Свет сверху", "AREA"); _ld.energy = 60 * (X1 - X0) * (Z1 - Z0); _ld.size = max(X1 - X0, Z1 - Z0); _ld.color = (1.0, 0.97, 0.92)
+            _lo = bpy.data.objects.new("Свет сверху", _ld); _lo.location = W((X0 + X1) / 2, (Z0 + Z1) / 2, HC + 1.2); sc.collection.objects.link(_lo)
+        bpy.data.objects["Свет сверху"].hide_render = False
+        sc.render.resolution_x, sc.render.resolution_y = 1200, 1600
+        if not globals().get("_EXP0_SET"): _EXP0 = sc.view_settings.exposure; _EXP0_SET = True
+        sc.view_settings.exposure = _EXP0 + float(OPT.get("topexp", "-1.6"))     # без потолка света больше — экспозиция ниже, плитка остаётся графитом
+        if sc.world and sc.world.use_nodes:
+            for _n in sc.world.node_tree.nodes:
+                if _n.type == "BACKGROUND": _n.inputs[1].default_value = 0.15   # фон вокруг комнаты тёмный, не голубое небо
+    else:
+        if bpy.data.objects.get("Свет сверху"): bpy.data.objects["Свет сверху"].hide_render = True
+        if globals().get("_EXP0_SET"): sc.view_settings.exposure = _EXP0
+        sc.render.resolution_x, sc.render.resolution_y = _RES0
     n_, loc, tgt, lens = CAMS[s_]
     cd = bpy.data.cameras.new(n_); cd.lens = lens; cd.sensor_width = 36; cd.clip_start = 0.02
     co = bpy.data.objects.new(n_, cd); co.location = loc; co.rotation_euler = (tgt - loc).to_track_quat("-Z", "Y").to_euler(); sc.collection.objects.link(co)
-    if "real" in ARGS:     # ровная камера (вертикали вертикальны), объектив ~22–24 мм, вверх/вниз — сдвигом
+    if "real" in ARGS and not _top:     # ровная камера (вертикали вертикальны), объектив ~22–24 мм, вверх/вниз — сдвигом
         _dv = tgt - loc; _hd2 = math.hypot(_dv.x, _dv.y); co.rotation_euler = (math.radians(90), 0, math.atan2(_dv.y, _dv.x) - math.radians(90))
-        cd.lens = max(lens, float(OPT.get("lensmin", "17")));   # 17.11: без сверхширокого искажения (13 мм растягивал предметы) cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
+        cd.lens = max(lens, float(OPT.get("lensmin", "17")))   # 17.11: без сверхширокого искажения (13 мм растягивал предметы)
+        cd.shift_y = max(-0.3, min(0.3, (_dv.z / max(_hd2, 0.3)) * cd.lens / 36 * 0.85))
+        if s_.startswith("v"):   # 17.11 (заказчик: «как с телефона — вся стена сверху донизу, пол и потолок»): вертикальный кадр 9:16,
+            _hc_ = globals().get("HC", 2.65)          # камера ровно на середине высоты, объектив — чтобы пол и потолок у дальней стены влезли
+            co.location.z = _hc_ / 2; cd.shift_y = 0.0; cd.sensor_fit = "VERTICAL"; cd.sensor_height = 36
+            cd.lens = max(11.0, 18.0 * _hd2 / (_hc_ / 2 + 0.30))   # запас 30 см: видна полоса пола и потолка
+            sc.render.resolution_x, sc.render.resolution_y = (1620, 2880) if OPT.get("print", "0") == "1" else (1080, 1920)   # print=1 — для печати альбома (½ A4 при 300 dpi)
+            if OPT.get("print", "0") == "1":
+                sc.cycles.use_adaptive_sampling = True; sc.cycles.adaptive_threshold = 0.01; sc.cycles.use_denoising = True
+                sc.render.image_settings.quality = 95
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n_ + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)
 # ---- 17.11: РАЗВЕРТКИ как у SM (аргумент elev): ортогональный вид на каждую стену из 3D — для листов разверток;
