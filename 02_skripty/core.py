@@ -59,16 +59,12 @@ class Sheet:
         A = s.A
         for (x, z, w, d) in furn:
             A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')
-        s.toilet(1.43, 9.018, col=col); s.toilet(0.71, 9.018, col=ORANGE, sw=5)
-        s.toilet_r(8.415, 6.073, col=col)          # 13.11: в ванной один унитаз (+ гиг. душ)
+        # 17.11 (обмер): унитазы/раковины/бак/бойлеры — по утверждённым схемам (санузел вар. И, ванная по обмеру)
+        s.toilet_l(7.32, 0.509, col=col)                     # санузел: инсталляция в выемке шахты у Т1, лицом к двери
+        s.toilet_r(9.45, 5.594, col=col)                     # ванная: у стояка Т2, на коробе инсталляции 320
         s.highitems()
-        A(f'<rect x="{X(1.058):.1f}" y="{Y(6.80):.1f}" width="{0.50*S:.1f}" height="{0.42*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')   # раковина санузла (верхняя стена)
-        A(f'<rect x="{X(3.564):.1f}" y="{Y(8.06):.1f}" width="{0.48*S:.1f}" height="{0.60*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')  # раковина ванной
-        A(f'<rect x="{X(686/P):.1f}" y="{Y(112/P):.1f}" width="{25/P*S:.1f}" height="{32/P*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
-        for cy in (122, 136):
-            A(f'<circle cx="{X(698.5/P):.1f}" cy="{Y(cy/P):.1f}" r="15" fill="none" stroke="{col}" stroke-width="{sw}"/>')
-        A(f'<rect x="{X(686/P):.1f}" y="{Y(180/P):.1f}" width="{25/P*S:.1f}" height="{30/P*S:.1f}" rx="10" fill="none" stroke="{col}" stroke-width="{sw}"/>')
-        A(f'<circle cx="{X(215.5/P):.1f}" cy="{Y(468.5/P):.1f}" r="36" fill="none" stroke="{col}" stroke-width="{sw}"/>')
+        for (x, z, w, d) in ((1.144, 6.80, 0.45, 0.20), (5.434, 7.55, 0.48, 0.60)):
+            A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" rx="10" fill="{fill}" stroke="{col}" stroke-width="{sw}"/>')
     def toilet(s, ax, wallz, col=FURNC, sw=2.5, w=0.36, d=0.55):
         x0 = ax - w / 2
         s.A(f'<rect x="{X(x0):.1f}" y="{Y(wallz-0.16):.1f}" width="{w*S:.1f}" height="{0.16*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
@@ -76,11 +72,17 @@ class Sheet:
     def highitems(s):
         A = s.A; C = "#B03A2E"
         # 13.11: бойлеры Ø450 над унитазами (пунктир — висят высоко), бак 200 л под заказ — пенал у левой стены санузла
-        for (bx, bz, t) in ((6.073 - 0.275, 8.42, "Б1"), (1.43, 9.018 - 0.275, "Б2")):
-            A(f'<circle cx="{X(bx):.1f}" cy="{Y(bz):.1f}" r="{0.225*S:.1f}" fill="none" stroke="{C}" stroke-width="5" stroke-dasharray="14 8"/>')
-            A(f'<text x="{X(bx):.0f}" y="{Y(bz)+8:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{C}">{t}</text>')
-        A(f'<rect x="{X(0.309):.1f}" y="{Y(7.74):.1f}" width="{0.24*S:.1f}" height="{0.52*S:.1f}" fill="#E3EEF8" stroke="{BLUE}" stroke-width="5"/>')
-        if S < 300: A(f'<text x="{X(0.43):.0f}" y="{Y(8.00)+9:.0f}" text-anchor="middle" font-size="20" font-weight="bold" fill="{BLUE}">бак</text>')
+        # 17.11: плоские бойлеры 470×285 (пунктир — висят высоко): Б1 — в шкафу над унитазом ванной, Б2 — над раковиной санузла;
+        # бак 200 л — в выемке шахты санузла над инсталляцией (на раме до пола)
+        for (bx, bz, bw, bd, t) in ((5.914 - 0.30, 9.45 - 0.235, 0.285, 0.47, "Б1"), (1.594 - 0.47, 6.80, 0.47, 0.285, "Б2")):
+            A(f'<rect x="{X(bx):.1f}" y="{Y(bz):.1f}" width="{bw*S:.1f}" height="{bd*S:.1f}" fill="none" stroke="{C}" stroke-width="5" stroke-dasharray="14 8"/>')
+            A(f'<text x="{X(bx + bw / 2):.0f}" y="{Y(bz + bd / 2)+8:.0f}" text-anchor="middle" font-size="22" font-weight="bold" fill="{C}">{t}</text>')
+        A(f'<rect x="{X(0.329):.1f}" y="{Y(7.03):.1f}" width="{0.30*S:.1f}" height="{0.58*S:.1f}" fill="none" stroke="{BLUE}" stroke-width="5" stroke-dasharray="14 8"/>')
+        if S < 300: A(f'<text x="{X(0.48):.0f}" y="{Y(7.70)+9:.0f}" text-anchor="middle" font-size="18" font-weight="bold" fill="{BLUE}">бак</text>')
+    def toilet_l(s, az, wallx, col=FURNC, sw=2.5, w=0.36, d=0.55):
+        z0 = az - w / 2
+        s.A(f'<rect x="{X(wallx-0.20):.1f}" y="{Y(z0-0.07):.1f}" width="{0.20*S:.1f}" height="{(w+0.14)*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
+        s.A(f'<ellipse cx="{X(wallx+(d-0.16)/2+0.02):.1f}" cy="{Y(az):.1f}" rx="{(d-0.16)/2*S:.1f}" ry="{w/2*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
     def toilet_r(s, az, wallx, col=FURNC, sw=2.5, w=0.36, d=0.55):
         z0 = az - w / 2
         s.A(f'<rect x="{X(wallx-0.16):.1f}" y="{Y(z0):.1f}" width="{0.16*S:.1f}" height="{w*S:.1f}" fill="none" stroke="{col}" stroke-width="{sw}"/>')
@@ -93,6 +95,20 @@ class Sheet:
             else: A(f'<line x1="{X(x+w/2):.1f}" y1="{Y(z):.1f}" x2="{X(x+w/2):.1f}" y2="{Y(z+d):.1f}" stroke="{INK}" stroke-width="2"/>')
         for (x, z, w, d) in G["walls"]:
             A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="url(#hatch)" stroke="{INK}" stroke-width="1.5"/>')
+        # 17.11 (заказчик): БЕТОН на всех планах — шахты и короба труб (заштрихованы, как стены), балки — пунктиром с подписью
+        for c in D.get("concrete", []):
+            x, z, w, d = c["rect"]
+            if c["kind"] == "beam":
+                A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="none" stroke="#7A3B2E" stroke-width="4" stroke-dasharray="22 10"/>')
+                lbl = "балка" + (f", низ {2700 - c.get('drop_mm', 0)}" if c.get("drop_mm") else "")
+                cx, cy = X(x + w / 2), Y(z + d / 2); vert = d > w
+                A(f'<text x="{cx:.0f}" y="{cy:.0f}" {"transform=" + chr(34) + f"rotate(-90 {cx:.0f} {cy:.0f})" + chr(34) if vert else ""} text-anchor="middle" font-size="20" fill="#7A3B2E">{lbl}</text>')
+            else:
+                A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="url(#hatch)" stroke="{INK}" stroke-width="2.5"/>')
+                A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="#7A3B2E" fill-opacity="0.18" stroke="none"/>')
+        for r_ in D.get("risers", []):
+            if r_.get("room") == "Прихожая": continue
+            A(f'<circle cx="{X(r_["x"]):.1f}" cy="{Y(r_["z"]):.1f}" r="13" fill="#B03A2E" stroke="#FFFFFF" stroke-width="3"/>')
     def numbers(s, names=False):
         for n, (cx, cy) in NPOS.items():
             s.A(f'<circle cx="{X(cx):.0f}" cy="{Y(cy):.0f}" r="34" fill="#FFFFFF" stroke="{INK}" stroke-width="3"/><text x="{X(cx):.0f}" y="{Y(cy)+14:.0f}" text-anchor="middle" font-size="38" fill="{INK}">{NUM[n]}</text>')

@@ -250,13 +250,14 @@ OY = 300
 s = Sheet("План демонтажа и монтажа перегородок", 0)
 s.furniture(col="#C9C3B8"); s.walls()
 for r in ROOMS: room_num(s, r, area=False)
-NEW = [((0.309, 8.818, 1.527, 0.20), "короб инсталляций h=1200"),     # санузел, стена биде/унитаза
-       ((5.873, 8.08, 0.20, 0.70), "короб инсталляций h=1200"),       # ванная, правая стена (13.11: один унитаз)
-       ((0.309, 7.74, 0.24, 0.52), "")]                                # 13.11: пенал бака 200 л под заказ (санузел, левая стена)
+NEW = [((0.309, 7.00, 0.20, 0.64), "инсталляция в выемке"),          # 17.11 санузел вар. И: в выемке шахты у Т1
+       ((5.594, 9.09, 0.32, 0.764), "короб инсталляций h=1120"),      # ванная по обмеру, у стояка Т2
+       ((1.836, 8.29, 0.109, 0.71), "заложить старый проём"),          # санузел: перенос двери
+       ((0.694, 7.79, 0.90, 0.02), "стекло душа")]
 for (x, z, w, d), t in NEW:
     s.A(f'<rect x="{X(x):.1f}" y="{Y(z):.1f}" width="{w*S:.1f}" height="{d*S:.1f}" fill="#9FD3A8" stroke="{GREEN}" stroke-width="3"/>')
-s.A(f'<text x="{X(1.07):.0f}" y="{Y(9.018)+60:.0f}" text-anchor="middle" font-size="24" fill="{GREEN}">короб инсталляций (ГКЛВ) h=1200</text>')
-s.A(f'<text x="{X(6.3):.0f}" y="{Y(8.75):.0f}" font-size="24" fill="{GREEN}">короб инсталл.</text>')
+s.A(f'<text x="{X(2.0):.0f}" y="{Y(8.70):.0f}" font-size="22" fill="{GREEN}">санузел: заложить старый проём, новый 700 — z 7,04</text>')
+s.A(f'<text x="{X(6.0):.0f}" y="{Y(9.50):.0f}" font-size="22" fill="{GREEN}">короб инсталл.</text>')
 s.explication("Экспликация помещений", expl_rows(), colname="м²")
 legend(s, s.ty + 80, [
     (lambda cx, cy: s.A(f'<rect x="{cx-30}" y="{cy-14}" width="60" height="28" fill="url(#hatch)" stroke="{INK}"/>'), "Существующие стены — сохраняются"),
@@ -396,14 +397,14 @@ for r in ROOMS:
     cx, cz = r["label"]; h = int((r["lights"]["sm"]["h_field"] if r["lights"].get("main") == "sm" else ceil_h(r)) * 1000)
     room_num(s, r, area=False)
     s.A(f'<rect x="{X(cx)-70:.0f}" y="{Y(cz)+46:.0f}" width="140" height="46" rx="23" fill="#FFFFFF" stroke="{INK}" stroke-width="2"/><text x="{X(cx):.0f}" y="{Y(cz)+79:.0f}" text-anchor="middle" font-size="27" font-weight="bold" fill="{INK}">+{h}</text>')
-s.explication("Типы потолка", [("Гостиная: ГКЛ, окраска, карниз", lambda cx, cy: s.A(f'<rect x="{cx-28}" y="{cy-16}" width="56" height="32" fill="{CFILL["neo"]}" stroke="#A08C68" stroke-width="3"/>'), "1"),
+s.explication("Типы потолка", [("Гостиные 1 и 2: система SM", lambda cx, cy: s.A(f'<rect x="{cx-28}" y="{cy-16}" width="56" height="32" fill="{CFILL["neo"]}" stroke="#A08C68" stroke-width="3"/>'), "1"),
     ("ГКЛ, окраска, теневой профиль", lambda cx, cy: s.A(f'<rect x="{cx-28}" y="{cy-16}" width="56" height="32" fill="{CFILL["modern"]}" stroke="{INK}"/>'), "5"),
     ("Влагостойкий ГКЛВ / натяжной", lambda cx, cy: s.A(f'<rect x="{cx-28}" y="{cy-16}" width="56" height="32" fill="{CFILL["wet"]}" stroke="{INK}"/>'), "2"),
     ("Световая линия заподлицо, белая", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{INK}" stroke-width="14"/><line x1="{cx-27}" y1="{cy}" x2="{cx+27}" y2="{cy}" stroke="#FFE9A8" stroke-width="8"/>'), "1"),
     ("LED-лента в нише / карнизе", lambda cx, cy: s.A(f'<line x1="{cx-28}" y1="{cy}" x2="{cx+28}" y2="{cy}" stroke="{ORANGE}" stroke-width="4" stroke-dasharray="12 6"/>'), ""),
     ("Отметка потолка от чистого пола", lambda cx, cy: s.A(f'<rect x="{cx-30}" y="{cy-14}" width="60" height="28" rx="14" fill="#FFF" stroke="{INK}" stroke-width="2"/>'), "")], colname="шт")
 s.notes([f"1. Плита перекрытия {int(HCEIL*1000)} (проверить).", "2. Коридор, прихожая 2500 — короб", "    под вентиляцию и трассы.", "3. Мокрые зоны 2500 — над", "    бойлерами доступ (люк).",
-         "4. Гостиная (13.11, система SM,", "    Узел-1 ×0,6): короб 280 у стен", "    +2490 (карниз 130 к стене),", "    ступень с карнизом 60×65;", "    2-й уровень +2550 с магнитным", "    треком 35 по кругу; подъём к", "    полю с карнизом 100×105, LED", "    на поле; поле +2670. У окна —", "    ниша 150 под карниз штор.", "    Узел — отдельный лист.", "5. Комнаты: теневой профиль", "    + LED-ниша по периметру."])
+         "4. Гостиные 1 и 2 одинаково (SM,", "    Узел-1 ×0,6): короб 280 у стен", "    +2490 (карниз 130 к стене),", "    ступень с карнизом 60×65;", "    2-й уровень +2550 с магнитным", "    треком 35 по кругу; подъём к", "    полю с карнизом 100×105, LED", "    на поле; поле +2670. У окна —", "    ниша 150 под карниз штор.", "    Узел — отдельный лист.", "5. Спальня: теневой профиль", "    + LED-ниша по периметру."])
 s.save("s13_potolok")
 
 # ================================================================== План привязки светильников
@@ -421,7 +422,7 @@ for r in ROOMS:
     if L["main"] == "chandelier": l_chand(X(cx), Y(cz)); pts.append((cx, cz)); count["chand"] += 1
     if L["main"] == "pendant": l_pend(X(cx), Y(cz)); pts.append((cx, cz)); count["pend"] += 1
     if L["main"] == "pendants2":
-        tx, tz = x0 + 1.2, z0 + 0.975
+        tx, tz = 11.45, 1.66                     # 17.11 обмер: над столом 1200×700 у окна
         for dx in (-0.3, 0.3): l_pend(X(tx + dx), Y(tz)); pts.append((tx + dx, tz)); count["pend"] += 1
     n = L.get("spots", 0)
     if n:
@@ -435,7 +436,7 @@ for r in ROOMS:
             sp = [(x0 + m + (W_ - 2 * m) * (i + 0.5) / cols, z0 + m + (H_ - 2 * m) * (j + 0.5) / rows) for j in range(rows) for i in range(cols)][:n]
         for (px, pz) in sp: l_spot(X(px), Y(pz)); pts.append((px, pz)); count["spot"] += 1
     if L.get("led") == "worktop":
-        s.A(f'<line x1="{X(10.64):.1f}" y1="{Y(z1-0.32):.1f}" x2="{X(12.4):.1f}" y2="{Y(z1-0.32):.1f}" stroke="{ORANGE}" stroke-width="5" stroke-dasharray="16 8"/>')
+        s.A(f'<line x1="{X(x1-0.32):.1f}" y1="{Y(2.45):.1f}" x2="{X(x1-0.32):.1f}" y2="{Y(z1-0.05):.1f}" stroke="{ORANGE}" stroke-width="5" stroke-dasharray="16 8"/>')
     if L.get("led") == "mirror":
         s.A(f'<text x="{X(cx):.0f}" y="{Y(z1)-20:.0f}" text-anchor="middle" font-size="20" fill="{ORANGE}">подсв. зеркала</text>')
     if L.get("led") in ("cornice", "niche"):
@@ -445,8 +446,8 @@ for r in ROOMS:
             for zz in (2.2, 4.7): l_sconce(X(x1) - 0, Y(zz)); count["sconce"] += 1
             s.A(f'<text x="{X(x1)-30:.0f}" y="{Y(3.45):.0f}" text-anchor="end" font-size="22" fill="{ORANGE}">бра h=1600</text>')
         elif r["name"] == "Спальня 2":
-            for xx in (11.45, 14.0): l_sconce(X(xx), Y(z0) + 18); count["sconce"] += 1
-            s.A(f'<text x="{X(12.75):.0f}" y="{Y(z0)+44:.0f}" text-anchor="middle" font-size="22" fill="{ORANGE}">бра h=1400</text>')
+            for xx in (11.60, 13.60): l_sconce(X(xx), Y(z0) + 18); count["sconce"] += 1
+            s.A(f'<text x="{X(12.60):.0f}" y="{Y(z0)+44:.0f}" text-anchor="middle" font-size="22" fill="{ORANGE}">бра h=1400</text>')
     if L["main"] == "sm":
         sm_ceiling(s, r, ceil=False); c_ = L["sm"]; zb_ = z0 + 0.15; tr_ = c_["track"]; mid_ = (zb_ + z1) / 2
         SPT = [(x0 + tr_, z) for z in (zb_ + 0.95, zb_ + 1.08, mid_ - 0.08, mid_ + 0.08, z1 - 1.08, z1 - 0.95)] + [(x1 - tr_, z) for z in (zb_ + 0.95, zb_ + 1.08, mid_ - 0.08, mid_ + 0.08, z1 - 1.08, z1 - 0.95)]
@@ -483,12 +484,12 @@ def l_disc(cx, cy, s=s): s.A(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="21" fill="
 def l_plinth(x0_, z0_, x1_, z1_, s=s): s.A(f'<line x1="{X(x0_):.1f}" y1="{Y(z0_):.1f}" x2="{X(x1_):.1f}" y2="{Y(z1_):.1f}" stroke="#2E9E6B" stroke-width="7" stroke-dasharray="5 7"/>')
 DISCS = [(x, 7.29) for x in (2.75, 3.95, 5.15, 6.35, 7.55, 8.75)] + [(2.70, 8.55), (2.70, 9.15)]
 for (px, pz) in DISCS: l_disc(X(px), Y(pz)); count["spot_disc"] = count.get("spot_disc", 0) + 1
-chain(s, [1.945, 9.945] + [p[0] for p in DISCS[:6]], 6.672 + 0.12, True, dcol("Коридор"), side=+1, fs=21)
+chain(s, [1.945, 10.105] + [p[0] for p in DISCS[:6]], 6.672 + 0.12, True, dcol("Коридор"), side=+1, fs=21)
 chain(s, [7.909, 9.509, 8.55, 9.15], 1.945 + 0.12, False, dcol("Прихожая"), side=+1, fs=21)
 s.A(f'<rect x="{X(1.945+0.05):.1f}" y="{Y(7.909+0.05):.1f}" width="{(3.455-1.945-0.1)*S:.1f}" height="{(9.509-7.909-0.1)*S:.1f}" fill="none" stroke="{ORANGE}" stroke-width="3" stroke-dasharray="16 10"/>')
 s.A(f'<rect x="{X(3.455)-16:.1f}" y="{Y(8.45):.1f}" width="10" height="{0.8*S:.1f}" fill="{ORANGE}"/><text x="{X(3.455)-24:.0f}" y="{Y(8.85):.0f}" text-anchor="end" font-size="20" fill="{ORANGE}">зеркало с подсв., h=1700</text>')
 s.A(f'<text x="{X(5.5):.0f}" y="{Y(6.672)+150:.0f}" text-anchor="middle" font-size="21" fill="{ORANGE}">БП LED 24 В — в шкафу коридора у щита (доступ)</text>')
-s.A(f'<rect x="{X(13.75):.1f}" y="{Y(7.491)-16:.1f}" width="{0.8*S:.1f}" height="10" fill="{ORANGE}"/><text x="{X(14.15):.0f}" y="{Y(7.491)-26:.0f}" text-anchor="middle" font-size="20" fill="{ORANGE}">зеркало с подсв., h=1800</text>')
+s.A(f'<rect x="{X(13.75):.1f}" y="{Y(7.516)-16:.1f}" width="{0.8*S:.1f}" height="10" fill="{ORANGE}"/><text x="{X(14.15):.0f}" y="{Y(7.516)-26:.0f}" text-anchor="middle" font-size="20" fill="{ORANGE}">зеркало с подсв., h=1800</text>')
 for r in ROOMS: room_num(s, r, area=False)
 s.explication("Светильники", [("Люстра (крюк, розетка Ø600)", lambda cx, cy: l_chand(cx, cy), count["chand"]), ("Подвесной светильник", lambda cx, cy: l_pend(cx, cy), count["pend"]),
     ("Точечный встраиваемый Ø80", lambda cx, cy: l_spot(cx, cy), count["spot"]), ("Круглый светильник Ø240", lambda cx, cy: l_disc(cx, cy), count.get("spot_disc", 0)), ("Бра настенное", lambda cx, cy: l_sconce(cx, cy + 8), count["sconce"]),
@@ -725,7 +726,7 @@ for (sid, png, ttl) in GS:
 
 # ================================================================== 14.11.2026: палитра материалов + короб заподлицо (для строителей)
 for (sid, png, ttl) in (("s26_palitra", "palitra_materialov", "Палитра материалов — утверждено 14.11.2026"),
-                        ("s27_korob", "shema_shkaf_zapodlico", "Санузел и ванная — короб 320 заподлицо со шкафом (принят вар. 1)")):
+                        ("s27_korob", "shema_obmer_spalnya2", "Спальня 2 — расстановка по обмеру (17.11.2026)")):
     s = Sheet(ttl, 0)
     f = os.path.join(PROJ, "01_chertezhi", png + ".png")
     if os.path.exists(f):
@@ -845,15 +846,17 @@ s.save("s6b_kond_shema")
 
 # ================================================================== Ванная и санузел: расстановка по реальным размерам (13.11.2026)
 s = Sheet("", 0)
-_f = os.path.join(PROJ, "01_chertezhi", "shema_vanna.png")
-if os.path.exists(_f):
-    from PIL import Image as _I
-    import base64 as _b64b, io as _iob
-    _im = _I.open(_f).convert("RGB"); _im.thumbnail((2900, 2900)); _bf = _iob.BytesIO(); _im.save(_bf, "JPEG", quality=90)
-    s.A(f'<image x="130" y="50" width="{SX-140}" height="{H-100}" preserveAspectRatio="xMidYMid meet" href="data:image/jpeg;base64,{_b64b.b64encode(_bf.getvalue()).decode()}"/>')
+# 17.11.2026: утверждённые схемы по обмеру — санузел (вар. И) и ванная, рядом
+_fs = [os.path.join(PROJ, "01_chertezhi", n) for n in ("shema_sanuzel_obmer_i.png", "shema_obmer_vanna.png")]
+from PIL import Image as _I
+import base64 as _b64b, io as _iob
+for _k, _f in enumerate(_fs):
+    if not os.path.exists(_f): continue
+    _im = _I.open(_f).convert("RGB"); _im.thumbnail((1600, 2100)); _bf = _iob.BytesIO(); _im.save(_bf, "JPEG", quality=90)
+    _w = (SX - 160) / 2
+    s.A(f'<image x="{130 + _k * _w:.0f}" y="40" width="{_w:.0f}" height="{H-80}" preserveAspectRatio="xMidYMid meet" href="data:image/jpeg;base64,{_b64b.b64encode(_bf.getvalue()).decode()}"/>')
 s.ty = 130
-s.notes(["14.11.2026 — актуально:", "Ванная: раковина 600, стиралка", "  10 кг, ванна 1300×700, унитаз", "  + гиг. душ; бойлер Б1 ПЛОСКИЙ", "  470×875×285 в шкафу над унитазом.",
-         "Санузел: душ 700×900 (шторка),", "  раковина на верхней стене,", "  биде 360×500, унитаз; шкаф до", "  потолка: бак 200 л плоский", "  (под заказ) + плоский бойлер Б2.",
-         "Короб инсталляции 320 —", "  заподлицо со шкафом 320", "  (ровная стена); перед биде 490.", "Плитка — светлый грейж 60×120."])
-s.title = "Ванная и санузел — расстановка"
+s.notes(["17.11.2026 — по обмеру:", "Санузел 900×1820: унитаз у Т1", "  в выемке шахты (640), бак 200 л", "  над инсталляцией, бойлер Б2 над", "  раковиной; душ 900×820 в торце", "  за стеклом; дверь 700 ПЕРЕНОС.",
+         "Ванная 2350×2420: ванна 1700", "  вдоль левой стены; раковина и", "  стиралка у двери; унитаз у Т2,", "  бойлер Б1 над ним."])
+s.title = "Ванная и санузел — расстановка по обмеру"
 s.save("s5b_vanna_shema")

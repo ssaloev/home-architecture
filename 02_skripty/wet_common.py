@@ -280,7 +280,10 @@ def towel_rail_bk(w, a, hc=1.25):
     return objs
 def washer_bk(w, a0, a1, d0=0.05):
     """стиральная машина Samsung WD11 (600×586×849) спиной к стене w, дверцей в комнату"""
-    if w != "L": raise ValueError("только L")
+    if w == "R":   # 17.11: правая стена (ванная по обмеру) — зеркально L: поворот -90°
+        Tm = Matrix.Translation(Vector((X1 - d0 - 0.586, -a0, 0.0))) @ Matrix.Rotation(math.radians(-90), 4, "Z")
+        return bk_load("stiralka_samsung", Tm)
+    if w != "L": raise ValueError("только L/R")
     Tm = Matrix.Translation(Vector((X0 + d0 + 0.586, -a1, 0.0))) @ Matrix.Rotation(math.radians(90), 4, "Z")
     return bk_load("stiralka_samsung", Tm)
 def bath_bk(x0, x1, z0, z1, h=0.56):
