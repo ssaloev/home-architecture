@@ -109,7 +109,7 @@ if _tr:
     _w = max(p_.x for p_ in _P) - min(p_.x for p_ in _P); _k = 0.45 / _w
     _piv = Vector(((max(p_.x for p_ in _P) + min(p_.x for p_ in _P)) / 2, max(p_.y for p_ in _P), min(p_.z for p_ in _P)))
     _rt = {o for o in _tr if o.parent is None or o.parent not in _tr}
-    for o in _rt: o.matrix_world = Matrix.Translation(Vector((_piv.x, _piv.y, 1.05))   # 17.11 («сушитель и полотенца слишком близко к унитазу»): низ 1050) @ Matrix.Scale(_k, 4) @ Matrix.Translation(-_piv) @ o.matrix_world
+    for o in _rt: o.matrix_world = Matrix.Translation(Vector((_piv.x, _piv.y, 1.05))) @ Matrix.Scale(_k, 4) @ Matrix.Translation(-_piv) @ o.matrix_world   # 17.11 («сушитель и полотенца слишком близко к унитазу»): низ 1050
     print("Сушитель: было", round(_w, 3), "м, масштаб", round(_k, 3))
 # 17.11 (заказчик: «сушитель и вешалка для полотенец — в одном месте рядом»): справа от сушителя 2 крючка для полотенец, h 1550
 for xx in (1.24, 1.33): wb("Крючок полотенца", "T", xx - 0.008, xx + 0.008, 0, 0.05, 1.74, 1.76, M["black"], 0.003)   # 17.11: выше, полотенца над уровнем унитаза
