@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.." ; B="D:/ProgramFiles/blender.exe"; S=02_skripty; X="$@";
 "$B" -b --factory-startup -P $S/komnata_blender.py -- fast shots=2,3 $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/spalnya_blender.py -- fast shots=1,2 $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/koridor_blender.py -- fast shots=1,4 $X >/dev/null 2>&1
-"$B" -b --factory-startup -P $S/sanuzel_blender.py -- fast shots=3 exp=1.0 $X >/dev/null 2>&1
+"$B" -b --factory-startup -P $S/sanuzel_blender.py -- fast shots=1 exp=1.0 $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/vanna_blender.py -- fast shots=1 exp=1.0 $X >/dev/null 2>&1
 "$B" -b --factory-startup -P $S/kuhnya_blender.py -- fast shots=2 exp=1.1 $X >/dev/null 2>&1
 python -X utf8 - <<'PY'
@@ -15,7 +15,7 @@ import os
 V="08_vizualizacii"; f=ImageFont.truetype("arial.ttf",26)
 fs=[("gostinaya/q__smA_3_divan_i_kresla","Гостиная 1"),("gostinaya/q__smA_4_tv_zona","Гостиная 1 — ТВ"),("komnata/q_2_ot_okna_k_shkafu","Гостиная 2"),("komnata/q_3_tv_zona","Гостиная 2 — ТВ"),
     ("spalnya2/q_1_ot_dveri_k_krovati","Спальня"),("spalnya2/q_2_ot_okna_k_shkafu","Спальня — шкаф"),("koridor/q_1_koridor_k_prihozhey","Коридор"),("koridor/q_4_prihozhaya_gosti","Прихожая"),
-    ("sanuzel/q_3_bak_bide","Санузел"),("vannaya/q_1_ot_dveri","Ванная"),("kuhnya/q_2_rabochaya_zona","Кухня")]
+    ("sanuzel/q_1_ot_dveri","Санузел"),("vannaya/q_1_ot_dveri","Ванная"),("kuhnya/q_2_rabochaya_zona","Кухня")]
 c=Image.new("RGB",(1080,len(fs)*658),"white"); d=ImageDraw.Draw(c); fb=ImageFont.truetype("arialbd.ttf",34)   # вертикально под телефон
 for i,(p,t) in enumerate(fs):
     q=os.path.join(V,p+".jpg"); y=i*658
