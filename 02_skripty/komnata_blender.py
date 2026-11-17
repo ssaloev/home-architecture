@@ -498,7 +498,7 @@ for s_ in SHOTS:
 # ---- 17.11: РАЗВЕРТКИ как у SM (аргумент elev): ортогональный вид на каждую стену из 3D — для листов разверток;
 #      elev ewalls=T,R,B,L edepth=1.2 (сколько метров перед стеной видно) esamples=96 shots=0 → OUT/elev_<стена>.jpg
 if "elev" in ARGS:
-    _hc = globals().get("HC", 2.65); sc.render.engine = "CYCLES"; sc.cycles.samples = int(OPT.get("esamples", "96")); sc.cycles.use_denoising = True
+    _hc = globals().get("HC", 2.65); sc.view_settings.exposure += float(OPT.get("eexp", "1.0")); sc.render.engine = "CYCLES"; sc.cycles.samples = int(OPT.get("esamples", "96")); sc.cycles.use_denoising = True
     for _w in OPT.get("ewalls", "T,R,B,L").split(","):
         _L = (X1 - X0) if _w in "TB" else (Z1 - Z0); _dep = (Z1 - Z0) if _w in "TB" else (X1 - X0)
         _cx, _cz = (X0 + X1) / 2, (Z0 + Z1) / 2

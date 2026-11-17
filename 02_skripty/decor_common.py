@@ -58,11 +58,12 @@ def dk(name, cx, cz, h0=0.0, rot=0.0, size=None, axis="w", wall=None):
 if OPT.get("decor", "1") == "1":
     R_ = globals().get("OUTDIR") or os.path.basename(globals().get("OUT", ""))
     if R_ == "komnata":
-        dk("kartina_abstr", X1 - 0.03, tm, 1.05, size=1.20, wall="R")
-        dk("vazy_3", X0 + 0.22, tm - 1.05, 0.32, 90, 0.55)
+        _sw = globals().get("SWAP", True)                # SWAP: ТВ у правой стены (X1), диван у левой (X0)
+        dk("kartina_abstr", (X0 + 0.03) if _sw else (X1 - 0.03), tm, 1.05, size=1.20, wall=("L" if _sw else "R"))
+        dk("vazy_3", (X1 - 0.22) if _sw else (X0 + 0.22), tm - 1.05, 0.32, 90, 0.55)
         dk("svechi", 7.05, tm + 0.20, 0.47, 0, 0.18)
         dk("vaza_frukty", 7.25, tm - 0.25, 0.47, 0, 0.30)
-        dk("sansevieriya", X0 + 0.30, Z0 + 0.45, 0.0, 0, 0.75, "h")
+        dk("sansevieriya", (X1 - 0.30) if _sw else (X0 + 0.30), Z0 + 0.45, 0.0, 0, 0.75, "h")
     elif R_ == "spalnya2":
         for xx in (BC - 1.025, BC + 1.025): dk("lampa_nastol", xx, Z0 + 0.22, 0.45, 0, 0.42, "h")
         dk("podushki_dekor", BC, Z0 + 0.55, 0.56, 0, 0.90)

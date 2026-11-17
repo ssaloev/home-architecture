@@ -134,6 +134,7 @@ def marble_img(name, nx, ny, tiles_u, tiles_v, seed=3, kind="dark"):
         "white":  ((0.91, 0.90, 0.885), (0.55, 0.53, 0.52), SOFT, 0.015),   # белый мрамор
         "grafit": ((0.30, 0.30, 0.31), (0.80, 0.80, 0.80), SPARSE, 0.06),   # графит, редкие прожилки
         "grey":   ((0.50, 0.495, 0.49), (0.90, 0.90, 0.89), DENSE * 0.8, 0.05),  # серый мрамор с белыми прожилками
+        "lgrey":  ((0.70, 0.70, 0.69), (0.88, 0.88, 0.87), SOFT, 0.02),   # 17.11: светло-серый керамогранит (серо-белая палитра)
         "greige": ((0.78, 0.75, 0.70), (0.90, 0.88, 0.85), SPARSE, 0.03),   # 14.11: СВЕТЛЫЙ грейж-камень (было 0.55 — выходило тёмно-коричневым)   # тёплый серо-бежевый камень
         "beton":  ((0.40, 0.395, 0.39), (0.40, 0.40, 0.40), SPARSE * 0, 0.12),
         # 13.11 серая гамма (заказчик: «серый, тёмно-серый, чёрно-серый, графитово-серый»), одна плитка на всю ванную
@@ -164,7 +165,7 @@ def marble_mat(name, img, S, rough=0.12):
     tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = S
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs[0], t.inputs["Vector"]); nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     return m
-ALL = OPT.get("all", "grey")   # 17.11: серо-белая палитра — серая плитка   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
+ALL = OPT.get("all", "lgrey")   # 17.11: серо-белая палитра — светло-серая плитка   # 14.11 вар.2: светлый грейж-камень   # 14.11: светлая плитка везде (было g1 серый)      # 13.11: заказчик выбрал плитку №1 — серый, одна на всё помещение
 IMG_W = marble_img("мрамор тёмный стены", 1024, 2048, 2, 2, 3, ALL or "dark")     # плитка 600×1200 вертикально
 IMG_L = marble_img("мрамор белый стены", 1024, 2048, 2, 2, 21, ALL or "white")
 IMG_F = marble_img("мрамор тёмный пол", 2048, 1024, 2, 2, 11, ALL or "dark")      # пол 1200×600
@@ -559,7 +560,7 @@ for s_ in SHOTS:
 # ---- 17.11: РАЗВЕРТКИ как у SM (аргумент elev): ортогональный вид на каждую стену из 3D — для листов разверток;
 #      elev ewalls=T,R,B,L edepth=1.2 (сколько метров перед стеной видно) esamples=96 shots=0 → OUT/elev_<стена>.jpg
 if "elev" in ARGS:
-    _hc = globals().get("HC", 2.65); sc.render.engine = "CYCLES"; sc.cycles.samples = int(OPT.get("esamples", "96")); sc.cycles.use_denoising = True
+    _hc = globals().get("HC", 2.65); sc.view_settings.exposure += float(OPT.get("eexp", "1.0")); sc.render.engine = "CYCLES"; sc.cycles.samples = int(OPT.get("esamples", "96")); sc.cycles.use_denoising = True
     for _w in OPT.get("ewalls", "T,R,B,L").split(","):
         _L = (X1 - X0) if _w in "TB" else (Z1 - Z0); _dep = (Z1 - Z0) if _w in "TB" else (X1 - X0)
         _cx, _cz = (X0 + X1) / 2, (Z0 + Z1) / 2
