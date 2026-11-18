@@ -7,8 +7,9 @@ def browser():
         if os.path.exists(c) or shutil.which(c): return c
     raise SystemExit("Не найден Chrome/Edge для рендера SVG")
 BR = None
+_PROF = os.path.join(tempfile.gettempdir(), "album_chrome_profile")   # 18.11: свой профиль — иначе headless висит, если открыт обычный Chrome
 def _run(args):
-    subprocess.run([BR, "--headless=new", "--disable-gpu", "--hide-scrollbars", "--no-pdf-header-footer", "--run-all-compositor-stages-before-draw"] + args,
+    subprocess.run([BR, "--headless=new", f"--user-data-dir={_PROF}", "--disable-gpu", "--hide-scrollbars", "--no-pdf-header-footer", "--run-all-compositor-stages-before-draw"] + args,
                    check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 def png(svg, out, w=3840, h=2160):
     global BR; BR = BR or browser()
