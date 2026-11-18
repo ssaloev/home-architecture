@@ -369,7 +369,7 @@ def cab_content(kind, w, a0, a1, d, h0, h1):
         for k in range(3):
             for j in range(2):
                 wb("Сухое полотенце", w, a0 + 0.04 + j * 0.27, a0 + 0.29 + j * 0.27, 0.03, d - 0.06, hm + k * 0.075, hm + (k + 1) * 0.075 - 0.004, M["towel" if k % 2 else "white"], 0.02)
-def _door_open(w, p0, p1, d, h0, h1, hinge_lo):
+def _door_open(w, p0, p1, d, h0, h1, hinge_lo, handle=True):
     """фасад, повёрнутый на 100° вокруг петли (открыт)"""
     hx, hz = pt(w, p0 if hinge_lo else p1, d)
     fx, fz = pt(w, p1 if hinge_lo else p0, d); nx, nz = pt(w, p0, d + 1.0)
@@ -380,7 +380,7 @@ def _door_open(w, p0, p1, d, h0, h1, hinge_lo):
     piv = bpy.data.objects.new("Петля фасада", None); piv.location = W(hx, hz, 0); sc.collection.objects.link(piv)
     parts = [wb("Фасад", w, p0, p1, d - 0.02, d, h0 + 0.002, h1 - 0.002, M["ward"], 0.002)]
     ah = p1 - 0.05 if hinge_lo else p0 + 0.05
-    parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, min(h0 + 0.33, h1 - 0.03), M["black"], 0.002))
+    if handle: parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, min(h0 + 0.33, h1 - 0.03), M["black"], 0.002))
     for o_ in parts: o_.parent = piv; o_.matrix_parent_inverse = Matrix.Translation(piv.location).inverted()
     piv.rotation_euler = (0, 0, -ang)        # ось z мира; (x,z)-план → (x,-y): знак меняется
 def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
@@ -540,8 +540,22 @@ _CH0 = 0.42                                                 # низ шкафч�
 for (q0, q1) in ((SZ0, SZ0 + 0.018), (SZ1 - 0.018, SZ1)): wb("Тумба боковина", "R", q0, q1, 0, CD, _TB0, _TH, M["ward"], 0.002)
 wb("Тумба дно (полка для полотенец)", "R", SZ0 + 0.018, SZ1 - 0.018, 0, CD, _TB0, _TB0 + 0.025, M["ward"], 0.002)
 wb("Тумба задняя стенка ниши", "R", SZ0 + 0.018, SZ1 - 0.018, 0, 0.01, _TB0, _CH0, M["ward"])
-wb("Шкафчик под раковиной (сифон, краны)", "R", SZ0 + 0.018, SZ1 - 0.018, 0, CD - 0.02, _CH0, _TH, M["ward"])
-wb("Фасад push-to-open", "R", SZ0 + 0.020, SZ1 - 0.020, CD - 0.02, CD, _CH0 + 0.002, _TH - 0.003, M["ward"], 0.002)
+if OPENC:   # 18.11 (заказчик: «кадры с открытым шкафом»): внутри — сифон, 2 крана (Х/Г) и фильтр
+    wb("Шкафчик задняя стенка", "R", SZ0 + 0.018, SZ1 - 0.018, 0, 0.01, _CH0, _TH, M["inner"])
+    wb("Шкафчик дно", "R", SZ0 + 0.018, SZ1 - 0.018, 0, CD - 0.02, _CH0, _CH0 + 0.018, M["ward"])
+    _sx_, _sz_ = pt("R", _SC, 0.28)
+    _cyl(_sx_, _sz_, 0.022, _CH0 + 0.20, _TH, M["black"], 24).name = "Сифон (выпуск)"
+    wb("Сифон колено", "R", _SC - 0.025, _SC + 0.025, 0.02, 0.30, _CH0 + 0.16, _CH0 + 0.21, M["black"], 0.01)
+    for _aa, _cc in ((SZ0 + 0.12, "#2E6FD8"), (SZ1 - 0.12, "#C8322B")):
+        wb("Кран подводки", "R", _aa - 0.015, _aa + 0.015, 0.01, 0.06, 0.53, 0.56, M["black"], 0.004)
+        wb("Флажок крана", "R", _aa - 0.02, _aa + 0.02, 0.06, 0.07, 0.55, 0.565, mat("Флажок " + _cc, _cc, 0.4))
+        wb("Шланг к смесителю", "R", _aa - 0.005, _aa + 0.005, 0.035, 0.045, 0.56, _TH, M["black"])
+    _fx_, _fz_ = pt("R", SZ0 + 0.20, 0.10)
+    _cyl(_fx_, _fz_, 0.035, _CH0 + 0.03, _CH0 + 0.28, mat("Фильтр колба", "#DCE6EC", 0.2), 32).name = "Фильтр"
+    _door_open("R", SZ0 + 0.020, SZ1 - 0.020, CD, _CH0, _TH, True, handle=False)
+else:
+    wb("Шкафчик под раковиной (сифон, краны)", "R", SZ0 + 0.018, SZ1 - 0.018, 0, CD - 0.02, _CH0, _TH, M["ward"])
+    wb("Фасад push-to-open", "R", SZ0 + 0.020, SZ1 - 0.020, CD - 0.02, CD, _CH0 + 0.002, _TH - 0.003, M["ward"], 0.002)
 wb("LED ниши", "R", SZ0 + 0.04, SZ1 - 0.04, 0.05, CD - 0.05, _CH0 - 0.005, _CH0, M["led"])
 if OPT.get("decor", "1") == "0":   # 18.11: с декором — две стопки полотенец моделью (decor_common), «как в отеле»
     for k in range(2): wb("Полотенца", "R", SZ0 + 0.06 + k * 0.26, SZ0 + 0.28 + k * 0.26, 0.08, 0.40, 0.125, 0.27, M["towel"], 0.03)

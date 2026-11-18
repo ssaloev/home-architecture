@@ -369,7 +369,7 @@ def cab_content(kind, w, a0, a1, d, h0, h1):
         for k in range(3):
             for j in range(2):
                 wb("Сухое полотенце", w, a0 + 0.04 + j * 0.27, a0 + 0.29 + j * 0.27, 0.03, d - 0.06, hm + k * 0.075, hm + (k + 1) * 0.075 - 0.004, M["towel" if k % 2 else "white"], 0.02)
-def _door_open(w, p0, p1, d, h0, h1, hinge_lo):
+def _door_open(w, p0, p1, d, h0, h1, hinge_lo, handle=True):
     """фасад, повёрнутый на 100° вокруг петли (открыт)"""
     hx, hz = pt(w, p0 if hinge_lo else p1, d)
     fx, fz = pt(w, p1 if hinge_lo else p0, d); nx, nz = pt(w, p0, d + 1.0)
@@ -380,7 +380,7 @@ def _door_open(w, p0, p1, d, h0, h1, hinge_lo):
     piv = bpy.data.objects.new("Петля фасада", None); piv.location = W(hx, hz, 0); sc.collection.objects.link(piv)
     parts = [wb("Фасад", w, p0, p1, d - 0.02, d, h0 + 0.002, h1 - 0.002, M["ward"], 0.002)]
     ah = p1 - 0.05 if hinge_lo else p0 + 0.05
-    parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, min(h0 + 0.33, h1 - 0.03), M["black"], 0.002))
+    if handle: parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, min(h0 + 0.33, h1 - 0.03), M["black"], 0.002))
     for o_ in parts: o_.parent = piv; o_.matrix_parent_inverse = Matrix.Translation(piv.location).inverted()
     piv.rotation_euler = (0, 0, -ang)        # ось z мира; (x,z)-план → (x,-y): знак меняется
 def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
