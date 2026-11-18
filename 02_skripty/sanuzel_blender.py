@@ -380,7 +380,7 @@ def _door_open(w, p0, p1, d, h0, h1, hinge_lo):
     piv = bpy.data.objects.new("Петля фасада", None); piv.location = W(hx, hz, 0); sc.collection.objects.link(piv)
     parts = [wb("Фасад", w, p0, p1, d - 0.02, d, h0 + 0.002, h1 - 0.002, M["ward"], 0.002)]
     ah = p1 - 0.05 if hinge_lo else p0 + 0.05
-    parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, h0 + 0.33, M["black"], 0.002))
+    parts.append(wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, min(h0 + 0.33, h1 - 0.03), M["black"], 0.002))
     for o_ in parts: o_.parent = piv; o_.matrix_parent_inverse = Matrix.Translation(piv.location).inverted()
     piv.rotation_euler = (0, 0, -ang)        # ось z мира; (x,z)-план → (x,-y): знак меняется
 def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
@@ -399,7 +399,7 @@ def cabinet(n, w, a0, a1, d, h0, h1, doors=2, content=None, led=True):
         if OPENC and content: _door_open(w, p0, p1, d, h0, h1, k % 2 == 0); continue
         wb("Фасад", w, p0, p1, d - 0.02, d, h0 + 0.002, h1 - 0.002, M["ward"], 0.002)
         ah = p1 - 0.05 if k % 2 == 0 else p0 + 0.05
-        wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, h0 + 0.33, M["black"], 0.002)
+        wb("Ручка", w, ah - 0.006, ah + 0.006, d, d + 0.016, h0 + 0.03, min(h0 + 0.33, h1 - 0.03), M["black"], 0.002)
     if led: wb("LED под шкафом", w, a0 + 0.03, a1 - 0.03, 0.05, d - 0.05, h0 - 0.005, h0, M["led"])
 def spots(P, e=None):
     for (xx, zz) in P:

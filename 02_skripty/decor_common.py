@@ -221,10 +221,23 @@ if OPT.get("decor", "1") == "1":
         dk("vazy_3", X1 - 0.18, 3.25, 1.52, 90, 0.30) if False else None
         dk("sansevieriya", X0 + 0.30, 4.40, 0.0, 0, 0.70, "h")
     elif R_ == "vannaya":
+        # 18.11: полотенца — 2 стопки на открытой полке под раковиной + 2 на крючках у сушителя (белое/серое)
+        for _zz in (SZ0 + 0.17, SZ0 + 0.43):
+            for _o in dk("polotenca_stopka", X1 - 0.24, _zz, "auto:0.45", -90, 0.24):
+                if _o.type == "MESH":
+                    for _i, _sl in enumerate(_o.material_slots): _sl.material = M["white"] if _i % 2 == 0 else M.get("towel", M["white"])
+        for _xx, _c in ((5.26, (0.86, 0.85, 0.82, 1)), (5.35, (0.50, 0.50, 0.49, 1))):
+            _tw = dk("polotence_visit", _xx, Z0 + 0.03, 1.18, size=0.30, wall="T")
+            if _tw:
+                _big = max(_tw, key=lambda o: len(o.data.vertices) if o.type == "MESH" else 0)
+                _gm = bpy.data.materials.new("Полотенце крючок"); _gm.use_nodes = True
+                _gb = next(n_ for n_ in _gm.node_tree.nodes if n_.type == "BSDF_PRINCIPLED"); _gb.inputs["Base Color"].default_value = _c; _gb.inputs["Roughness"].default_value = 1.0
+                for o in _tw:
+                    if o.type != "MESH": continue
+                    if o is not _big: o.hide_render = True; continue
+                    for i_ in range(len(o.data.materials)): o.data.materials[i_] = _gm
         dk("vanna_aksessuary", X1 - 0.16, SZ0 + 0.10, "auto:1.15", -90, 0.22)
-        for _o in dk("polotenca_stopka", X1 - 0.30, 8.55, "auto:1.15", -90, 0.30):   # 17.11: полотенца в палитре (белые/серые), не радужные
-            if _o.type == "MESH":
-                for _i, _sl in enumerate(_o.material_slots): _sl.material = M["white"] if _i % 2 == 0 else M.get("towel", M["white"])
+        # 18.11: стопка на стиралке убрана (висела в воздухе под шкафом) — полотенца под раковиной и на крючках
         dk("kovrik_seryi", X0 + 1.15, 9.05, 0.0, 90, 0.95)
         dk("svechi", X0 + 0.12, BZ0 + 0.12, 0.58, 0, 0.14)
         # 18.11: растение убрано — декор ванной согласуется с заказчиком отдельно (палитра: без зелёного)

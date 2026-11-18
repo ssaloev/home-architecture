@@ -9,15 +9,45 @@ OUTDIR = "vannaya"
 #==COMMON==
 room_box("T", DX0, DX1)
 
-# ---- правая стена у двери: раковина 600×480 на столешнице из плитки, снизу открытая полка; зеркало с LED
+# ---- правая стена у двери: раковина 600×480; зеркало с LED
+# 18.11 (заказчик: «поставь нормальную раковину, которую мы выбрали; утверждённую модель — везде»):
+#   как в санузле — ИНТЕГРИРОВАННАЯ раковина в столешнице из белого искусственного камня (600×480×120, чаша 420×300 гл. 95, R35),
+#   смеситель С2 на столешнице за чашей; под ней шкафчик (сифон, краны) серо-белый, ниже открытая полка с полотенцами
 CT = 0.90; SZ0, SZ1 = 7.55, 8.15; CD = 0.48
-wb("Столешница", "R", SZ0, SZ1, 0, CD, CT - 0.04, CT, M["tile"])
-for (a0, a1) in ((SZ0, SZ0 + 0.03), (SZ1 - 0.03, SZ1)): wb("Боковина", "R", a0, a1, 0, CD, 0, CT - 0.04, M["tile"])
-wb("Полка", "R", SZ0 + 0.03, SZ1 - 0.03, 0, CD - 0.02, 0.30, 0.33, M["tile"])
-wb("LED под столешницей", "R", SZ0 + 0.04, SZ1 - 0.04, CD - 0.06, CD - 0.03, CT - 0.045, CT - 0.04, M["led"])
-for k in range(2): wb("Полотенца", "R", SZ0 + 0.06 + k * 0.26, SZ0 + 0.28 + k * 0.26, 0.08, 0.40, 0.33, 0.47, M["towel"], 0.03)
-wb("Сифон", "R", (SZ0 + SZ1) / 2 - 0.02, (SZ0 + SZ1) / 2 + 0.02, 0.0, 0.24, CT - 0.25, CT - 0.04, M["black"])
-vessel("R", (SZ0 + SZ1) / 2, 0.26, CT)
+M["kamen"] = mat("Искусственный камень белый", "#E9E7E2", 0.28)
+_SC = (SZ0 + SZ1) / 2
+_slab = wb("Столешница с раковиной", "R", SZ0, SZ1, 0, CD, CT - 0.12, CT, M["kamen"])
+_bx, _bz = pt("R", _SC, 0.28)                              # центр чаши (сзади 130 — под смеситель)
+bpy.ops.mesh.primitive_cube_add(location=W(_bx, _bz, CT + 0.005)); _cut = bpy.context.active_object
+_cut.scale = (0.15, 0.21, 0.10); bpy.ops.object.transform_apply(scale=True)
+_cb = _cut.modifiers.new("r", "BEVEL"); _cb.width = 0.035; _cb.segments = 10
+bpy.context.view_layer.objects.active = _cut; bpy.ops.object.modifier_apply(modifier="r")
+_bo = _slab.modifiers.new("chasha", "BOOLEAN"); _bo.object = _cut; _bo.operation = "DIFFERENCE"
+bpy.context.view_layer.objects.active = _slab; bpy.ops.object.modifier_apply(modifier="chasha")
+bpy.data.objects.remove(_cut, do_unlink=True)
+_eb = _slab.modifiers.new("kromka", "BEVEL"); _eb.width = 0.004; _eb.segments = 3; _eb.limit_method = "ANGLE"
+for _p in _slab.data.polygons: _p.use_smooth = True
+_cyl(_bx, _bz, 0.019, CT - 0.096, CT - 0.093, M["black"], 32).name = "Донный клапан"
+_fo = bk_fit("smesitel_c2", 0, 0, 0, 0)                   # смеситель С2 (утв. 17.11 в санузле)
+_fm = [o for o in _fo if o.type == "MESH"]
+if _fm:
+    bpy.context.view_layer.update()
+    _V = [o.matrix_world @ v.co for o in _fm for v in o.data.vertices]
+    _zmin = min(v.z for v in _V); _base = [v for v in _V if v.z < _zmin + 0.02]
+    _sx = sum(v.x for v in _base) / len(_base); _sy = sum(v.y for v in _base) / len(_base)
+    _cx = (min(v.x for v in _V) + max(v.x for v in _V)) / 2; _cy = (min(v.y for v in _V) + max(v.y for v in _V)) / 2
+    _ang = math.atan2(_cy - _sy, _cx - _sx)
+    _rt = {o for o in _fo if o.parent is None or o.parent not in _fo}
+    _R = Matrix.Rotation(math.pi - _ang, 4, "Z")              # излив → -X (от правой стены в чашу)
+    _mx, _mz = pt("R", _SC, 0.065)
+    _tgt = W(_mx, _mz, CT)
+    for o in _rt: o.matrix_world = Matrix.Translation(_tgt) @ _R @ Matrix.Translation(Vector((-_sx, -_sy, -_zmin))) @ o.matrix_world
+    for o in _fm:
+        for i_ in range(len(o.data.materials)): o.data.materials[i_] = M["black"]
+cabinet("Шкафчик под раковиной (сифон, краны)", "R", SZ0 + 0.005, SZ1 - 0.005, CD, 0.56, CT - 0.125, doors=2, content=None, led=True)
+wb("Полка для полотенец", "R", SZ0 + 0.005, SZ1 - 0.005, 0, CD, 0.10, 0.125, M["ward"], 0.002)
+if OPT.get("decor", "1") == "0":   # 18.11: с декором — две стопки полотенец моделью (decor_common), «как в отеле»
+    for k in range(2): wb("Полотенца", "R", SZ0 + 0.06 + k * 0.26, SZ0 + 0.28 + k * 0.26, 0.08, 0.40, 0.125, 0.27, M["towel"], 0.03)
 bottles("R", SZ0 + 0.04, 0.08, CT)
 mirror_led("R", SZ0 + 0.02, SZ1 - 0.02, 1.25, 2.10)
 
@@ -57,10 +87,43 @@ wb("Короб инсталляции", "R", UZ - 0.36, Z1, 0, 0.32, 0, 1.12, M[
 hung("Унитаз", "R", UZ, "wc", d0=0.32)
 wb("Гиг. душ смеситель", "R", UZ - 0.30, UZ - 0.24, 0.32, 0.35, 0.66, 0.74, M["black"], 0.005)
 wb("Гиг. душ лейка", "R", UZ - 0.295, UZ - 0.245, 0.35, 0.39, 0.80, 0.95, M["black"], 0.01)
+# 18.11 (правило «утверждённые модели — везде»): держатель Д1 и ведро М3 как в санузле — на нижней стене сбоку от унитаза, крышкой к унитазу
+_HX = X1 - 0.60
+_dh = bk_fit("derzhatel_d1", _HX, Z1 - 0.07, 0.66, 0)
+for o in _dh:
+    if o.type == "MESH":
+        for i_ in range(len(o.data.materials)): o.data.materials[i_] = M["black"]
+if _dh:
+    def _top(o):
+        while o.parent is not None: o = o.parent
+        return o
+    _rt = {_top(o) for o in _dh}
+    bpy.context.view_layer.update()
+    _P = [o.matrix_world @ Vector(c) for o in _dh if o.type == "MESH" for c in o.bound_box]
+    _pv = Vector(tuple((min(p_[i] for p_ in _P) + max(p_[i] for p_ in _P)) / 2 for i in range(3)))
+    _R = Matrix.Rotation(math.pi, 4, "Z") @ Matrix.Rotation(math.radians(-90), 4, "Z") @ Matrix.Diagonal((1, -1, 1, 1)) @ Matrix.Rotation(math.radians(90), 4, "Z") @ Matrix.Rotation(math.radians(90), 4, "X")
+    for o in _rt: o.matrix_world = Matrix.Translation(_pv) @ _R @ Matrix.Translation(-_pv) @ o.matrix_world
+    bpy.context.view_layer.update()
+    _P = [o.matrix_world @ Vector(c) for o in _dh if o.type == "MESH" for c in o.bound_box]
+    _d = Vector((_HX - (min(p_.x for p_ in _P) + max(p_.x for p_ in _P)) / 2, (-Z1) - min(p_.y for p_ in _P), 0.70 - (min(p_.z for p_ in _P) + max(p_.z for p_ in _P)) / 2))
+    for o in _rt: o.location += _d
+_mu = bk_fit("musorka_m3", X1 - 1.00, Z1 - 0.16, 0.0, 0, 0.29, "h")
+for o in _mu:
+    if o.type == "MESH":
+        for i_ in range(len(o.data.materials)): o.data.materials[i_] = M["black"]
 cabinet("Шкаф над унитазом слева: бак 200 л + насос", "R", 8.86, 9.355, 0.32, 1.12, HC, 1, "tank_top", led=False)   # плоский бак ~200 л 460×280×1470 (под заказ)
 cabinet("Шкаф над унитазом справа: бойлер Б1", "R", 9.36, Z1 - 0.005, 0.32, 1.12, HC, 1, ("flatboiler", (9.36 + Z1) / 2), led=False)
 
-towel_rail_bk("T", (DX1 + X1) / 2 - 0.25)
+# 18.11 (заказчик: «места для полотенец не вижу»): сушитель 450 + рядом 2 крючка с полотенцами (как в санузле); под раковиной — стопки полотенец
+_tr = [o for o in towel_rail_bk("T", 4.93, hc=1.25) if o.type == "MESH"]
+if _tr:
+    bpy.context.view_layer.update()
+    _P = [o.matrix_world @ Vector(c) for o in _tr for c in o.bound_box]
+    _k = 0.45 / (max(p_.x for p_ in _P) - min(p_.x for p_ in _P))
+    _piv = Vector(((max(p_.x for p_ in _P) + min(p_.x for p_ in _P)) / 2, max(p_.y for p_ in _P), min(p_.z for p_ in _P)))
+    _rt = {o for o in _tr if o.parent is None or o.parent not in _tr}
+    for o in _rt: o.matrix_world = Matrix.Translation(Vector((_piv.x, _piv.y, 0.95))) @ Matrix.Scale(_k, 4) @ Matrix.Translation(-_piv) @ o.matrix_world
+for xx in (5.26, 5.35): wb("Крючок полотенца", "T", xx - 0.008, xx + 0.008, 0, 0.05, 1.69, 1.71, M["black"], 0.003)
 spots([(4.25, 7.95), (5.30, 7.95), (4.00, 9.20), (5.20, 9.20)])
 
 exec(open(os.path.join(PROJ, "02_skripty", "decor_common.py"), encoding="utf-8").read())   # 17.11: декор (decor=0 — без него)
@@ -77,5 +140,7 @@ CAMS.update({"v1": ("v1_ot_dveri_na_unitaz", W(4.20, Z0 + 0.06, 1.3), W(4.70, Z1
              "v5": ("v5_ugol_dver_rakovina", W(X0 + 0.06, Z0 + 0.06, 1.3), W(X1, Z1, 1.3), 0),
              "v6": ("v6_ugol_rakovina", W(X1 - 0.30, Z0 + 0.06, 1.3), W(X0, Z1, 1.3), 0),
              "v7": ("v7_ugol_vanna", W(X0 + 0.80, Z1 - 0.06, 1.3), W(X1, Z0, 1.3), 0),
-             "v8": ("v8_ugol_unitaz", W(X1 - 0.80, Z1 - 0.06, 1.3), W(X0, Z0, 1.3), 0)})
+             "v8": ("v8_ugol_unitaz", W(X1 - 0.80, Z1 - 0.06, 1.3), W(X0, Z0, 1.3), 0),
+             "v9": ("v9_rakovina_polotenca", W(X0 + 0.80, 7.75, 1.3), W(X1, 7.75, 1.3), 0),
+             "v10": ("v10_unitaz_derzhatel", W(X0 + 0.75, Z0 + 0.70, 1.3), W(X1 - 0.45, Z1, 1.3), 0)})   # 18.11: унитаз, держатель Д1, ведро М3   # 18.11: раковина, полотенца под ней, крючки и сушитель
 if OPENC: CAMS = {k: ("open_" + v[0],) + v[1:] for k, v in CAMS.items()}
