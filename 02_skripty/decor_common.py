@@ -215,8 +215,8 @@ if OPT.get("decor", "1") == "1":
         dk("sansevieriya", X1 - 0.30, Z1 - 0.30, 0.0, 0, 0.80, "h")
         dk("svechi", 14.35, Z1 - 0.22, "auto", 0, 0.15)
     elif R_ == "kuhnya":
-        dk("posuda_4", 11.00, Z0 + 0.36, "auto", 0, 0.42)
-        dk("vaza_frukty", 11.30, Z0 + 0.30, "auto", 0, 0.28)
+        dk("posuda_4", 10.25, 1.85, "auto", 0, 0.42)
+        dk("vaza_frukty", 10.70, 1.80, "auto", 0, 0.28)
         dk("doska_razdel", X1 - 0.30, 3.80, "auto:1.3", 90, 0.36)
         dk("vazy_3", X1 - 0.18, 3.25, 1.52, 90, 0.30) if False else None
     elif R_ == "vannaya":
