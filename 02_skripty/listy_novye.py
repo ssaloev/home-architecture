@@ -699,6 +699,7 @@ SH = [("gostinaya/_smA_1_ot_dveri_k_oknu", "Гостиная", "от двери 
 _cnt = {}
 for k, (fn, room, cap) in enumerate(SH, 1):        # 17.11: как у студии SM — белый лист, сверху «Комната - N», кадр крупно в тонкой рамке, без штампа
     if fn.startswith("sanuzel/"): continue           # 17.11: санузел — новые вертикальные печатные кадры (ниже, по 2 на лист)
+    if fn.startswith("vannaya/"): continue           # 18.11: ванная утверждена — тоже вертикальные печатные кадры по 2 на лист
     s = Sheet("", 0)
     s.o = [t for t in s.o if not (t.startswith('<rect x="120"') or t.startswith(f'<line x1="{SX}"') or t.startswith("<text"))]
     s.stamp = lambda: None
@@ -741,6 +742,16 @@ SU = [("sanuzel/v3_unitaz_print.jpg", "унитаз, шкаф бойлера и 
       ("sanuzel/0_obshiy_sverhu_print.jpg", "общий вид сверху"), ("sanuzel/open_v3_unitaz_print.jpg", "шкаф открыт: бойлер Б2, бумага")]
 for j in range(0, len(SU), 2):
     _vpage(f"s23_su_{j // 2 + 1}", "Санузел", j + 1, SU[j:j + 2])
+# 18.11.2026: ванная утверждена — печатные вертикальные кадры, по 2 на лист
+VA = [("vannaya/v1_ot_dveri_na_unitaz_print.jpg", "от двери: стиралка, унитаз, шкафы"), ("vannaya/v2_shkafy_bak_bojler_print.jpg", "шкафы до потолка: бак 200 л, бойлер Б1"),
+      ("vannaya/v3_vanna_print.jpg", "ванна 1700, стеклянная шторка"), ("vannaya/v4_k_dveri_print.jpg", "к двери 600, сушитель"),
+      ("vannaya/v9_rakovina_polotenca_print.jpg", "тумба: раковина в камне, смеситель С2, ниша"), ("vannaya/v10_unitaz_derzhatel_print.jpg", "унитаз, держатель Д1, ведро М3"),
+      ("vannaya/v5_ugol_dver_rakovina_print.jpg", "угол у двери"), ("vannaya/v6_ugol_rakovina_print.jpg", "угол у раковины"),
+      ("vannaya/v7_ugol_vanna_print.jpg", "угол у ванны"), ("vannaya/v8_ugol_unitaz_print.jpg", "угол у унитаза"),
+      ("vannaya/open_v9_rakovina_polotenca_print.jpg", "тумба открыта: сифон, краны, фильтр"), ("vannaya/open_v2_shkafy_bak_bojler_print.jpg", "шкафы открыты: бак, бойлер, бумага"),
+      ("vannaya/0_obshiy_sverhu_print.jpg", "общий вид сверху")]
+for j in range(0, len(VA), 2):
+    _vpage(f"s23_va_{j // 2 + 1}", "Ванная", j + 1, VA[j:j + 2])
 
 # ================================================================== 13.11.2026: гостиная по системе SM — узел потолка, ТВ-стена, стена с диваном
 GS = [("s25_gost_uzel", "shema_gostinaya_potolok_sm", "Гостиная — потолок по системе SM: план и Узел-1"),
