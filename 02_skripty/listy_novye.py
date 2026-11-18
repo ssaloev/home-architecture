@@ -577,7 +577,7 @@ def room_elev_sheet(fname, title, rname, notes):
         if r["style"] == "neo": items = items + neo_moldings(items, *( (rect[0], rect[1]) if side in "TB" else (rect[2], rect[3]) ), None)
         FIX[(rname, side)] = items
         Lw = wall_len(rect, side); sc = min(250, 800 / Lw)
-        fill = "#F3F0EA" if r["style"] == "hall" else "#FFFFFF"   # прихожая: светлые гладкие панели (согласовано)
+        fill = "#F3F0EA" if r["style"] == "hall" else "#FFFFFF"   # прихожая: светлый фон (стены — обои)
         elevation(s, rname, side, cells[i][0], cells[i][1], sc, f"Вид {r['num']}.{i+1} — {WALLRU[side]} стена", fill)
         rows.append((f"Вид {r['num']}.{i+1}: {WALLRU[side]} стена по плану", None, "", i + 1))
     if rname in CHECK:
@@ -609,7 +609,7 @@ room_elev_sheet("s16_razv_gost", "Развертка стен гостиной",
 room_elev_sheet("s17_razv_komn", "Развертка стен комнаты", "Комната", MOD_N)
 room_elev_sheet("s18_razv_sp2", "Развертка стен спальни 2", "Спальня 2", MOD_N)
 room_elev_sheet("s19_razv_kor", "Развертка стен коридора", "Коридор", MOD_N)
-HALL_N = ["1. Стены — бамбуковые панели", "    Dekorchi, светло-серые гладкие;", "    без молдингов и лепнины.", "2. За скамьёй — рифлёные рейки", "    под орех 1100, до потолка,", "    крючки h=1700 (как в образце).", "3. Скамья-обувница — тёмная.", "4. Консоль + зеркало напротив.", "5. h розеток — от чистого пола."]
+HALL_N = ["1. Стены — обои «Текстиль» (лён),", "    серый, как во всей квартире.", "2. За скамьёй — рейки под дерево,", "    до потолка, вешалка-полка.", "3. Слева шкаф хозяев 400 до потолка.", "4. Справа обувница slim 240 +", "    зеркало с подсветкой.", "5. h розеток — от чистого пола."]
 room_elev_sheet("s20_razv_prih", "Развертка стен прихожей", "Прихожая", HALL_N)
 
 # ================================================================== Ведомость отделки
@@ -699,7 +699,7 @@ SH = [("gostinaya/_smA_1_ot_dveri_k_oknu", "Гостиная", "от двери 
 _cnt = {}
 for k, (fn, room, cap) in enumerate(SH, 1):        # 17.11: как у студии SM — белый лист, сверху «Комната - N», кадр крупно в тонкой рамке, без штампа
     if fn.startswith("sanuzel/"): continue           # 17.11: санузел — новые вертикальные печатные кадры (ниже, по 2 на лист)
-    if fn.startswith(("vannaya/", "kuhnya/")): continue           # 18.11: ванная утверждена — тоже вертикальные печатные кадры по 2 на лист
+    if fn.startswith(("vannaya/", "kuhnya/", "koridor/")): continue           # 18.11: ванная утверждена — тоже вертикальные печатные кадры по 2 на лист
     s = Sheet("", 0)
     s.o = [t for t in s.o if not (t.startswith('<rect x="120"') or t.startswith(f'<line x1="{SX}"') or t.startswith("<text"))]
     s.stamp = lambda: None
@@ -760,6 +760,15 @@ KU = [("kuhnya/v1_pravaya_plita_moyka_print.jpg", "правая стена: пл
       ("kuhnya/v9_ugol_moyka_print.jpg", "угол: мойка, волшебный уголок, шкаф-гармошка"), ("kuhnya/0_obshiy_sverhu_print.jpg", "общий вид сверху")]
 for j in range(0, len(KU), 2):
     _vpage(f"s23_ku_{j // 2 + 1}", "Кухня", j + 1, KU[j:j + 2])
+
+# 18.11.2026: прихожая и коридор — печатные вертикальные кадры, по 2 на лист (стены обои, как во всей квартире)
+KO = [("koridor/v1_k_vhodnoy_dveri_print.jpg", "к входной двери"), ("koridor/v2_ot_dveri_v_koridor_print.jpg", "от двери в коридор"),
+      ("koridor/v3_shkaf_gosti_print.jpg", "шкаф и место для гостей"), ("koridor/v4_obuvnica_zerkalo_print.jpg", "обувница и зеркало"),
+      ("koridor/v5_ugol_k_dveri_sleva_print.jpg", "угол к двери слева"), ("koridor/v6_ugol_ot_dveri_vpravo_print.jpg", "от двери вправо"),
+      ("koridor/v7_ugol_ot_dveri_vlevo_print.jpg", "от двери влево"), ("koridor/v8_koridor_k_prihozhey_print.jpg", "коридор к прихожей"),
+      ("koridor/0_obshiy_sverhu_print.jpg", "общий вид сверху")]
+for j in range(0, len(KO), 2):
+    _vpage(f"s23_ko_{j // 2 + 1}", "Прихожая", j + 1, KO[j:j + 2])
 
 # ================================================================== 13.11.2026: гостиная по системе SM — узел потолка, ТВ-стена, стена с диваном
 GS = [("s25_gost_uzel", "shema_gostinaya_potolok_sm", "Гостиная — потолок по системе SM: план и Узел-1"),

@@ -186,9 +186,10 @@ if OBOI and OBOI != "0":
     M["wall"] = tex(mat("Обои " + _t, "#" + _c, 0.85), _t, 2.5 if _t == "hessian_230" else 3.0, "#" + _c, 1.9, 0.6)
 else: OBOI = None
 # ---------------------------------------------------------------- геометрия по плану (kvartira.json)
-CX0, CX1, CZ0, CZ1 = 1.945, 9.945, 6.672, 7.909        # коридор
+CX0, CX1, CZ0, CZ1 = 1.945, 10.105, 6.672, 7.909       # коридор (18.11: по плану из редактора обмера)
+BZW = 7.325                                             # стена ванной: у ванной коридор 653 (план заказчика)
 PX0, PX1, PZ1 = 1.945, 3.455, 9.509                     # прихожая (до входной двери)
-KX0, KX1, KZ1 = 6.0, 9.945, 8.418                       # карман под шкафы
+KX0, KX1, KZ1 = 6.59, 10.105, 8.418                      # карман под шкафы
 T = 0.15
 box("Пол", 0.5, 4.0, 11, 10.5, -0.05, 0, M["floor"])
 box("Перекрытие", 0.5, 4.0, 11, 10.5, H, H + 0.05, M["ceil"])
@@ -208,13 +209,13 @@ wall(CX0, CZ0 - T, 9.145, CZ0, [(2.145, 2.945, 2.1), (8.145, 8.945, 2.1)])
 box("Стена к кухне лев", 9.145 - 0.0, 4.2, 9.145 + 0.0 + 0.001, CZ0, 0, H, M["wall"])
 box("Торец к кухне", 9.0, 5.2, 10.2, 5.35, 0, H, M["wall"])
 # юг коридора: стена ванной с дверью; карман со шкафами
-wall(PX1, CZ1, KX0, CZ1 + T, [(4.255, 4.855, 2.1)])   # 18.11: дверь ванной 600 наружу
-box("Стена кармана", KX0, KZ1, CX1, KZ1 + T, 0, H, M["wall"]); box("Торец кармана", KX0 - T, CZ1, KX0, KZ1, 0, H, M["wall"])
+wall(PX1, BZW, KX0, BZW + 0.109, [(3.749, 4.349, 2.1)])   # 18.11: дверь ванной 600 наружу
+box("Стена кармана", KX0, KZ1, CX1, KZ1 + T, 0, H, M["wall"]); box("Торец кармана", KX0 - T, BZW, KX0, KZ1, 0, H, M["wall"])
 # восток: дверь в спальню 2
 wall(CX1, CZ0, CX1 + T, CZ1, [(6.75, 7.55, 2.1)], along="z")
 # запад: дверь в санузел + стены прихожей + входная дверь
 wall(CX0 - T, CZ0, CX0, PZ1, [(7.0, 7.8, 2.1)], along="z")
-box("Прихожая вост", PX1, CZ1, PX1 + T, PZ1, 0, H, M["wall"])
+box("Прихожая вост", PX1, BZW, PX1 + T, PZ1, 0, H, M["wall"])
 wall(PX0, PZ1, PX1, PZ1 + T, [(2.254, 3.145, 2.1)])
 
 # швы бамбуковых листов (1220 мм) — тонкая тёмная V-канавка
@@ -258,7 +259,7 @@ def door(x0, z0, x1, z1, axis, side, entry=False):
         box("Ручка", xf + dx + side * 0.04, hz - 0.12, xf + dx + side * 0.055, hz, 1.0, 1.02, M["black"], 0.003)
 door(2.145, CZ0 - 0.07, 2.945, None, "x", +1)
 door(8.145, CZ0 - 0.07, 8.945, None, "x", +1)
-door(4.255, CZ1 + 0.07, 5.055, None, "x", -1)
+door(3.749, BZW + 0.055, 4.349, None, "x", -1)
 door(CX1 + 0.07, 6.75, None, 7.55, "z", -1)
 door(CX0 - 0.07, 7.0, None, 7.8, "z", +1)
 door(2.254, PZ1 + 0.08, 3.145, None, "x", -1, entry=True)
@@ -270,9 +271,9 @@ M["skirt"] = mat("Плинтус алюм. крем", "#DCD1C1", 0.35, 0.2)
 M["led_floor"] = emis("LED плинтус", "#FFE0B8", 60)
 SK = []   # (a0, a1, fixed, axis, n)  axis x: стена вдоль x на z=fixed, n — куда смотрит лицо
 for (a0, a1) in ((CX0, 2.145), (2.945, 8.145), (8.945, 9.145)): SK.append((a0, a1, CZ0, "x", +1))
-for (a0, a1) in ((PX1, 4.255), (5.055, KX0)): SK.append((a0, a1, CZ1, "x", -1))
+for (a0, a1) in ((PX1, 3.749), (4.349, KX0)): SK.append((a0, a1, BZW, "x", -1))
 for (a0, a1) in ((CZ0, 7.0), (7.8, 7.95)): SK.append((a0, a1, PX0, "z", +1))
-for (a0, a1) in ((CZ1, 8.05), (9.25, PZ1)): SK.append((a0, a1, PX1, "z", -1))
+for (a0, a1) in ((BZW, 8.05), (9.25, PZ1)): SK.append((a0, a1, PX1, "z", -1))
 for (a0, a1) in ((CZ0, 6.75), (7.55, CZ1)): SK.append((a0, a1, CX1, "z", -1))
 # LED в плинтусе — только вдоль длинных стен коридора; в прихожей и на торцах — обычный плинтус
 SK_LED = []   # 12.11: LED в плинтусах убран по решению заказчика
@@ -380,13 +381,13 @@ box("Лючок короба", PX0 + 0.30, PZ1 - 0.18, PX0 + 0.302, PZ1 - 0.02, 
 box("Потолок коридор", CX0 + SL, CZ0 + SL, CX1 - SL, CZ1 - SL, HC, H, M["ceil"])
 box("Потолок прихожая", PX0 + SL, CZ1 - SL, PX1 - SL, PZ1 - SL, HC, H, M["ceil"])
 box("Потолок над шкафом", KX0, CZ1, CX1, KZ1, WT + 0.06, H, M["ceil"])
-box("Угол паза", PX1 - SL - 0.01, CZ1 - SL - 0.01, PX1 + 0.01, CZ1 + 0.01, HC, H, M["ceil"])
+box("Угол паза", PX1 - SL - 0.01, BZW - SL - 0.01, PX1 + 0.01, BZW + 0.01, HC, H, M["ceil"])
 box("Угол паза2", CX0 - 0.01, CZ1 - SL - 0.01, CX0 + SL + 0.01, CZ1 + 0.01, HC, H, M["ceil"])
 def strip(x0, z0, x1, z1):
     box("LED паз", x0, z0, x1, z1, HC + 0.03, HC + 0.035, M["led"])
 strip(CX0 + 0.01, CZ0 + 0.01, CX1 - 0.01, CZ0 + 0.03)
-strip(PX1, CZ1 - 0.03, CX1, CZ1 - 0.01)
-strip(CX0 + 0.01, CZ0, CX0 + 0.03, PZ1 - 0.01); strip(PX1 - 0.03, CZ1, PX1 - 0.01, PZ1 - 0.01)
+strip(PX1, BZW - 0.03, KX0, BZW - 0.01); strip(KX0, CZ1 - 0.03, CX1, CZ1 - 0.01)
+strip(CX0 + 0.01, CZ0, CX0 + 0.03, PZ1 - 0.01); strip(PX1 - 0.03, BZW, PX1 - 0.01, PZ1 - 0.01)
 strip(PX0, PZ1 - 0.03, PX1, PZ1 - 0.01); strip(CX1 - 0.03, CZ0, CX1 - 0.01, CZ1)
 def area(loc, size, energy, rot=(0, 0, 0), color=(1, 0.95, 0.88), sy=None, spread=None, shape="RECTANGLE"):
     lt = bpy.data.lights.new("A", "AREA"); lt.energy = energy; lt.color = color; lt.shape = shape; lt.size = size; lt.size_y = sy or size
@@ -396,13 +397,13 @@ def area(loc, size, energy, rot=(0, 0, 0), color=(1, 0.95, 0.88), sy=None, sprea
     except Exception: pass
     return o
 K = 30                       # Вт на метр паза (смыв света по стенам)
-for (x0, z0, x1, z1) in ((CX0, CZ0 + 0.04, CX1, CZ0 + 0.04), (PX1, CZ1 - 0.04, CX1, CZ1 - 0.04),
-                          (CX0 + 0.04, CZ0, CX0 + 0.04, PZ1), (PX1 - 0.04, CZ1, PX1 - 0.04, PZ1), (PX0, PZ1 - 0.04, PX1, PZ1 - 0.04),
+for (x0, z0, x1, z1) in ((CX0, CZ0 + 0.04, CX1, CZ0 + 0.04), (PX1, BZW - 0.04, KX0, BZW - 0.04), (KX0, CZ1 - 0.04, CX1, CZ1 - 0.04),
+                          (CX0 + 0.04, CZ0, CX0 + 0.04, PZ1), (PX1 - 0.04, BZW, PX1 - 0.04, PZ1), (PX0, PZ1 - 0.04, PX1, PZ1 - 0.04),
                           (CX1 - 0.04, CZ0, CX1 - 0.04, CZ1)):
     L = max(abs(x1 - x0), abs(z1 - z0)); horiz = abs(x1 - x0) > abs(z1 - z0)
     area(W((x0 + x1) / 2, (z0 + z1) / 2, HC + 0.02), L if horiz else 0.03, K * L, sy=0.03 if horiz else L, spread=80)
 # крупные круглые светильники Ø240 по центру
-DL = [(x, (CZ0 + CZ1) / 2) for x in (2.75, 3.95, 5.15, 6.35, 7.55, 8.75)] + [((PX0 + PX1) / 2, 8.55), ((PX0 + PX1) / 2, 9.15)]
+DL = [(x, (CZ0 + (BZW if x < KX0 else CZ1)) / 2) for x in (2.75, 3.95, 5.15, 6.35, 7.55, 8.75)] + [((PX0 + PX1) / 2, 8.55), ((PX0 + PX1) / 2, 9.15)]
 import bmesh as _bm
 for (x, z) in DL:   # 17.11 (выбор заказчика С1): чёрный плоский диск Ø300, НАКЛАДНОЙ — штанга модели срезана
     _lm = bkm("svet_c1", S=(0.75, 0.75, 0.75))
@@ -426,7 +427,7 @@ for (a0, a1, f, ax_, n_) in SK_LED:
     if ax_ == "x": area(W((a0 + a1) / 2, f + n_ * 0.03, 0.012), L, 18 * L, sy=0.02, color=(1, 0.9, 0.78))
     else: area(W(f + n_ * 0.03, (a0 + a1) / 2, 0.012), 0.02, 18 * L, sy=L, color=(1, 0.9, 0.78))
 # ---------------------------------------------------------------- камеры
-CAMS = {"1": ("1_koridor_k_prihozhey", W(9.75, 7.29, 1.45), W(2.6, 7.29, 1.38), 18),
+CAMS = {"1": ("1_koridor_k_prihozhey", W(9.75, 7.10, 1.45), W(2.6, 7.00, 1.38), 18),
         "2": ("2_vhodnaya_dver", W(2.85, 7.45, 1.50), W(2.6, 9.6, 1.0), 14),
         "4": ("4_prihozhaya_gosti", W(3.25, 9.35, 1.45), W(1.95, 8.4, 1.05), 15),
         "3": ("3_prihozhaya_zerkalo", W(2.35, 9.3, 1.5), W(3.455, 8.35, 1.25), 16),
@@ -438,7 +439,7 @@ CAMS = {"1": ("1_koridor_k_prihozhey", W(9.75, 7.29, 1.45), W(2.6, 7.29, 1.38), 
         "v5": ("v5_ugol_k_dveri_sleva", W(3.40, 6.75, 1.3), W(PX0, PZ1, 1.3), 0),
         "v6": ("v6_ugol_ot_dveri_vpravo", W(2.30, PZ1 - 0.06, 1.3), W(PX1, 6.70, 1.3), 0),
         "v7": ("v7_ugol_ot_dveri_vlevo", W(3.10, PZ1 - 0.06, 1.3), W(PX0, 6.70, 1.3), 0),
-        "v8": ("v8_koridor_k_prihozhey", W(9.80, 7.29, 1.3), W(PX0, 7.29, 1.3), 0),
+        "v8": ("v8_koridor_k_prihozhey", W(9.85, 7.00, 1.3), W(PX0, 7.00, 1.3), 0),
         "0": ("0_obshiy_sverhu", W((PX0 + PX1) / 2, PZ1 - 0.25, HC + 3.2), W((PX0 + PX1) / 2, 7.60, 0.0), 24)}
 sc.render.engine = "CYCLES"
 # 17.11: ИНСТРУМЕНТ ПРОВЕРКИ (аргумент qa): выгрузить сцену для qa_check.py и выйти без рендера
