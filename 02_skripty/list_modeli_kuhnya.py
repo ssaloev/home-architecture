@@ -23,6 +23,11 @@ if len(_s.argv) > 1 and _s.argv[1] == "svch":
     OUT = "_sogl_kuhnya_svch.jpg"
     SEC = [("СВЧ ВСТРОЕННАЯ (в шкаф над вытяжкой, 600)", [("11f652c3-351e-4da9-ad5e-979a01cdf356", "встроенная 595×455\nчёрная, как духовка"),
            ("5b7e1627-5c7b-40dc-9e74-4a0ea5653f41", "фасад в стиле\nдуховки Д3 (низкий)"), ("78612930-1e80-4761-b7fc-dc256043e3d6", "чёрная 456\nв нише с рамкой")])]
+if len(_s.argv) > 1 and _s.argv[1] == "holod":
+    OUT = "_sogl_kuhnya_holod.jpg"
+    SEC = [("ХОЛОДИЛЬНИК (ниша 800, у входа)", [("17579aa4-98fd-4c42-8e69-3e4303e3c97c", "Electrolux 700\nFrench door"), ("a22758d6-9b3e-4d53-9005-7b5d7ad3659e", "Thermador 756\nколонна, сталь"),
+           ("703d1ec5-161d-4bdb-bceb-2b6280a241fe", "Smeg 800\n2 двери"), ("17760027-5c7a-4cec-82a4-7104135ee02a", "704, 1902\n2 двери"),
+           ("96e33c05-71df-4560-93ce-51be9f7bb71e", "Gorenje 614\nморозилка снизу"), ("765d1ced-17b7-4377-b7b7-39b58d3486c9", "Consul 624\n2 двери")])]
 W, C, TW = 1080, 3, 330
 rows = sum(1 + (len(it) + C - 1) // C for _, it in SEC)
 H = 170 + sum(80 + ((len(it) + C - 1) // C) * (TW + 90) for _, it in SEC)
