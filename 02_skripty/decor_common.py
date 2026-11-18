@@ -215,11 +215,10 @@ if OPT.get("decor", "1") == "1":
         dk("sansevieriya", X1 - 0.30, Z1 - 0.30, 0.0, 0, 0.80, "h")
         dk("svechi", 14.35, Z1 - 0.22, "auto", 0, 0.15)
     elif R_ == "kuhnya":
-        dk("posuda_4", 11.45, Z0 + 0.36, "auto", 0, 0.42)
-        dk("vaza_frukty", 11.75, Z0 + 0.30, "auto", 0, 0.28)
-        dk("doska_razdel", X1 - 0.30, 3.75, "auto:1.3", 90, 0.36)
+        dk("posuda_4", 11.00, Z0 + 0.36, "auto", 0, 0.42)
+        dk("vaza_frukty", 11.30, Z0 + 0.30, "auto", 0, 0.28)
+        dk("doska_razdel", X1 - 0.30, 3.80, "auto:1.3", 90, 0.36)
         dk("vazy_3", X1 - 0.18, 3.25, 1.52, 90, 0.30) if False else None
-        dk("sansevieriya", X0 + 0.30, 4.40, 0.0, 0, 0.70, "h")
     elif R_ == "vannaya":
         # 18.11: полотенца — 2 стопки на открытой полке под раковиной + 2 на крючках у сушителя (белое/серое)
         for _zz in (SZ0 + 0.17, SZ0 + 0.43):
