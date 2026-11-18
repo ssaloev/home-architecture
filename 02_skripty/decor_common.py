@@ -209,7 +209,7 @@ if OPT.get("decor", "1") == "1":
                 if _b is None or _b.inputs["Base Color"].is_linked: continue
                 _c = _b.inputs["Base Color"].default_value
                 if _c[0] - _c[2] > 0.18 and _c[0] > 0.35: _sl.material = _g
-        if OPT.get("curt2", "1") == "1" and "WZ0" in globals(): curtains_model(X1 - 0.12, (WZ0 + WZ1) / 2, (WZ1 - WZ0) + 0.60, "R", globals().get("HC", 2.62) - 0.04)
+        if OPT.get("curt2", "1") == "1" and "WZ0" in globals(): curtains_model(X1 - 0.12, (WZ0 + WZ1) / 2 + 0.17, (WZ1 - WZ0) + 0.30, "R", globals().get("HC", 2.62) - 0.04)
         # 18.11: настольные лампы убраны — над тумбочками подвесы (выбор заказчика: свет 5)
         mute(dk("kartina_2", 14.15, Z1 - 0.03, 1.35, size=0.55, wall="B"))
         dk("sansevieriya", X1 - 0.30, Z1 - 0.30, 0.0, 0, 0.80, "h")

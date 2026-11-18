@@ -607,7 +607,7 @@ NEO_N = ["1. Стены — NCS S 1500-N (светло-", "    серый), мо
 MOD_N = ["1. Стены: обои «Текстиль» (лён),", "    тёплый серый ≈#B9B3AA.", "2. Плинтус — МДФ в цвет стен.", "3. h розеток — от чистого пола.", "4. Шкафы — до h=2400.", "5. ТВ на кронштейне h низа ~950."]
 room_elev_sheet("s16_razv_gost", "Развертка стен гостиной", "Гостиная", NEO_N)
 room_elev_sheet("s17_razv_komn", "Развертка стен комнаты", "Комната", MOD_N)
-room_elev_sheet("s18_razv_sp2", "Развертка стен спальни 2", "Спальня 2", MOD_N)
+# 19.11: развертка спальни 2 — из 3D (listy_osnovnye.elev_sheet)
 room_elev_sheet("s19_razv_kor", "Развертка стен коридора", "Коридор", MOD_N)
 HALL_N = ["1. Стены — обои «Текстиль» (лён),", "    серый, как во всей квартире.", "2. За скамьёй — рейки под дерево,", "    до потолка, вешалка-полка.", "3. Слева шкаф хозяев 400 до потолка.", "4. Справа обувница slim 240 +", "    зеркало с подсветкой.", "5. h розеток — от чистого пола."]
 room_elev_sheet("s20_razv_prih", "Развертка стен прихожей", "Прихожая", HALL_N)
@@ -699,7 +699,7 @@ SH = [("gostinaya/_smA_1_ot_dveri_k_oknu", "Гостиная", "от двери 
 _cnt = {}
 for k, (fn, room, cap) in enumerate(SH, 1):        # 17.11: как у студии SM — белый лист, сверху «Комната - N», кадр крупно в тонкой рамке, без штампа
     if fn.startswith("sanuzel/"): continue           # 17.11: санузел — новые вертикальные печатные кадры (ниже, по 2 на лист)
-    if fn.startswith(("vannaya/", "kuhnya/", "koridor/")): continue           # 18.11: ванная утверждена — тоже вертикальные печатные кадры по 2 на лист
+    if fn.startswith(("vannaya/", "kuhnya/", "koridor/", "spalnya2/")): continue           # 18.11: ванная утверждена — тоже вертикальные печатные кадры по 2 на лист
     s = Sheet("", 0)
     s.o = [t for t in s.o if not (t.startswith('<rect x="120"') or t.startswith(f'<line x1="{SX}"') or t.startswith("<text"))]
     s.stamp = lambda: None
@@ -770,6 +770,15 @@ KO = [("koridor/v1_k_vhodnoy_dveri_print.jpg", "к входной двери"), 
       ("koridor/0_obshiy_sverhu_print.jpg", "общий вид сверху")]
 for j in range(0, len(KO), 2):
     _vpage(f"s23_ko_{j // 2 + 1}", "Прихожая", j + 1, KO[j:j + 2])
+
+# 19.11.2026: спальня 2 утверждена — печатные вертикальные кадры, по 2 на лист
+SPL = [("spalnya2/v1_izgolove_print.jpg", "изголовье: кровать, тумбочки, подвесы"), ("spalnya2/v2_tv_stena_print.jpg", "ТВ-стена: тумба 1400, ТВ 55\""),
+       ("spalnya2/v3_shkaf_dver_print.jpg", "шкаф до потолка и дверь"), ("spalnya2/v4_okno_stolik_print.jpg", "окно и туалетный столик"),
+       ("spalnya2/v5_ugol_shkaf_print.jpg", "угол у шкафа"), ("spalnya2/v6_ugol_lodzhiya_print.jpg", "угол у прохода в лоджию"),
+       ("spalnya2/v7_ugol_dver_print.jpg", "угол у двери"), ("spalnya2/v8_ugol_stolik_print.jpg", "угол у столика"),
+       ("spalnya2/0_obshiy_sverhu_print.jpg", "общий вид сверху")]
+for j in range(0, len(SPL), 2):
+    _vpage(f"s23_sp_{j // 2 + 1}", "Спальня 2", j + 1, SPL[j:j + 2])
 
 # ================================================================== 13.11.2026: гостиная по системе SM — узел потолка, ТВ-стена, стена с диваном
 GS = [("s25_gost_uzel", "shema_gostinaya_potolok_sm", "Гостиная — потолок по системе SM: план и Узел-1"),

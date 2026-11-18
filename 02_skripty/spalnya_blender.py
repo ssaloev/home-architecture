@@ -365,7 +365,7 @@ rmirror("Зеркало в пол", MZ0, MZ1, 0.13, 2.0, X1 - 0.03, 0.002, mat("
 area(W(X1 - 0.05, (MZ0 + MZ1) / 2, 1.07), 0.02, 12, rot=(0, math.radians(-90), 0), sy=1.8) if False else None
 
 # ---------------- кондиционер К3 (план: правая стена, z 4.60–5.40, верх h=2500) + розетка h=2200
-ACZ0, ACZ1 = 4.60, 5.40
+ACZ0, ACZ1 = 4.86, 5.58   # 19.11 (заказчик): К3 — в углу у прохода в лоджию Б (наружный блок Н3 там), над зеркалом
 M["acw"] = mat("Кондиционер белый", "#F3F3F1", 0.35)
 def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     """Кондиционер (BlenderKit Midea) на стене: wall = ('R'|'L'|'T'|'B', координата стены); along — центр вдоль стены."""
@@ -388,7 +388,7 @@ def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
     d = tgt - (mn + mx) / 2
     for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
-ac_unit(("B", Z1), 14.15, 2.54, flip="acflip" in ARGS)   # 17.11 обмер: К3 над туалетным столиком (правая стена занята зеркалом/окном)
+ac_unit(("R", X1), (ACZ0 + ACZ1) / 2, 2.55, flip="acflip" in ARGS, width=0.72)   # 19.11: К3 у прохода в лоджию — трасса до Н3 ~1,5 м
 # ---------------- шторы на правой стене
 def drape_z(name, a0, a1, xc, amp, waves, m):
     bm = bmesh.new(); nu = int((a1 - a0) / 0.02); rows = []
