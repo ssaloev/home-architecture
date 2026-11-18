@@ -223,7 +223,7 @@ if OPT.get("decor", "1") == "1":
     elif R_ == "vannaya":
         # 18.11: полотенца — 2 стопки на открытой полке под раковиной + 2 на крючках у сушителя (белое/серое)
         for _zz in (SZ0 + 0.17, SZ0 + 0.43):
-            for _o in dk("polotenca_stopka", X1 - 0.24, _zz, "auto:0.45", -90, 0.24):
+            for _o in dk("polotenca_stopka", X1 - 0.24, _zz, "auto:0.38", -90, 0.24):
                 if _o.type == "MESH":
                     for _i, _sl in enumerate(_o.material_slots): _sl.material = M["white"] if _i % 2 == 0 else M.get("towel", M["white"])
         for _xx, _c in ((5.26, (0.86, 0.85, 0.82, 1)), (5.35, (0.50, 0.50, 0.49, 1))):
