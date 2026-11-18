@@ -278,14 +278,17 @@ else:
   for _o in _bed:   # покрывало — по ширине кровати (+4 см), чтобы не закрывало тумбочки
       if _o.name.startswith("BedCover"): _o.matrix_world = Matrix.Translation(W(BC, 0, 0)) @ Matrix.Diagonal((0.86, 1.0, 1.0, 1.0)) @ Matrix.Translation(-W(BC, 0, 0)) @ _o.matrix_world
   for (xx, rot) in ((BC - 0.955, 180), (BC + 0.955, 180)):   # тумбочки 1 (белые с ящиками, как были)
-    for _o in import_bk("tumbochka_noir", xx, Z0 + 0.24, 0.0, 0, 0.45):
+    for _o in import_bk("tumbochka_noir", xx, Z0 + 0.24, 0.0, 0, scl=(0.71, 0.85, 1.25)):   # 18.11 заказчик: «с обеих сторон шкафчики» — 450×400, h≈570, вровень с матрасом:
         if _o.type != "MESH": continue
         for _sl in _o.material_slots:
             _m = _sl.material; _b = next((n for n in _m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if (_m and _m.use_nodes) else None
             if _b is not None and not _b.inputs["Metallic"].is_linked and _b.inputs["Metallic"].default_value > 0.5: _sl.material = M["black"]; continue
             _sl.material = M["ward"]
 for xx in (BC - 0.955, BC + 0.955):   # 18.11 (выбор заказчика: свет 5 — тонкий подвес чёрный с золотом), низ h=1,10 над тумбочкой
-    import_bk("podves_cherny_zoloto", xx, Z0 + 0.25, 1.10, 0, H - 1.10, "h")
+    _pv = import_bk("podves_cherny_zoloto", xx, Z0 + 0.25, 1.10, 0, H - 1.10, "h")
+    _pc = W(xx, Z0 + 0.25, (1.10 + H) / 2); _fl = Matrix.Translation(_pc) @ Matrix.Rotation(math.pi, 4, "X") @ Matrix.Translation(-_pc)
+    for _o in _pv:   # 18.11 (заказчик: «висят вверх»): в модели чашка внизу — переворачиваем: чашка к потолку, плафон вниз
+        if _o.parent is None or _o.parent not in _pv: _o.matrix_world = _fl @ _o.matrix_world
     lt = bpy.data.lights.new("Подвес", "POINT"); lt.energy = 6; lt.color = (1, 0.85, 0.65); lt.shadow_soft_size = 0.03
     o = bpy.data.objects.new("Подвес", lt); o.location = W(xx, Z0 + 0.25, 1.06); sc.collection.objects.link(o)
 
@@ -530,6 +533,7 @@ for s_ in SHOTS:
             _hc_ = globals().get("HC", 2.65)          # камера ровно на середине высоты, объектив — чтобы пол и потолок у дальней стены влезли
             co.location.z = _hc_ / 2; cd.shift_y = 0.0; cd.sensor_fit = "VERTICAL"; cd.sensor_height = 36
             cd.lens = max(11.0, 18.0 * _hd2 / (_hc_ / 2 + 0.60))   # 18.11 (заказчик: «всё от верха до низу»): запас 60 см — пол и потолок целиком в кадре
+            if s_ in ("v1", "v2"): cd.lens = min(cd.lens, 16.0)   # 18.11: кровать с тумбочками с обеих сторон целиком
             sc.render.resolution_x, sc.render.resolution_y = (1620, 2880) if OPT.get("print", "0") == "1" else (1080, 1920)   # print=1 — для печати альбома (½ A4 при 300 dpi)
             if OPT.get("print", "0") == "1":
                 sc.cycles.use_adaptive_sampling = True; sc.cycles.adaptive_threshold = 0.01; sc.cycles.use_denoising = True
