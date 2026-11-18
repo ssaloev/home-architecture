@@ -84,11 +84,11 @@ def plank_floor(A, B, PL=0.6, PW=0.09):
     tc = nt.nodes.new("ShaderNodeTexCoord"); mp = nt.nodes.new("ShaderNodeMapping"); mp.inputs["Scale"].default_value = (1 / tw, 1 / th, 1)
     nt.links.new(tc.outputs["Object"], mp.inputs["Vector"]); nt.links.new(mp.outputs[0], t.inputs["Vector"]); nt.links.new(t.outputs["Color"], b.inputs["Base Color"])
     return m
-def import_bk(name, cx, cz, h0=0.0, rot_deg=0.0, target=None, axis="w"):
+def import_bk(name, cx, cz, h0=0.0, rot_deg=0.0, target=None, axis="w", scl=None, drop=()):
     f = os.path.join(BK, name + ".blend")
     if not os.path.exists(f): print("NO MODEL", name); return []
     with bpy.data.libraries.load(f, link=False) as (src, dst): dst.objects = [n for n in src.objects]
-    objs = [o for o in dst.objects if o is not None and o.type not in ("LIGHT", "CAMERA")]
+    objs = [o for o in dst.objects if o is not None and o.type not in ("LIGHT", "CAMERA") and not any(o.name.startswith(d_) for d_ in drop)]
     for o in objs: sc.collection.objects.link(o)
     roots = [o for o in objs if o.parent is None or o.parent not in objs]
     bpy.context.view_layer.update()
@@ -97,7 +97,7 @@ def import_bk(name, cx, cz, h0=0.0, rot_deg=0.0, target=None, axis="w"):
     mn = Vector((min(p.x for p in pts), min(p.y for p in pts), min(p.z for p in pts))); mx_ = Vector((max(p.x for p in pts), max(p.y for p in pts), max(p.z for p in pts)))
     size = {"w": max(mx_.x - mn.x, mx_.y - mn.y), "h": mx_.z - mn.z}[axis]
     k = (target / size) if target else 1.0; ctr = (mn + mx_) / 2
-    T_ = Matrix.Translation(W(cx, cz, h0)) @ Matrix.Rotation(math.radians(rot_deg), 4, "Z") @ Matrix.Scale(k, 4) @ Matrix.Translation(Vector((-ctr.x, -ctr.y, -mn.z)))
+    T_ = Matrix.Translation(W(cx, cz, h0)) @ Matrix.Rotation(math.radians(rot_deg), 4, "Z") @ (Matrix.Diagonal((*scl, 1.0)) if scl else Matrix.Scale(k, 4)) @ Matrix.Translation(Vector((-ctr.x, -ctr.y, -mn.z)))
     for r in roots: r.matrix_world = T_ @ r.matrix_world
     return objs
 
@@ -272,20 +272,22 @@ if CUSTOM:
         box("Ручка", xx - 0.07, Z0 + 0.40, xx + 0.07, Z0 + 0.415, 0.555, 0.565, M["black"], 0.003)
         box("LED под тумбочкой", xx - 0.15, Z0 + 0.03, xx + 0.15, Z0 + 0.37, 0.394, 0.398, M["led"])
 else:
-  _bed = import_bk("krovat_myagkaya", BC, Z0 + 0.04 + 1.07, 0.0, 0, 1.62)
-  for (xx, rot) in ((BC - 1.03, 180), (BC + 1.03, 180)):
+  # 18.11 (выбор заказчика: кровать 3 — серая бокс-спринг, матрас 1400×2000 — модель сужена по ширине 0,86, длина как есть)
+  _bed = import_bk("krovat_boxspring", BC, Z0 + 0.02 + 1.155, 0.0, 0, scl=(0.86, 1.0, 1.0))
+  bpy.context.view_layer.update()
+  for _o in _bed:   # покрывало — по ширине кровати (+4 см), чтобы не закрывало тумбочки
+      if _o.name.startswith("BedCover"): _o.matrix_world = Matrix.Translation(W(BC, 0, 0)) @ Matrix.Diagonal((0.86, 1.0, 1.0, 1.0)) @ Matrix.Translation(-W(BC, 0, 0)) @ _o.matrix_world
+  for (xx, rot) in ((BC - 0.955, 180), (BC + 0.955, 180)):   # тумбочки 1 (белые с ящиками, как были)
     for _o in import_bk("tumbochka_noir", xx, Z0 + 0.24, 0.0, 0, 0.45):
         if _o.type != "MESH": continue
         for _sl in _o.material_slots:
             _m = _sl.material; _b = next((n for n in _m.node_tree.nodes if n.type == "BSDF_PRINCIPLED"), None) if (_m and _m.use_nodes) else None
             if _b is not None and not _b.inputs["Metallic"].is_linked and _b.inputs["Metallic"].default_value > 0.5: _sl.material = M["black"]; continue
             _sl.material = M["ward"]
-for (xx, rot) in ((BC - 1.025, 0), (BC + 1.025, 0)):
-    bpy.ops.mesh.primitive_cylinder_add(vertices=8, radius=0.003, depth=H - 1.32, location=W(xx, Z0 + 0.27, (H + 1.32) / 2)); bpy.context.active_object.data.materials.append(M["black"])
-    bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.06, depth=0.24, location=W(xx, Z0 + 0.27, 1.20)); o_ = bpy.context.active_object; o_.data.materials.append(M["brass"]); bpy.ops.object.shade_smooth()
-    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.05, depth=0.004, location=W(xx, Z0 + 0.27, 1.079)); bpy.context.active_object.data.materials.append(M["spot"])
-    lt = bpy.data.lights.new("Подвес", "POINT"); lt.energy = 6; lt.color = (1, 0.85, 0.65); lt.shadow_soft_size = 0.05
-    o = bpy.data.objects.new("Подвес", lt); o.location = W(xx, Z0 + 0.27, 1.05); sc.collection.objects.link(o)
+for xx in (BC - 0.955, BC + 0.955):   # 18.11 (выбор заказчика: свет 5 — тонкий подвес чёрный с золотом), низ h=1,10 над тумбочкой
+    import_bk("podves_cherny_zoloto", xx, Z0 + 0.25, 1.10, 0, H - 1.10, "h")
+    lt = bpy.data.lights.new("Подвес", "POINT"); lt.energy = 6; lt.color = (1, 0.85, 0.65); lt.shadow_soft_size = 0.03
+    o = bpy.data.objects.new("Подвес", lt); o.location = W(xx, Z0 + 0.25, 1.06); sc.collection.objects.link(o)
 
 # ---------------- встроенный шкаф графит (левая стена, до потолка)
 b0, b1, wx = Z0, Z0 + 1.10, X0 + 0.60           # 17.11 заказчик: шкаф 1100 у верхнего угла; дверь — в торце коридора
@@ -342,11 +344,9 @@ for k in (range(2) if not ORT else ()):
 box("ТВ 55", BC - 0.62, Z1 - 0.045, BC + 0.62, Z1 - 0.01, 1.0, 1.70, M["tv"], 0.004)
 
 # ---------------- туалетный столик с зеркалом (угол у окна) + пуф + растение
-box("Столик", 13.75, Z1 - 0.40, 14.55, Z1, 0.72, 0.75, M["ward"], 0.004)
-box("Ящик столика", 13.77, Z1 - 0.40, 14.53, Z1, 0.58, 0.72, M["ward"], 0.003)
-box("Зеркало подсв.", 13.80, Z1 - 0.025, 14.50, Z1 - 0.02, 1.0, 1.85, M["led"])
-box("Зеркало", 13.82, Z1 - 0.03, 14.48, Z1 - 0.025, 1.02, 1.83, mat("Зеркало", "#E3E7E8", 0.02, 1.0))
-bpy.ops.mesh.primitive_cylinder_add(vertices=48, radius=0.2, depth=0.44, location=W(14.15, Z1 - 0.65, 0.22)); bpy.context.active_object.data.materials.append(M["soft"])
+# 18.11 (выбор заказчика: столик 2 — орех с круглым зеркалом LED, сужен до 800; пуф 2 — мех)
+import_bk("stolik_oreh_zerkalo", 14.15, Z1 - 0.265, 0.0, 180, scl=(0.82, 1.0, 1.0), drop=("Cylinder.001",))
+import_bk("puf_meh", 14.15, Z1 - 0.75, 0.0, 0, 0.44)
 # растение убрано 12.11 по просьбе заказчика
 # большое зеркало в пол с LED-подсветкой (правая стена под кондиционером), 800×1850
 def rmirror(name, z0, z1, h0, h1, x, r, m, dep):
@@ -433,6 +433,15 @@ CAMS = {"1": ("1_ot_dveri_k_krovati", W(10.95, 7.25, 1.50), W(13.4, 4.4, 1.0), 1
         "2": ("2_ot_okna_k_shkafu", W(14.35, 4.75, 1.50), W(10.5, 7.1, 1.05), 15),
         "3": ("3_krovat_pryamo", W(BC, 7.35, 1.45), W(BC, Z0, 1.0), 16),
         "4": ("4_prohod_v_lodzhiyu", W(12.9, 7.2, 1.5), W(14.25, 3.0, 1.1), 18)}
+# 18.11: полные вертикальные кадры пол–потолок: 4 стены (v1–v4), 4 угла (v5–v8)
+CAMS.update({"v1": ("v1_izgolove", W(BC, Z1 - 0.10, 1.3), W(BC, Z0, 1.3), 15),
+             "v2": ("v2_tv_stena", W(BC, Z0 + 0.30, 1.3), W(BC, Z1, 1.3), 15),
+             "v3": ("v3_shkaf_dver", W(X1 - 0.55, 6.30, 1.3), W(X0, 6.30, 1.3), 15),
+             "v4": ("v4_okno_stolik", W(X0 + 0.15, 6.60, 1.3), W(X1, 6.60, 1.3), 15),
+             "v5": ("v5_ugol_shkaf", W(13.55, Z1 - 0.70, 1.3), W(X0, Z0, 1.3), 15),
+             "v6": ("v6_ugol_lodzhiya", W(X0 + 0.75, Z1 - 0.25, 1.3), W(X1, Z0, 1.3), 15),
+             "v7": ("v7_ugol_dver", W(X1 - 0.25, Z0 + 0.30, 1.3), W(X0, Z1, 1.3), 15),
+             "v8": ("v8_ugol_stolik", W(X0 + 0.75, Z0 + 1.30, 1.3), W(X1, Z1, 1.3), 15)})
 
 sc.render.engine = "CYCLES"
 # 17.11: ИНСТРУМЕНТ ПРОВЕРКИ (аргумент qa): выгрузить сцену для qa_check.py и выйти без рендера
@@ -494,7 +503,7 @@ for s_ in SHOTS:
     if s_ not in CAMS: continue
     _top = (s_ == "0")
     for _o in sc.objects:
-        if _o.type == "MESH" and "потол" in _o.name.lower(): _o.hide_render = _top
+        if _o.type == "MESH" and ("потол" in _o.name.lower() or _o.name.startswith("Перекрытие")): _o.hide_render = _top
     if _top:
         if not bpy.data.objects.get("Свет сверху"):
             _ld = bpy.data.lights.new("Свет сверху", "AREA"); _ld.energy = 60 * (X1 - X0) * (Z1 - Z0); _ld.size = max(X1 - X0, Z1 - Z0); _ld.color = (1.0, 0.97, 0.92)
