@@ -169,8 +169,7 @@ NI = 0.16
 box("Потолок", X0 + SL, Z0 + SL, X1 - NI - SL, Z1 - SL, HC, H, M["ceil"]); box("Потолок у прохода", LX0 - 0.15, Z0 - 0.01, X1 - NI - SL, Z0 + SL, HC, H, M["ceil"])
 for (a0, b0, a1, b1) in ((X0 + 0.01, Z0, X0 + 0.03, Z1), (X1 - NI - 0.03, Z0, X1 - NI - 0.01, Z1), (X0, Z0 + 0.01, X1 - NI, Z0 + 0.03), (X0, Z1 - 0.03, X1 - NI, Z1 - 0.01)):
     box("LED паз", a0, b0, a1, b1, HC + 0.03, HC + 0.035, M["led"])
-for xx in (11.25, 14.15):                     # 2 линейных светильника вдоль комнаты
-    box("Линия света", xx - 0.02, Z0 + 0.35, xx + 0.02, Z1 - 0.35, HC - 0.004, HC, M["spot"])
+# 19.11: линейные светильники убраны — свет: LED короба над кроватью + 4 спота + паз по периметру
 # окно (правая стена)
 box("Подоконник", X1 - 0.04, WZ0 - 0.03, X1 + 0.12, WZ1 + 0.03, WS - 0.03, WS, M["wframe"], 0.005)
 for a in np.linspace(WZ0, WZ1, 3): box("Импост", X1 + 0.06, a - 0.03, X1 + 0.12, a + 0.03, WS, WT, M["wframe"], 0.004)
@@ -275,6 +274,13 @@ else:
   # 18.11 (выбор заказчика: кровать 3 — серая бокс-спринг, матрас 1400×2000 — модель сужена по ширине 0,86, длина как есть)
   _bed = import_bk("krovat_boxspring", BC, Z0 + 0.02 + 1.155, 0.0, 0, scl=(0.86, 1.0, 1.0))
   bpy.context.view_layer.update()
+  M["bedbase"] = mat("Основание кровати серое", "#6E6E6C", 0.8)
+  for _o in _bed:   # 19.11: белый пластик основания светился полосой у пола — в серый
+      if _o.type == "MESH" and _o.name.startswith("BedMain"):
+          for _sl in _o.material_slots:
+              _sl.material = M["bedbase"]
+      if _o.type == "MESH" and _o.name.startswith(("BedCover", "BedMattress")):   # 19.11: белая кромка покрывала/матраса светилась полосой — покрывало серое целиком
+          for _sl in _o.material_slots: _sl.material = mat("Покрывало серое", "#8C8C8A", 0.95)
   for _o in _bed:   # покрывало — по ширине кровати (+4 см), чтобы не закрывало тумбочки
       if _o.name.startswith("BedCover"): _o.matrix_world = Matrix.Translation(W(BC, 0, 0)) @ Matrix.Diagonal((0.86, 1.0, 1.0, 1.0)) @ Matrix.Translation(-W(BC, 0, 0)) @ _o.matrix_world
   for (xx, rot) in ((BC - 0.955, 180), (BC + 0.955, 180)):   # тумбочки 1 (белые с ящиками, как были)
@@ -365,7 +371,7 @@ rmirror("Зеркало в пол", MZ0, MZ1, 0.13, 2.0, X1 - 0.03, 0.002, mat("
 area(W(X1 - 0.05, (MZ0 + MZ1) / 2, 1.07), 0.02, 12, rot=(0, math.radians(-90), 0), sy=1.8) if False else None
 
 # ---------------- кондиционер К3 (план: правая стена, z 4.60–5.40, верх h=2500) + розетка h=2200
-ACZ0, ACZ1 = 4.86, 5.58   # 19.11 (заказчик): К3 — в углу у прохода в лоджию Б (наружный блок Н3 там), над зеркалом
+ACZ0, ACZ1 = 4.86, 5.58   # шторы начинаются отсюда (К3 — над дверью лоджии)
 M["acw"] = mat("Кондиционер белый", "#F3F3F1", 0.35)
 def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     """Кондиционер (BlenderKit Midea) на стене: wall = ('R'|'L'|'T'|'B', координата стены); along — центр вдоль стены."""
@@ -388,7 +394,7 @@ def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
     d = tgt - (mn + mx) / 2
     for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
-ac_unit(("R", X1), (ACZ0 + ACZ1) / 2, 2.55, flip="acflip" in ARGS, width=0.72)   # 19.11: К3 у прохода в лоджию — трасса до Н3 ~1,5 м
+ac_unit(("T", LZ1 + 0.09), (13.89 + 14.618) / 2, 2.55, flip="acflip" in ARGS, width=0.70)   # 19.11 (заказчик): К3 над дверью в лоджию Б — трасса сквозь стену к Н3
 # ---------------- шторы на правой стене
 def drape_z(name, a0, a1, xc, amp, waves, m):
     bm = bmesh.new(); nu = int((a1 - a0) / 0.02); rows = []
@@ -413,10 +419,8 @@ area(W(X1 + 0.5, (WZ0 + WZ1) / 2, 1.6), WZ1 - WZ0, 350, rot=(0, math.radians(-90
 for (x0_, z0_, x1_, z1_) in ((X0 + 0.04, Z0, X0 + 0.04, Z1), (X1 - NI - 0.04, Z0, X1 - NI - 0.04, Z1), (X0, Z0 + 0.04, X1, Z0 + 0.04), (X0, Z1 - 0.04, X1, Z1 - 0.04)):
     L = max(abs(x1_ - x0_), abs(z1_ - z0_)); hz = abs(x1_ - x0_) > abs(z1_ - z0_)
     area(W((x0_ + x1_) / 2, (z0_ + z1_) / 2, HC + 0.02), L if hz else 0.03, 30 * L, sy=0.03 if hz else L, spread=80)
-for xx in (11.25, 14.15):
-    area(W(xx, (Z0 + Z1) / 2, HC - 0.01), 0.04, 60, sy=Z1 - Z0 - 0.7)
 # (убрано 12.11: мягкие панели на стене) area(W(BC, Z0 + 0.06, HH + 0.06), HW1 - HW0, 15, sy=0.02, color=(1, 0.86, 0.66))
-for xx in (11.515, 13.30):                    # 4 круглых спота (план света: 2×2)
+for xx in (11.10, 14.10):                     # 4 круглых спота по бокам от короба (19.11)
     for zz in (5.393, 6.425):
         bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.045, depth=0.004, location=W(xx, zz, HC - 0.002)); bpy.context.active_object.data.materials.append(M["spot"])
         bpy.ops.mesh.primitive_torus_add(major_radius=0.05, minor_radius=0.006, location=W(xx, zz, HC - 0.003)); bpy.context.active_object.data.materials.append(M["black"])
@@ -429,6 +433,19 @@ w = sc.world or bpy.data.worlds.new("W"); sc.world = w; w.use_nodes = True; w.no
 
 # 17.11 обмер: бетонная балка по линии Г, 2,52 м от стены с дверью; низ — по замеру потолка (пока 2,52 от пола)
 box("Балка", 12.752, Z0, 13.102, Z1, float(OPT.get("beam", "2.52")), HC + 0.01, M["ceil"])
+# 19.11 (заказчик: «балку не скрыть — учесть, сохранив стиль»): как в гостиной по системе SM — короб ГКЛ низ 2490,
+# над кроватью во всю глубину комнаты, ширина = кровать + 30 мм (1500): балка внутри короба; по длинным краям — теневой шов и LED на верхнее поле
+PB0, PB1, PBH = 11.85, 13.35, 2.49
+box("Короб над кроватью (балка внутри)", PB0, Z0, PB1, Z1, PBH, HC + 0.01, M["ceil"])
+for _x in (PB0, PB1):
+    box("Теневой шов короба", _x - 0.006, Z0, _x + 0.006, Z1, PBH, PBH + 0.012, M["black"])
+    _s = -1 if _x == PB0 else 1
+    box("LED короба", _x + _s * 0.012, Z0 + 0.05, _x + _s * 0.02, Z1 - 0.05, HC - 0.06, HC - 0.055, M["led"])
+    area(W(_x + _s * 0.06, (Z0 + Z1) / 2, HC - 0.05), 0.03, 30 * (Z1 - Z0), rot=(math.pi, 0, 0), sy=Z1 - Z0 - 0.1, spread=100)
+for _z in (Z0 + 0.45, Z1 - 0.45):     # 2 встроенных Ø80 в коробе (как у SM) — у изголовья и в ногах
+    bpy.ops.mesh.primitive_cylinder_add(vertices=32, radius=0.04, depth=0.004, location=W((PB0 + PB1) / 2, _z, PBH - 0.002)); bpy.context.active_object.data.materials.append(M["spot"])
+    lt = bpy.data.lights.new("Спот короба", "SPOT"); lt.energy = 6; lt.spot_size = math.radians(60); lt.spot_blend = 0.6; lt.color = (1, 0.92, 0.82)
+    o = bpy.data.objects.new("Спот короба", lt); o.location = W((PB0 + PB1) / 2, _z, PBH - 0.02); sc.collection.objects.link(o)
 
 # ---------------- камеры
 exec(open(os.path.join(PROJ, "02_skripty", "decor_common.py"), encoding="utf-8").read())   # 17.11: декор (decor=0 — без него)
@@ -506,7 +523,7 @@ for s_ in SHOTS:
     if s_ not in CAMS: continue
     _top = (s_ == "0")
     for _o in sc.objects:
-        if _o.type == "MESH" and ("потол" in _o.name.lower() or _o.name.startswith("Перекрытие")): _o.hide_render = _top
+        if _o.type == "MESH" and ("потол" in _o.name.lower() or _o.name.startswith(("Перекрытие", "Короб над", "Теневой шов", "LED короба", "Балка"))): _o.hide_render = _top
     if _top:
         if not bpy.data.objects.get("Свет сверху"):
             _ld = bpy.data.lights.new("Свет сверху", "AREA"); _ld.energy = 60 * (X1 - X0) * (Z1 - Z0); _ld.size = max(X1 - X0, Z1 - Z0); _ld.color = (1.0, 0.97, 0.92)
