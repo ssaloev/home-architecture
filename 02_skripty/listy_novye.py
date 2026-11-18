@@ -766,6 +766,7 @@ KO = [("koridor/v1_k_vhodnoy_dveri_print.jpg", "к входной двери"), 
       ("koridor/v3_shkaf_gosti_print.jpg", "шкаф и место для гостей"), ("koridor/v4_obuvnica_zerkalo_print.jpg", "обувница и зеркало"),
       ("koridor/v5_ugol_k_dveri_sleva_print.jpg", "угол к двери слева"), ("koridor/v6_ugol_ot_dveri_vpravo_print.jpg", "от двери вправо"),
       ("koridor/v7_ugol_ot_dveri_vlevo_print.jpg", "от двери влево"), ("koridor/v8_koridor_k_prihozhey_print.jpg", "коридор к прихожей"),
+      ("koridor/v9_shkafy_koridora_print.jpg", "коридор: встроенные шкафы 3515×470"), ("koridor/v10_shkafy_ot_spalni_print.jpg", "шкафы от двери спальни 2"),
       ("koridor/0_obshiy_sverhu_print.jpg", "общий вид сверху")]
 for j in range(0, len(KO), 2):
     _vpage(f"s23_ko_{j // 2 + 1}", "Прихожая", j + 1, KO[j:j + 2])

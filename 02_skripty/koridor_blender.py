@@ -440,6 +440,9 @@ CAMS = {"1": ("1_koridor_k_prihozhey", W(9.75, 7.10, 1.45), W(2.6, 7.00, 1.38), 
         "v6": ("v6_ugol_ot_dveri_vpravo", W(2.30, PZ1 - 0.06, 1.3), W(PX1, 6.70, 1.3), 0),
         "v7": ("v7_ugol_ot_dveri_vlevo", W(3.10, PZ1 - 0.06, 1.3), W(PX0, 6.70, 1.3), 0),
         "v8": ("v8_koridor_k_prihozhey", W(9.85, 7.00, 1.3), W(PX0, 7.00, 1.3), 0),
+        # 18.11 (заказчик: «не вижу шкафов в коридоре»): кадры на встроенные шкафы 3515×470 в кармане у кухни
+        "v9": ("v9_shkafy_koridora", W(6.80, 6.76, 1.3), W(9.90, 7.95, 1.3), 15),
+        "v10": ("v10_shkafy_ot_spalni", W(10.00, 6.76, 1.3), W(6.70, 7.95, 1.3), 15),
         "0": ("0_obshiy_sverhu", W((PX0 + PX1) / 2, PZ1 - 0.25, HC + 3.2), W((PX0 + PX1) / 2, 7.60, 0.0), 24)}
 sc.render.engine = "CYCLES"
 # 17.11: ИНСТРУМЕНТ ПРОВЕРКИ (аргумент qa): выгрузить сцену для qa_check.py и выйти без рендера
@@ -492,6 +495,6 @@ for s in SHOTS:
     if s.startswith("v"):
         _dv = tgt - loc; _hd = math.hypot(_dv.x, _dv.y)
         co.location.z = HC / 2; co.rotation_euler = (math.radians(90), 0, math.atan2(_dv.y, _dv.x) - math.radians(90))
-        cd.lens = max(11.0, 18.0 * _hd / (HC / 2 + 0.30)) if s != "v8" else 24.0
+        cd.lens = (lens if lens else max(11.0, 18.0 * _hd / (HC / 2 + 0.30))) if s != "v8" else 24.0
     sc.camera = co; sc.render.filepath = os.path.join(OUT, ("q_" if QUICK else "") + n + tag + ".jpg"); bpy.ops.render.render(write_still=True)
     print("RENDERED", sc.render.filepath)
