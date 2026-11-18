@@ -687,6 +687,51 @@ spots([(10.9, 2.80), (10.9, 3.70), (11.7, 2.80), (11.7, 3.70), (11.0, 1.70)], 60
 for (x0, z0, x1, z1) in ((X0, Z0, X1, Z0 + 0.02), (X0, Z1 - 0.02, X1, Z1), (X0, Z0, X0 + 0.02, Z1), (X1 - 0.02, Z0, X1, Z1)):
     box("LED периметр", x0, z0, x1, z1, HC - 0.012, HC - 0.008, M["led"])
 
+# 18.11 (заказчик: «кухня не похожа на мебель — коробки»): как во всей квартире — чёрные ручки на каждом фасаде и ящике,
+# тёмные швы 3 мм между фасадами (тень за фасадом), ручки на холодильнике
+M["shov"] = mat("Шов фасадов (тень)", "#2A2A2C", 0.8)
+_rc = Vector(((X0 + X1) / 2, -(Z0 + Z1) / 2))
+bpy.context.view_layer.update()
+for _o in [o for o in sc.objects if o.type == "MESH" and (o.name.startswith("Фасад") or o.name.startswith("Ящик"))]:
+    _P = [_o.matrix_world @ Vector(c) for c in _o.bound_box]
+    x0_, x1_ = min(p.x for p in _P), max(p.x for p in _P); y0_, y1_ = min(p.y for p in _P), max(p.y for p in _P); z0_, z1_ = min(p.z for p in _P), max(p.z for p in _P)
+    thin_x = (x1_ - x0_) < (y1_ - y0_)
+    if thin_x:
+        fx = x0_ if abs(_rc.x - x0_) < abs(_rc.x - x1_) else x1_; sg = -1 if fx == x0_ else 1
+        a0_, a1_ = y0_, y1_
+    else:
+        fy = y0_ if abs(_rc.y - y0_) < abs(_rc.y - y1_) else y1_; sg = -1 if fy == y0_ else 1
+        a0_, a1_ = x0_, x1_
+    # тень-шов: тёмная пластина 6 мм за фасадом, шире на 3 мм
+    if thin_x:
+        bx = fx - sg * 0.024
+        bpy.ops.mesh.primitive_cube_add(location=(bx, (a0_ + a1_) / 2, (z0_ + z1_) / 2)); sh_ = bpy.context.active_object; sh_.scale = (0.003, (a1_ - a0_) / 2 + 0.003, (z1_ - z0_) / 2 + 0.003)
+    else:
+        by = fy - sg * 0.024
+        bpy.ops.mesh.primitive_cube_add(location=((a0_ + a1_) / 2, by, (z0_ + z1_) / 2)); sh_ = bpy.context.active_object; sh_.scale = ((a1_ - a0_) / 2 + 0.003, 0.003, (z1_ - z0_) / 2 + 0.003)
+    sh_.name = "Шов"; sh_.data.materials.append(M["shov"])
+    W_, Hh = a1_ - a0_, z1_ - z0_
+    if "угла" in _o.name or "антресоли" in _o.name: pass
+    if Hh < 0.45 and W_ > Hh:                      # ящик: горизонтальная ручка у верхней кромки
+        L = min(0.40, W_ * 0.6); c = (a0_ + a1_) / 2; ha, hb, hz0, hz1 = c - L / 2, c + L / 2, z1_ - 0.055, z1_ - 0.043
+    else:                                           # дверца: вертикальная ручка у края, ближе к центру комнаты
+        ea = a1_ - 0.045 if abs((_rc.y if thin_x else _rc.x) - a1_) < abs((_rc.y if thin_x else _rc.x) - a0_) else a0_ + 0.045
+        ha, hb = ea - 0.006, ea + 0.006
+        if z0_ > 1.3: hz0, hz1 = z0_ + 0.04, z0_ + 0.34             # навесной — внизу
+        elif z1_ < 1.0: hz0, hz1 = z1_ - 0.30, z1_ - 0.04           # нижний — вверху
+        else: hz0, hz1 = 0.95, 1.30                                  # колонна — на уровне руки
+    if thin_x:
+        hx0, hx1 = (fx - 0.026, fx) if sg < 0 else (fx, fx + 0.026)
+        bpy.ops.mesh.primitive_cube_add(location=((hx0 + hx1) / 2, (ha + hb) / 2, (hz0 + hz1) / 2)); h_ = bpy.context.active_object; h_.scale = ((hx1 - hx0) / 2, (hb - ha) / 2, (hz1 - hz0) / 2)
+    else:
+        hy0, hy1 = (fy - 0.026, fy) if sg < 0 else (fy, fy + 0.026)
+        bpy.ops.mesh.primitive_cube_add(location=((ha + hb) / 2, (hy0 + hy1) / 2, (hz0 + hz1) / 2)); h_ = bpy.context.active_object; h_.scale = ((hb - ha) / 2, (hy1 - hy0) / 2, (hz1 - hz0) / 2)
+    h_.name = "Ручка"; h_.data.materials.append(M["black"])
+    bv = h_.modifiers.new("b", "BEVEL"); bv.width = 0.003; bv.segments = 2
+# ручки холодильника (две створки side-by-side)
+_FS = (FZ0 + FZ1) / 2
+for _zh in (_FS - 0.03, _FS + 0.03):
+    box("Ручка холодильника", X0 + FD + 0.005, _zh - 0.007, X0 + FD + 0.03, _zh + 0.007, 0.75, 1.55, M["black"], 0.003)
 exec(open(os.path.join(PROJ, "02_skripty", "decor_common.py"), encoding="utf-8").read())   # 17.11: декор (decor=0 — без него)
 CAMS = {"v1": ("v1_pravaya_moyka", W(10.40, 3.10, 1.3), W(X1, 3.10, 1.3), 0),
         "v2": ("v2_nizhnyaya_plita", W(11.30, 2.10, 1.3), W(11.30, Z1, 1.3), 0),
