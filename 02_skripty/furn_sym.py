@@ -121,13 +121,14 @@ def draw(A, X, Y, S, f, rooms_rects, fill="#F3EFE7", col="#6B665C", sw=2.5, back
         R(0.05, Lv - 0.06, Lu / n - 0.05, Lv - 0.02, DARK, st=DARK)
     elif k == "low" and ("мойка" in nm or "плита" in nm):   # кухонный ряд: столешница, мойка, варочная панель
         R(0, 0, Lu, Lv, WOOD); Ln([(0, Lv - 0.04), (Lu, Lv - 0.04)], s_=thin)
-        R(0.08, 0.10, 0.52, Lv - 0.10, WHITE, r=0.05); R(0.13, 0.15, 0.47, Lv - 0.15, STEEL, r=0.05, s_=thin)
-        C(0.30, 0.06, 0.025, DARK); C(0.30, Lv / 2, 0.02, DARK, s_=thin)
-        h0 = Lu - 0.64
+        so = 0.90 if nm.startswith("плита") else 0.0     # 18.11 кухня 2в: плита у шахты первой, мойка через ящик 300
+        R(so + 0.08, 0.10, so + 0.52, Lv - 0.10, WHITE, r=0.05); R(so + 0.13, 0.15, so + 0.47, Lv - 0.15, STEEL, r=0.05, s_=thin)
+        C(so + 0.30, 0.06, 0.025, DARK); C(so + 0.30, Lv / 2, 0.02, DARK, s_=thin)
+        h0 = 0.01 if so else Lu - 0.64
         R(h0, 0.04, h0 + 0.58, Lv - 0.04, DARK, st=DARK, r=0.02)
         for (du, dv, rr) in ((0.15, 0.17, 0.09), (0.43, 0.17, 0.07), (0.15, Lv - 0.21, 0.07), (0.43, Lv - 0.21, 0.09)):
             C(h0 + du, dv, rr, "none", st="#9A9A9A", s_=thin)
-        R(0.60, Lv - 0.06, 1.04, Lv - 0.03, "none", s_=thin, dash="5 4")
+        if not so: R(0.60, Lv - 0.06, 1.04, Lv - 0.03, "none", s_=thin, dash="5 4")
     elif k == "low":                                    # тумбочка / обувница: ящик + лампа
         R(0, 0, Lu, Lv, WOOD, r=0.02)
         if "тумбоч" in nm: C(Lu / 2, Lv / 2, min(Lu, Lv) * 0.25, WHITE, s_=thin)
