@@ -63,6 +63,7 @@ SHEETS = [
     ("s6_kond", "План кондиционеров"),
     ("s6b_kond_shema", "Кондиционеры — схема квартиры, трассы и питание"),
     ("s5_santeh", "План сантехнического оборудования"),
+    ("s5c_voda_bak", "Водоснабжение: бак 200 л, насос, бойлеры — работа без воды"),
     ("s5a_uzly", "Санузел и ванная — узлы сантехники"),
     ("s5b_vanna_shema", "Ванная и санузел — расстановка по обмеру"),
     ("s27_korob", "Спальня 2 — расстановка по обмеру"),
@@ -91,7 +92,7 @@ ns["SHEET_NO"] = {f: i + 1 for i, (f, _) in enumerate(SHEETS)}
 ns["SHEET_NO"]["sZ_zamer"] = "—"
 ns["LISTOV"] = len(SHEETS)
 ns["SHEETS"] = SHEETS; ns["PROJ"] = PROJ
-for f in ("listy_osnovnye.py", "listy_novye.py"):
+for f in ("listy_osnovnye.py", "listy_novye.py", "listy_voda.py"):
     if os.path.exists(f):
         exec(open(f, encoding="utf-8").read(), ns)
 
