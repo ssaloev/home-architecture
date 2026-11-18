@@ -685,7 +685,7 @@ def ac_unit(wall, along, top=2.50, flip=False, width=1.10):
     else: tgt = Vector((along, -(wc - (mx.y - mn.y) / 2 - 0.01), top - (mx.z - mn.z) / 2))
     d = tgt - (mn + mx) / 2
     for r in roots: r.matrix_world = Matrix.Translation(d) @ r.matrix_world
-ac_unit(("L", X0), 4.10, 2.58)        # К4 над свободной частью левой стены у входа
+# 18.11 (заказчик): кондиционера на кухне НЕ будет (К4 убран)
 
 # ---------------- потолок: споты + LED по периметру
 spots([(10.9, 2.80), (10.9, 3.70), (11.7, 2.80), (11.7, 3.70), (11.0, 1.70)], 60)
